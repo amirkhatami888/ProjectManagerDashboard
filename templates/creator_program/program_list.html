@@ -13,6 +13,22 @@
         </a>
     </div>
     
+    <!-- Access Information -->
+    <div class="alert alert-info mb-4">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>دسترسی شما:</strong>
+        {% if user.is_admin or user.is_ceo or user.is_chief_executive %}
+            شما به تمام طرح‌ها دسترسی دارید.
+        {% else %}
+            شما به طرح‌های استان‌های زیر دسترسی دارید:
+            {% for province in user.get_assigned_provinces %}
+                <span class="badge bg-primary me-1">{{ province }}</span>
+            {% empty %}
+                <span class="text-warning">هیچ استانی به شما اختصاص داده نشده است.</span>
+            {% endfor %}
+        {% endif %}
+    </div>
+    
     {% if programs %}
     <div class="card">
         <div class="card-body">
@@ -24,6 +40,7 @@
                             <th>عنوان طرح</th>
                             <th>نوع طرح</th>
                             <th>استان</th>
+                            <th>ایجاد کننده</th>
                             <th>وضعیت مجوز</th>
                             <th>تعداد پروژه‌ها</th>
                             <th>پیشرفت فیزیکی</th>
@@ -42,6 +59,14 @@
                             </td>
                             <td>{{ program.get_program_type_display }}</td>
                             <td>{{ program.province }}</td>
+                            <td>
+                                <small class="text-muted">
+                                    {{ program.created_by.get_full_name|default:program.created_by.username }}
+                                    {% if user == program.created_by %}
+                                        <span class="badge bg-success ms-1">شما</span>
+                                    {% endif %}
+                                </small>
+                            </td>
                             <td>
                                 <span class="badge {% if program.license_state == 'دارد' %}bg-success{% elif program.license_state == 'ندارد' %}bg-danger{% elif program.license_state == 'دردست اقدام' %}bg-warning{% else %}bg-secondary{% endif %}">
                                     {{ program.get_license_state_display }}
