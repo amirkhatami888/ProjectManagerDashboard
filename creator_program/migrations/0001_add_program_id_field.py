@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('title', models.CharField(max_length=255, verbose_name='عنوان طرح')),
                 ('program_id', models.CharField(blank=True, max_length=50, unique=True, verbose_name='کد طرح')),
-                ('program_type', models.CharField(choices=[('پایگاه امداد جادهای', 'پایگاه امداد جادهای'), ('پایگاه امداد کوهستانی', 'پایگاه امداد کوهستانی'), ('پایگاه امداد دریایی', 'پایگاه امداد دریایی'), ('ساختمان اداری آموزشی درمانی وفرهنگی', 'ساختمان اداری آموزشی درمانی وفرهنگی'), ('پایگاه عملیات پشتیبانی اقماری هوایی', 'پایگاه عملیات پشتیبانی اقماری هوایی'), ('مولد سازی', 'مولد سازی')], max_length=50, verbose_name='نوع طرح')),
+                ('program_type', models.CharField(choices=[('پایگاه امداد جاده ای', 'پایگاه امداد جاده ای'), ('پایگاه امداد کوهستانی', 'پایگاه امداد کوهستانی'), ('پایگاه امداد دریایی', 'پایگاه امداد دریایی'), ('ساختمان اداری آموزشی درمانی وفرهنگی', 'ساختمان اداری آموزشی درمانی وفرهنگی'), ('پایگاه عملیات پشتیبانی اقماری هوایی', 'پایگاه عملیات پشتیبانی اقماری هوایی'), ('مولد سازی', 'مولد سازی')], max_length=50, verbose_name='نوع طرح')),
                 ('license_state', models.CharField(choices=[('دارد', 'دارد'), ('ندارد', 'ندارد'), ('دردست اقدام', 'دردست اقدام'), ('قبل از بخش نامه اردیبهشت 91', 'قبل از بخش نامه اردیبهشت 91')], max_length=50, verbose_name='وضعیت مجوز دفترچه توجیهی')),
                 ('license_code', models.CharField(max_length=25, verbose_name='کد مجوز دفترچه توجیهی')),
                 ('description', models.TextField(blank=True, null=True, verbose_name='توضیحات')),

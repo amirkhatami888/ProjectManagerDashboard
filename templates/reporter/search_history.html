@@ -831,14 +831,14 @@
                                                     <div class="row g-2">
                                                         <div class="col-md-6">
                                                             <div class="form-check">
-                                                                <input class="form-check-input program-type-checkbox-all" type="checkbox" id="program_type_all" value="all" {% if selected_program_types|length > 0 and selected_program_types|length == 6 %}checked{% endif %}>
+                                                                <input class="form-check-input program-type-checkbox-all" type="checkbox" id="program_type_all" value="all" {% if selected_program_types|length > 0 and selected_program_types|length == 7 %}checked{% endif %}>
                                                             <label class="form-check-label fw-bold" for="program_type_all">همه</label>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-6">
                                                             <div class="form-check">
-                                                                <input class="form-check-input program-type-checkbox" type="checkbox" name="program_types" id="program_type_1" value="پایگاه امداد جادهای" {% if "پایگاه امداد جادهای" in selected_program_types %}checked{% endif %}>
-                                                                <label class="form-check-label" for="program_type_1">پایگاه امداد جادهای</label>
+                                                                <input class="form-check-input program-type-checkbox" type="checkbox" name="program_types" id="program_type_1" value="پایگاه امداد جاده ای" {% if "پایگاه امداد جاده ای" in selected_program_types %}checked{% endif %}>
+                                                                <label class="form-check-label" for="program_type_1">پایگاه امداد جاده ای</label>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-6">
@@ -869,6 +869,12 @@
                                                             <div class="form-check">
                                                                 <input class="form-check-input program-type-checkbox" type="checkbox" name="program_types" id="program_type_6" value="مولد سازی" {% if "مولد سازی" in selected_program_types %}checked{% endif %}>
                                                                 <label class="form-check-label" for="program_type_6">مولد سازی</label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input program-type-checkbox" type="checkbox" name="program_types" id="program_type_7" value="سالن چند منظوره/انبار امدادی" {% if "سالن چند منظوره/انبار امدادی" in selected_program_types %}checked{% endif %}>
+                                                                <label class="form-check-label" for="program_type_7">سالن چند منظوره/انبار امدادی</label>
                                                             </div>
                                                         </div>
                                                     </div>
