@@ -60,7 +60,7 @@ def can_modify_project(user, project):
         return True
     
     # Province managers can modify projects from their assigned provinces
-    if user.is_province_manager:
+    if hasattr(user, 'is_province_manager') and user.is_province_manager:
         user_provinces = user.get_assigned_provinces()
         if user_provinces and project.province in user_provinces:
             return True
@@ -89,7 +89,7 @@ def subproject_list(request, project_id=None):
         # Get user's assigned provinces
         user_provinces = request.user.get_assigned_provinces()
         if user_provinces:
-            # Show all subprojects from projects in user's assigned provinces
+            # Show subprojects from projects in user's assigned provinces
             subprojects = base_queryset.filter(project__province__in=user_provinces)
         else:
             # Fallback to user's own subprojects if no province assignments
@@ -1644,7 +1644,9 @@ def add_financial_document(request, subproject_id):
     project = subproject.project
 
     # Check permissions - admin users should have access
-    if not (request.user.is_admin or request.user == subproject.created_by):
+    if not (request.user.is_admin or 
+            request.user == subproject.created_by or
+            (request.user.is_province_manager and subproject.project.province in request.user.get_assigned_provinces())):
         raise PermissionDenied
 
     if request.method == 'POST':
@@ -1705,7 +1707,9 @@ def edit_financial_document(request, document_id):
     project = subproject.project
 
     # Check permissions - admin users should have access
-    if not (request.user.is_admin or request.user == document.created_by):
+    if not (request.user.is_admin or 
+            request.user == document.created_by or
+            (request.user.is_province_manager and subproject.project.province in request.user.get_assigned_provinces())):
         raise PermissionDenied
 
     if request.method == 'POST':
@@ -1798,8 +1802,7 @@ def financial_ledger(request, subproject_id):
     # Check permissions - admin users should have access
     if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
             request.user.is_expert or request.user == subproject.created_by or 
-            request.user == subproject.project.created_by or
-            (request.user.is_province_manager and subproject.project.province in request.user.get_assigned_provinces())):
+            request.user == subproject.project.created_by):
         raise PermissionDenied
     
     # Get all financial documents for this subproject
