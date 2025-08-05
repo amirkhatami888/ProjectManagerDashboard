@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h4 class="mb-0">{{ title }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                {{ form.repository_url|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.secret_token|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.deploy_branch|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        {{ form.is_active.label }}
+                                    </label>
+                                    {% if form.is_active.help_text %}
+                                        <small class="form-text text-muted">{{ form.is_active.help_text }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    {{ form.auto_deploy }}
+                                    <label class="form-check-label" for="{{ form.auto_deploy.id_for_label }}">
+                                        {{ form.auto_deploy.label }}
+                                    </label>
+                                    {% if form.auto_deploy.help_text %}
+                                        <small class="form-text text-muted">{{ form.auto_deploy.help_text }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Configuration
+                            </button>
+                            <a href="{% url 'webhooks:configurations' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Help Information -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Setup Instructions</h5>
+                </div>
+                <div class="card-body">
+                    <h6>GitHub Webhook Setup:</h6>
+                    <ol>
+                        <li>Go to your GitHub repository</li>
+                        <li>Navigate to Settings → Webhooks</li>
+                        <li>Click "Add webhook"</li>
+                        <li>Set the Payload URL to: <code>{{ request.scheme }}://{{ request.get_host }}{% url 'webhooks:github_webhook' %}</code></li>
+                        <li>Set Content type to: <code>application/json</code></li>
+                        <li>Select events: <code>Push</code>, <code>Pull requests</code>, <code>Releases</code></li>
+                        <li>Add a secret token (optional but recommended)</li>
+                        <li>Click "Add webhook"</li>
+                    </ol>
+                    
+                    <h6>Configuration Options:</h6>
+                    <ul>
+                        <li><strong>Repository URL:</strong> The GitHub repository URL (e.g., https://github.com/username/repo)</li>
+                        <li><strong>Secret Token:</strong> The webhook secret from GitHub (optional)</li>
+                        <li><strong>Deploy Branch:</strong> The branch to deploy from (default: main)</li>
+                        <li><strong>Active:</strong> Enable/disable this webhook configuration</li>
+                        <li><strong>Auto Deploy:</strong> Automatically deploy when webhook is received</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

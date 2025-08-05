@@ -35,6 +35,7 @@ urlpatterns = [
     path('reporter/', include('reporter.urls')),
     path("notifications/", include("notifications.urls")),
     path("sms/", include("notifications_sms.urls")),
+    path("webhooks/", include("webhooks.urls")),
 ]
 
 if settings.DEBUG:

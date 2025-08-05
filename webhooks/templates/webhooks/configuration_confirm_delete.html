@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Webhook Configuration{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h4 class="mb-0 text-danger">
+                        <i class="fas fa-exclamation-triangle"></i> Delete Webhook Configuration
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h5 class="alert-heading">Are you sure?</h5>
+                        <p>You are about to delete the webhook configuration for:</p>
+                        <p class="mb-0"><strong>{{ config.repository_url }}</strong></p>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Deploy Branch:</strong> {{ config.deploy_branch }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Status:</strong> 
+                            <span class="badge badge-{% if config.is_active %}success{% else %}secondary{% endif %}">
+                                {% if config.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Note:</strong> This action cannot be undone. The webhook configuration will be permanently deleted.
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'webhooks:configurations' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Delete Configuration
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

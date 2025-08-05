@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block title %}Webhook Events{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Webhook Events</h1>
+                <a href="{% url 'webhooks:dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Filters</h6>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row">
+                        <div class="col-md-3">
+                            <label for="event_type">Event Type</label>
+                            <select name="event_type" id="event_type" class="form-control">
+                                <option value="">All Events</option>
+                                {% for value, label in event_types %}
+                                    <option value="{{ value }}" {% if filters.event_type == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="status">Status</label>
+                            <select name="status" id="status" class="form-control">
+                                <option value="">All Statuses</option>
+                                {% for value, label in status_choices %}
+                                    <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="repository">Repository</label>
+                            <input type="text" name="repository" id="repository" class="form-control" 
+                                   value="{{ filters.repository }}" placeholder="Search repository...">
+                        </div>
+                        <div class="col-md-3">
+                            <label>&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> Filter
+                                </button>
+                                <a href="{% url 'webhooks:events' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Clear
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Events Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Webhook Events</h6>
+                </div>
+                <div class="card-body">
+                    {% if page_obj %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Event Type</th>
+                                        <th>Repository</th>
+                                        <th>Branch</th>
+                                        <th>Commit SHA</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for event in page_obj %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge badge-{% if event.event_type == 'push' %}primary{% elif event.event_type == 'pull_request' %}info{% elif event.event_type == 'release' %}success{% else %}secondary{% endif %}">
+                                                {{ event.get_event_type_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ event.repository }}</td>
+                                        <td>{{ event.branch|default:"-" }}</td>
+                                        <td>
+                                            {% if event.commit_sha %}
+                                                <code>{{ event.commit_sha|truncatechars:8 }}</code>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-{% if event.status == 'completed' %}success{% elif event.status == 'failed' %}danger{% elif event.status == 'processing' %}warning{% else %}secondary{% endif %}">
+                                                {{ event.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ event.created_at|date:"M d, Y H:i" }}</td>
+                                        <td>
+                                            <a href="{% url 'webhooks:event_detail' event.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if page_obj.has_other_pages %}
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if filters.event_type %}&event_type={{ filters.event_type }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.repository %}&repository={{ filters.repository }}{% endif %}">
+                                            <i class="fas fa-angle-double-left"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if filters.event_type %}&event_type={{ filters.event_type }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.repository %}&repository={{ filters.repository }}{% endif %}">
+                                            <i class="fas fa-angle-left"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}{% if filters.event_type %}&event_type={{ filters.event_type }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.repository %}&repository={{ filters.repository }}{% endif %}">
+                                                {{ num }}
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if filters.event_type %}&event_type={{ filters.event_type }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.repository %}&repository={{ filters.repository }}{% endif %}">
+                                            <i class="fas fa-angle-right"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if filters.event_type %}&event_type={{ filters.event_type }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.repository %}&repository={{ filters.repository }}{% endif %}">
+                                            <i class="fas fa-angle-double-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-bell fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No webhook events found</h5>
+                            <p class="text-muted">Webhook events will appear here when GitHub sends notifications to your server.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

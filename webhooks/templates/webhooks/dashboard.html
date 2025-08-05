@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}Webhook Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Webhook Dashboard</h1>
+                <a href="{% url 'webhooks:configuration_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Webhook Configuration
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Events</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_events }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Successful</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ successful_events }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pending</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_events }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Failed</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ failed_events }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Events -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Webhook Events</h6>
+                    <a href="{% url 'webhooks:events' %}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if events %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Event Type</th>
+                                        <th>Repository</th>
+                                        <th>Branch</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for event in events %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge badge-{% if event.event_type == 'push' %}primary{% elif event.event_type == 'pull_request' %}info{% elif event.event_type == 'release' %}success{% else %}secondary{% endif %}">
+                                                {{ event.get_event_type_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ event.repository }}</td>
+                                        <td>{{ event.branch|default:"-" }}</td>
+                                        <td>
+                                            <span class="badge badge-{% if event.status == 'completed' %}success{% elif event.status == 'failed' %}danger{% elif event.status == 'processing' %}warning{% else %}secondary{% endif %}">
+                                                {{ event.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ event.created_at|date:"M d, Y H:i" }}</td>
+                                        <td>
+                                            <a href="{% url 'webhooks:event_detail' event.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No webhook events found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Webhook Configurations -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Webhook Configurations</h6>
+                    <a href="{% url 'webhooks:configurations' %}" class="btn btn-sm btn-primary">Manage</a>
+                </div>
+                <div class="card-body">
+                    {% if configurations %}
+                        {% for config in configurations %}
+                        <div class="border-bottom pb-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ config.repository_url|truncatechars:30 }}</h6>
+                                    <small class="text-muted">Branch: {{ config.deploy_branch }}</small>
+                                    <div class="mt-2">
+                                        <span class="badge badge-{% if config.is_active %}success{% else %}secondary{% endif %}">
+                                            {% if config.is_active %}Active{% else %}Inactive{% endif %}
+                                        </span>
+                                        {% if config.auto_deploy %}
+                                        <span class="badge badge-info">Auto Deploy</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="ml-2">
+                                    <a href="{% url 'webhooks:configuration_edit' config.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No webhook configurations found.</p>
+                        <a href="{% url 'webhooks:configuration_create' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Add Configuration
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block title %}Webhook Event Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Webhook Event Details</h1>
+                <a href="{% url 'webhooks:events' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Events
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Event Information -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Event Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Event Type:</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge badge-{% if event.event_type == 'push' %}primary{% elif event.event_type == 'pull_request' %}info{% elif event.event_type == 'release' %}success{% else %}secondary{% endif %}">
+                                        {{ event.get_event_type_display }}
+                                    </span>
+                                </dd>
+                                
+                                <dt class="col-sm-4">Repository:</dt>
+                                <dd class="col-sm-8">{{ event.repository }}</dd>
+                                
+                                <dt class="col-sm-4">Branch:</dt>
+                                <dd class="col-sm-8">{{ event.branch|default:"-" }}</dd>
+                                
+                                <dt class="col-sm-4">Commit SHA:</dt>
+                                <dd class="col-sm-8">
+                                    {% if event.commit_sha %}
+                                        <code>{{ event.commit_sha }}</code>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Status:</dt>
+                                <dd class="col-sm-8">
+                                    <span class="badge badge-{% if event.status == 'completed' %}success{% elif event.status == 'failed' %}danger{% elif event.status == 'processing' %}warning{% else %}secondary{% endif %}">
+                                        {{ event.get_status_display }}
+                                    </span>
+                                </dd>
+                                
+                                <dt class="col-sm-4">Created:</dt>
+                                <dd class="col-sm-8">{{ event.created_at|date:"M d, Y H:i:s" }}</dd>
+                                
+                                <dt class="col-sm-4">Updated:</dt>
+                                <dd class="col-sm-8">{{ event.updated_at|date:"M d, Y H:i:s" }}</dd>
+                                
+                                <dt class="col-sm-4">Processed:</dt>
+                                <dd class="col-sm-8">
+                                    {% if event.processed_at %}
+                                        {{ event.processed_at|date:"M d, Y H:i:s" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                    
+                    {% if event.commit_message %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Commit Message:</h6>
+                            <div class="alert alert-info">
+                                {{ event.commit_message }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if event.error_message %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Error Message:</h6>
+                            <div class="alert alert-danger">
+                                {{ event.error_message }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Payload Data -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Webhook Payload</h6>
+                </div>
+                <div class="card-body">
+                    <div class="bg-light p-3 rounded">
+                        <pre class="mb-0" style="max-height: 400px; overflow-y: auto;"><code>{{ event.payload|pprint }}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'webhooks:events' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-list"></i> View All Events
+                        </a>
+                        <a href="{% url 'webhooks:dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                        <a href="{% url 'webhooks:configurations' %}" class="btn btn-outline-info">
+                            <i class="fas fa-cog"></i> Configurations
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Statistics -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Event Statistics</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border-right">
+                                <div class="h4 mb-0 text-primary">{{ event.id }}</div>
+                                <div class="text-xs text-muted">Event ID</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="h4 mb-0 text-success">
+                                {% if event.status == 'completed' %}
+                                    <i class="fas fa-check-circle"></i>
+                                {% elif event.status == 'failed' %}
+                                    <i class="fas fa-times-circle"></i>
+                                {% elif event.status == 'processing' %}
+                                    <i class="fas fa-clock"></i>
+                                {% else %}
+                                    <i class="fas fa-question-circle"></i>
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-muted">Status</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

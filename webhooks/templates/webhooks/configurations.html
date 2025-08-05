@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Webhook Configurations{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Webhook Configurations</h1>
+                <a href="{% url 'webhooks:configuration_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Configuration
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Manage Webhook Configurations</h6>
+                </div>
+                <div class="card-body">
+                    {% if configurations %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Repository</th>
+                                        <th>Deploy Branch</th>
+                                        <th>Status</th>
+                                        <th>Auto Deploy</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for config in configurations %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ config.repository_url }}" target="_blank">
+                                                {{ config.repository_url }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info">{{ config.deploy_branch }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-{% if config.is_active %}success{% else %}secondary{% endif %}">
+                                                {% if config.is_active %}Active{% else %}Inactive{% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if config.auto_deploy %}
+                                                <span class="badge badge-success">Yes</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">No</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ config.created_at|date:"M d, Y" }}</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'webhooks:configuration_edit' config.id %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'webhooks:configuration_test' config.id %}" class="btn btn-sm btn-outline-info">
+                                                    <i class="fas fa-play"></i>
+                                                </a>
+                                                <a href="{% url 'webhooks:configuration_delete' config.id %}" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-link fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No webhook configurations found</h5>
+                            <p class="text-muted">Create your first webhook configuration to start receiving GitHub events.</p>
+                            <a href="{% url 'webhooks:configuration_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add Configuration
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

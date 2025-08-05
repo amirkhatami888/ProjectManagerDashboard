@@ -26,3 +26,4 @@ typing_extensions==4.14.1
 urllib3==1.26.15
 whitenoise==5.3.0
 xlsxwriter==3.2.5
+cryptography==41.0.7
