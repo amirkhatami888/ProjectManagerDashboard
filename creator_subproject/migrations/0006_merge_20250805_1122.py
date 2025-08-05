@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("creator_subproject", "0003_documentfile_file_mime_type"),
-        ("creator_subproject", "0005_auto_20250805_0925"),
+        ("creator_subproject", "0005_fix_executive_stage_migration"),
     ]
 
     operations = []
