@@ -1341,9 +1341,10 @@ def subproject_list(request, project_id):
     
     # Check permissions
     if not (request.user.is_admin or request.user.is_ceo or request.user.is_expert or 
-            request.user.is_chief_executive or project.created_by == request.user):
+            request.user.is_chief_executive or project.created_by == request.user or
+            (request.user.is_province_manager and project.province in request.user.get_assigned_provinces())):
         messages.error(request, 'شما اجازه دسترسی به این صفحه را ندارید.')
-        return redirect('creator_project:project_detail', project_id=project.id)
+        return redirect('creator_project:project_detail', pk=project.id)
     
     subprojects = project.subprojects.all().order_by('sub_project_number')
     
@@ -1363,7 +1364,9 @@ def subproject_delete(request, subproject_id):
     project = subproject.project
     
     # Check permissions
-    if not (request.user.is_admin or project.created_by == request.user):
+    if not (request.user.is_admin or 
+            project.created_by == request.user or
+            (request.user.is_province_manager and project.province in request.user.get_assigned_provinces())):
         messages.error(request, 'شما اجازه حذف این زیرپروژه را ندارید.')
         return redirect('creator_project:subproject_list', project_id=project.id)
     

@@ -963,7 +963,7 @@
                         <a href="{% url 'creator_project:subproject_list' project.id %}" class="btn btn-sm btn-outline-light">
                             <i class="bi bi-list"></i> مشاهده همه
                         </a>
-                    {% if project.has_available_subproject_slots and user.is_admin or project.created_by == user %}
+                    {% if project.has_available_subproject_slots and user.is_admin or project.created_by == user or user.is_province_manager and project.province in user.get_assigned_provinces %}
                     <a href="{% url 'creator_subproject:subproject_create' project.id %}" class="btn btn-sm btn-light">
                         <i class="bi bi-plus-circle"></i> افزودن
                     </a>
