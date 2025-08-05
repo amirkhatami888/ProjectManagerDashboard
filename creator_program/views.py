@@ -5,6 +5,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from .models import Program
 from .forms import ProgramForm
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ProgramListView(LoginRequiredMixin, ListView):
@@ -35,10 +38,18 @@ class ProgramCreateView(LoginRequiredMixin, CreateView):
         return kwargs
     
     def form_valid(self, form):
+        logger.info(f"DEBUG: Form is valid for user {self.request.user.username}")
+        logger.info(f"DEBUG: Form data: {self.request.POST}")
         form.instance.created_by = self.request.user
         response = super().form_valid(form)
         messages.success(self.request, "طرح با موفقیت ایجاد شد.")
         return response
+    
+    def form_invalid(self, form):
+        logger.error(f"DEBUG: Form is invalid for user {self.request.user.username}")
+        logger.error(f"DEBUG: Form errors: {form.errors}")
+        logger.error(f"DEBUG: Form data: {self.request.POST}")
+        return super().form_invalid(form)
     
     def get_success_url(self):
         return reverse_lazy('creator_program:program_detail', kwargs={'pk': self.object.pk})

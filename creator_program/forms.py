@@ -1,5 +1,8 @@
 from django import forms
 from .models import Program
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ProgramForm(forms.ModelForm):
@@ -57,3 +60,18 @@ class ProgramForm(forms.ModelForm):
                 # Make the field read-only if there's only one choice
                 if len(assigned_provinces) == 1:
                     self.fields['province'].widget.attrs['readonly'] = True
+    
+    def clean_province(self):
+        """Custom validation for province field with debugging"""
+        province = self.cleaned_data.get('province')
+        logger.info(f"DEBUG: Submitted province value: '{province}' (repr: {repr(province)})")
+        
+        # Check if the province is in the available choices
+        available_choices = [choice[0] for choice in self.fields['province'].choices]
+        logger.info(f"DEBUG: Available province choices: {available_choices}")
+        
+        if province and province not in available_choices:
+            logger.error(f"DEBUG: Province '{province}' not found in available choices: {available_choices}")
+            raise forms.ValidationError(f"استان '{province}' در لیست استان‌های مجاز نیست.")
+        
+        return province
