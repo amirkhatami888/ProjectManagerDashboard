@@ -440,6 +440,10 @@ def subproject_create(request, project_id):
         except ValueError as e:
             messages.error(request, f"خطا در مقادیر ورودی: {str(e)}")
         except Exception as e:
+            print(f"DEBUG: Exception occurred: {str(e)}")
+            print(f"DEBUG: Exception type: {type(e)}")
+            import traceback
+            print(f"DEBUG: Traceback: {traceback.format_exc()}")
             messages.error(request, f"خطا در ایجاد زیرپروژه: {str(e)}")
     
     # For GET requests, show the form

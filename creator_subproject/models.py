@@ -298,6 +298,7 @@ class SubProject(models.Model):
         )
     
     def save(self, *args, **kwargs):
+        print(f"DEBUG: SubProject.save() called for {'new' if self.pk is None else 'existing'} subproject")
         is_new = self.pk is None
         old_state = None
         
@@ -317,8 +318,10 @@ class SubProject(models.Model):
         # to ensure consistency between the field and property
         self.subproject_debt = self.subproject_debts
         
+        print(f"DEBUG: About to call super().save()")
         # Save the instance
         super().save(*args, **kwargs)
+        print(f"DEBUG: super().save() completed successfully")
         
         # Update parent project's physical progress and overall status
         if hasattr(self, 'project') and self.project:
