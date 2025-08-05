@@ -31,7 +31,7 @@ class Command(BaseCommand):
                     # Add the missing dependency migration
                     cursor.execute("""
                         INSERT INTO django_migrations (app, name, applied) 
-                        VALUES ('creator_subproject', '0005_fix_executive_stage_migration', datetime('now'))
+                        VALUES ('creator_subproject', '0005_fix_executive_stage_migration', NOW())
                     """)
                     
                     self.stdout.write(
