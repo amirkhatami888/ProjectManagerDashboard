@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('creator_subproject', '0003_documentfile_file_mime_type'),
+        ('creator_subproject', '0001_initial'),
     ]
 
     operations = [
