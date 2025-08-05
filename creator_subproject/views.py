@@ -59,6 +59,12 @@ def can_modify_project(user, project):
     if hasattr(user, 'is_chief_executive') and user.is_chief_executive:
         return True
     
+    # Province managers can modify projects from their assigned provinces
+    if user.is_province_manager:
+        user_provinces = user.get_assigned_provinces()
+        if user_provinces and project.province in user_provinces:
+            return True
+    
     # Default to no access
     return False
 
@@ -78,10 +84,16 @@ def subproject_list(request, project_id=None):
     elif request.user.is_expert or request.user.is_vice_chief_executive:
         # Since we removed is_submitted, filter by parent project's status
         subprojects = base_queryset.filter(project__is_submitted=True)
-    # If user is province manager, show only their subprojects
+    # If user is province manager, show subprojects from their assigned provinces
     elif request.user.is_province_manager:
-        # Show all subprojects created by this user, without filtering by province
-        subprojects = base_queryset.filter(created_by=request.user)
+        # Get user's assigned provinces
+        user_provinces = request.user.get_assigned_provinces()
+        if user_provinces:
+            # Show all subprojects from projects in user's assigned provinces
+            subprojects = base_queryset.filter(project__province__in=user_provinces)
+        else:
+            # Fallback to user's own subprojects if no province assignments
+            subprojects = base_queryset.filter(created_by=request.user)
     else:
         return HttpResponseForbidden("You don't have permission to view subprojects.")
 
@@ -100,7 +112,8 @@ def subproject_detail(request, pk):
     # Check permissions
     if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
             request.user.is_expert or request.user == subproject.created_by or 
-            request.user == subproject.project.created_by):
+            request.user == subproject.project.created_by or
+            (request.user.is_province_manager and subproject.project.province in request.user.get_assigned_provinces())):
         raise PermissionDenied
     
     # Get the latest financial documents
@@ -804,7 +817,9 @@ def subproject_financials(request, pk):
 
     # Check permissions
     if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
-            request.user.is_vice_chief_executive or request.user.is_expert or subproject.created_by == request.user):
+            request.user.is_vice_chief_executive or request.user.is_expert or 
+            subproject.created_by == request.user or
+            (request.user.is_province_manager and subproject.project.province in request.user.get_assigned_provinces())):
         return HttpResponseForbidden("You don't have permission to view financial details.")
 
     # Placeholder for actual implementation
@@ -823,7 +838,10 @@ def project_situations_list(request, project_id):
     # Check permissions
     if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
             request.user.is_vice_chief_executive or request.user.is_expert or 
-            (request.user.is_province_manager and project.created_by == request.user)):
+            (request.user.is_province_manager and (
+                project.created_by == request.user or 
+                project.province in request.user.get_assigned_provinces()
+            ))):
         return HttpResponseForbidden("You don't have permission to view this project's situations.")
 
     situations = ProjectSituation.objects.filter(project=project)
@@ -841,7 +859,9 @@ def project_situation_create(request, project_id):
 
     # Check permissions
     if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
-            request.user.is_vice_chief_executive or request.user.is_expert or project.created_by == request.user):
+            request.user.is_vice_chief_executive or request.user.is_expert or 
+            project.created_by == request.user or
+            (request.user.is_province_manager and project.province in request.user.get_assigned_provinces())):
         return HttpResponseForbidden("You don't have permission to add situations to this project.")
 
     if request.method == 'POST':
@@ -1289,7 +1309,9 @@ def delete_payment(request, payment_id):
         return redirect('dashboard')
     
     # Permission check
-    if not (request.user.is_admin or subproject.created_by == request.user):
+    if not (request.user.is_admin or 
+            subproject.created_by == request.user or
+            (request.user.is_province_manager and subproject.project.province in request.user.get_assigned_provinces())):
         return HttpResponseForbidden("شما اجازه حذف این پرداخت را ندارید.")
 
     if request.method == 'POST':
@@ -1532,7 +1554,8 @@ def upload_gallery_image(request, subproject_id):
     
     # Check if user has permission to edit this subproject
     if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
-            request.user.is_expert or subproject.created_by == request.user):
+            request.user.is_expert or subproject.created_by == request.user or
+            (request.user.is_province_manager and subproject.project.province in request.user.get_assigned_provinces())):
         messages.error(request, 'شما اجازه دسترسی به این بخش را ندارید.')
         return redirect('creator_subproject:subproject_detail', pk=subproject.id)
     
@@ -1571,7 +1594,8 @@ def delete_gallery_image(request, image_id):
     
     # Check if user has permission to delete this image
     if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
-            request.user.is_expert or subproject.created_by == request.user):
+            request.user.is_expert or subproject.created_by == request.user or
+            (request.user.is_province_manager and subproject.project.province in request.user.get_assigned_provinces())):
         messages.error(request, 'شما اجازه دسترسی به این بخش را ندارید.')
         return redirect('creator_subproject:subproject_gallery', pk=subproject.id)
     
@@ -1591,7 +1615,8 @@ def financial_documents(request, subproject_id):
     # Check permissions - admin users should have access
     if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
             request.user.is_expert or request.user == subproject.created_by or 
-            request.user == subproject.project.created_by):
+            request.user == subproject.project.created_by or
+            (request.user.is_province_manager and subproject.project.province in request.user.get_assigned_provinces())):
         raise PermissionDenied
     
     documents = FinancialDocument.objects.filter(
@@ -1730,7 +1755,9 @@ def delete_financial_document(request, document_id):
         return redirect('dashboard')
     
     # Permission check
-    if not (request.user.is_admin or subproject.created_by == request.user):
+    if not (request.user.is_admin or 
+            subproject.created_by == request.user or
+            (request.user.is_province_manager and subproject.project.province in request.user.get_assigned_provinces())):
         return HttpResponseForbidden("شما اجازه حذف این سند مالی را ندارید.")
 
     # Check if any other documents reference this one
@@ -1771,7 +1798,8 @@ def financial_ledger(request, subproject_id):
     # Check permissions - admin users should have access
     if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
             request.user.is_expert or request.user == subproject.created_by or 
-            request.user == subproject.project.created_by):
+            request.user == subproject.project.created_by or
+            (request.user.is_province_manager and subproject.project.province in request.user.get_assigned_provinces())):
         raise PermissionDenied
     
     # Get all financial documents for this subproject

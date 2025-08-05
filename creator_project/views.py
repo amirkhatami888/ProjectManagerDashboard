@@ -164,7 +164,9 @@ def project_create(request):
     try:
         program = Program.objects.get(id=program_id)
         # Check if the user has permission to create projects under this program
-        if program.created_by != request.user and not request.user.is_admin:
+        if not (request.user.is_admin or 
+                program.created_by == request.user or
+                (request.user.is_province_manager and program.province in request.user.get_assigned_provinces())):
             messages.error(request, "شما اجازه ایجاد پروژه برای این طرح را ندارید.")
             return redirect('creator_program:program_list')
     except Program.DoesNotExist:
