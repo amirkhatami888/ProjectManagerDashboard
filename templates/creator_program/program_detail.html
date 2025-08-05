@@ -63,6 +63,50 @@
                         </div>
                     </div>
 
+                    <!-- Creator and Access Information Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-info border-bottom pb-2 mb-3">
+                                <i class="bi bi-person-check me-2"></i>اطلاعات دسترسی
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-person text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">ایجاد کننده</small>
+                                    <p class="mb-0">{{ program.created_by.get_full_name|default:program.created_by.username }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-shield-check text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">دسترسی استان</small>
+                                    <p class="mb-0">
+                                        <span class="badge bg-info">کاربران استان {{ program.province }} می‌توانند این طرح را مشاهده و ویرایش کنند</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% if user == program.created_by %}
+                        <div class="col-12 mb-3">
+                            <div class="alert alert-success">
+                                <i class="bi bi-check-circle me-2"></i>
+                                <strong>شما ایجاد کننده این طرح هستید</strong> - می‌توانید تمام تغییرات را اعمال کنید.
+                            </div>
+                        </div>
+                        {% elif user.province == program.province or user.is_admin or user.is_ceo or user.is_chief_executive %}
+                        <div class="col-12 mb-3">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>شما دسترسی به این طرح دارید</strong> - می‌توانید این طرح را مشاهده و ویرایش کنید.
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
                     <!-- License Information Section -->
                     <div class="row mb-4">
                         <div class="col-12">
@@ -327,4 +371,5 @@
     </div>
     {% endif %}
 </div>
+{% endblock %}
 {% endblock %}
