@@ -1462,9 +1462,10 @@ def projects_map_view(request):
     print(f"DEBUG: Initial programs with coordinates: {programs.count()}")
     
     # Filter by province if the user has a province restriction
-    if request.user.province and not (request.user.is_admin or request.user.is_chief_executive or request.user.is_ceo or request.user.is_vice_chief_executive):
-        programs = programs.filter(province=request.user.province)
-        print(f"DEBUG: After province filter ({request.user.province}): {programs.count()}")
+    user_provinces = request.user.get_assigned_provinces()
+    if user_provinces and not (request.user.is_admin or request.user.is_chief_executive or request.user.is_ceo or request.user.is_vice_chief_executive):
+        programs = programs.filter(province__in=user_provinces)
+        print(f"DEBUG: After province filter ({user_provinces}): {programs.count()}")
     
     # Get request parameters for filtering
     province = request.GET.get('province', '')
@@ -1512,7 +1513,7 @@ def projects_map_view(request):
             program_data.append(program_info)
     
     print(f"DEBUG: Final program_data count: {len(program_data)}")
-    print(f"DEBUG: User: {request.user.username}, Role: {request.user.role}, Province: {request.user.province}")
+    print(f"DEBUG: User: {request.user.username}, Role: {request.user.role}, Assigned Provinces: {request.user.get_assigned_provinces()}")
     
     # Prepare JSON for frontend
     programs_json = json.dumps(program_data, ensure_ascii=False)

@@ -174,8 +174,9 @@ def project_create(request):
     
     # Safely log the province with explicit encoding
     try:
-        province = request.user.province or "N/A"
-        logger.debug(f"User province: {province}")
+        user_provinces = request.user.get_assigned_provinces()
+        province = user_provinces[0] if user_provinces else "N/A"
+        logger.debug(f"User assigned provinces: {user_provinces}")
         logger.debug(f"User province (repr): {repr(province)}")
     except Exception as e:
         logger.error(f"Error logging province: {e}", exc_info=True)
@@ -223,10 +224,12 @@ def project_create(request):
                 project.allocation_credit_treasury_travel = 0
                 project.debt = 0
             
-                # Ensure province is set to the user's province if they are a province manager
-                if request.user.is_province_manager and request.user.province:
-                    project.province = request.user.province
-                    print(f"DEBUG: Setting project province to {project.province}")
+                # Ensure province is set to the user's assigned province if they are a province manager
+                if request.user.is_province_manager:
+                    user_provinces = request.user.get_assigned_provinces()
+                    if user_provinces:
+                        project.province = user_provinces[0]  # Use the first assigned province
+                        print(f"DEBUG: Setting project province to {project.province}")
                 
                 # Convert Persian date manually and set it directly to the instance
                 if persian_date and persian_date.strip():
@@ -299,9 +302,10 @@ def project_update(request, pk):
         pass
     elif request.user.is_province_manager and project.created_by == request.user:
         # Province managers can only update their own projects
-        # Ensure the project belongs to the manager's province
-        if request.user.province and project.province != request.user.province:
-            return HttpResponseForbidden("You can only update projects in your own province.")
+        # Ensure the project belongs to the manager's assigned provinces
+        user_provinces = request.user.get_assigned_provinces()
+        if user_provinces and project.province not in user_provinces:
+            return HttpResponseForbidden("You can only update projects in your assigned provinces.")
     else:
         return HttpResponseForbidden("You don't have permission to update this project.")
     
@@ -325,8 +329,10 @@ def project_update(request, pk):
                 project._update_user = request.user
                 
                 # Ensure province managers can't change the province
-                if request.user.is_province_manager and request.user.province:
-                    form.instance.province = request.user.province
+                if request.user.is_province_manager:
+                    user_provinces = request.user.get_assigned_provinces()
+                    if user_provinces:
+                        form.instance.province = user_provinces[0]  # Use the first assigned province
                     
                     # Reset approval status when province manager updates project
                     form.instance.is_submitted = False
@@ -544,9 +550,10 @@ def project_add_allocation(request, pk):
         pass
     elif request.user.is_province_manager and project.created_by == request.user:
         # Province managers can only add allocation to their own projects
-        # Ensure the project belongs to the manager's province
-        if request.user.province and project.province != request.user.province:
-            return HttpResponseForbidden("You can only add allocation to projects in your own province.")
+        # Ensure the project belongs to the manager's assigned provinces
+        user_provinces = request.user.get_assigned_provinces()
+        if user_provinces and project.province not in user_provinces:
+            return HttpResponseForbidden("You can only add allocation to projects in your assigned provinces.")
     else:
         return HttpResponseForbidden("You don't have permission to add allocation to this project.")
     

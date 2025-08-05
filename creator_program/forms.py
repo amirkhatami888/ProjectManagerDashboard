@@ -45,11 +45,15 @@ class ProgramForm(forms.ModelForm):
         # Add help text for program_opening_date
         self.fields['program_opening_date'].help_text = 'این فیلد به صورت خودکار بر اساس تاریخ پایان پروژه‌های این طرح محاسبه می‌شود'
         
-        # If user is a province manager, restrict province choices to their province
-        if user and hasattr(user, 'is_province_manager') and user.is_province_manager and user.province:
-            # Create a list with only the user's province
-            province_choices = [(user.province, user.province)]
-            self.fields['province'].choices = province_choices
-            self.fields['province'].initial = user.province
-            # Make the field read-only since there's only one choice
-            self.fields['province'].widget.attrs['readonly'] = True
+        # If user is a province manager, restrict province choices to their assigned provinces
+        if user and hasattr(user, 'is_province_manager') and user.is_province_manager:
+            assigned_provinces = user.get_assigned_provinces()
+            if assigned_provinces:
+                # Create choices from the user's assigned provinces
+                province_choices = [(province, province) for province in assigned_provinces]
+                self.fields['province'].choices = province_choices
+                # Set initial value to the first assigned province
+                self.fields['province'].initial = assigned_provinces[0]
+                # Make the field read-only if there's only one choice
+                if len(assigned_provinces) == 1:
+                    self.fields['province'].widget.attrs['readonly'] = True
