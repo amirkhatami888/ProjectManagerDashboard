@@ -3,6 +3,7 @@ from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from .models import Program
 from .forms import ProgramForm
 import logging
@@ -16,14 +17,47 @@ class ProgramListView(LoginRequiredMixin, ListView):
     context_object_name = 'programs'
     
     def get_queryset(self):
-        # Filter programs based on user role if needed
-        return Program.objects.all().order_by('-created_at')
+        user = self.request.user
+        
+        # If user is admin, CEO, or chief executive, show all programs
+        if user.is_admin or user.is_ceo or user.is_chief_executive:
+            return Program.objects.all().order_by('-created_at')
+        
+        # Get user's assigned provinces
+        user_provinces = user.get_assigned_provinces()
+        
+        # Filter programs by user's assigned provinces
+        if user_provinces:
+            return Program.objects.filter(province__in=user_provinces).order_by('-created_at')
+        
+        # If user has no province assignments, show only their own programs
+        return Program.objects.filter(created_by=user).order_by('-created_at')
 
 
 class ProgramDetailView(LoginRequiredMixin, DetailView):
     model = Program
     template_name = 'creator_program/program_detail.html'
     context_object_name = 'program'
+    
+    def get_object(self, queryset=None):
+        program = super().get_object(queryset)
+        user = self.request.user
+        
+        # Check if user has access to this program
+        if not self.user_has_access(program, user):
+            raise PermissionDenied("شما دسترسی به این طرح ندارید.")
+        
+        return program
+    
+    def user_has_access(self, program, user):
+        """Check if user has access to the program based on province and role"""
+        # Admin, CEO, and chief executive have access to all programs
+        if user.is_admin or user.is_ceo or user.is_chief_executive:
+            return True
+        
+        # Check if user has access to the program's province
+        user_provinces = user.get_assigned_provinces()
+        return program.province in user_provinces
 
 
 class ProgramCreateView(LoginRequiredMixin, CreateView):
@@ -60,6 +94,26 @@ class ProgramUpdateView(LoginRequiredMixin, UpdateView):
     form_class = ProgramForm
     template_name = 'creator_program/program_form.html'
     context_object_name = 'program'
+    
+    def get_object(self, queryset=None):
+        program = super().get_object(queryset)
+        user = self.request.user
+        
+        # Check if user has access to modify this program
+        if not self.user_can_modify(program, user):
+            raise PermissionDenied("شما مجوز ویرایش این طرح را ندارید.")
+        
+        return program
+    
+    def user_can_modify(self, program, user):
+        """Check if user can modify the program based on province and role"""
+        # Admin, CEO, and chief executive can modify all programs
+        if user.is_admin or user.is_ceo or user.is_chief_executive:
+            return True
+        
+        # Check if user has access to the program's province
+        user_provinces = user.get_assigned_provinces()
+        return program.province in user_provinces
     
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
