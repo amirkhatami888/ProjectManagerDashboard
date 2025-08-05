@@ -352,6 +352,51 @@ def subproject_create(request, project_id):
                     subproject.adjustment_coefficient = adjustment_coefficient_decimal
                 else:
                     subproject.adjustment_coefficient = 0
+                
+                # Save the subproject with contract information
+                subproject.save()
+                
+                # Handle relationships for contract subprojects
+                related_id = request.POST.get('related_subproject')
+                relationship_type = request.POST.get('relationship_type')
+                
+                # Only process relationship if both related_id and relationship_type are provided
+                if related_id and related_id.strip() and related_id != 'floating' and relationship_type:
+                    try:
+                        # Convert to integer and look up the related subproject
+                        related_id_int = int(related_id)
+                        related_subproject = SubProject.objects.get(pk=related_id_int)
+                        
+                        # Update the subproject with relationship info
+                        subproject.related_subproject = related_subproject
+                        subproject.relationship_type = relationship_type
+                        
+                        # Set relationship delay if provided
+                        if request.POST.get('relationship_delay'):
+                            subproject.relationship_delay = int(request.POST.get('relationship_delay'))
+                        
+                        # Save again to update relationship fields
+                        subproject.save()
+                        
+                        # Now calculate dates based on the relationship
+                        calculate_dates_based_on_relationship(subproject, request.POST, related_subproject)
+                        # Final save with updated dates
+                        subproject.save()
+                        
+                    except ValueError:
+                        messages.warning(request, "خطا: شناسه زیرپروژه مرتبط نامعتبر است.")
+                    except SubProject.DoesNotExist:
+                        messages.warning(request, "خطا: زیرپروژه مرتبط یافت نشد.")
+                    except Exception as e:
+                        messages.warning(request, f"خطا در ارتباط با زیرپروژه دیگر: {str(e)}")
+                else:
+                    # No relationship or floating relationship
+                    calculate_dates_based_on_relationship(subproject, request.POST)
+                    subproject.save()
+                
+                messages.success(request, "زیرپروژه با موفقیت ایجاد شد.")
+                return redirect('creator_project:project_detail', pk=project.id)
+                
             else:
                 # For subprojects without contract
                 imagenary_duration = request.POST.get('imagenary_duration')
@@ -387,55 +432,49 @@ def subproject_create(request, project_id):
                 cost_calculation_method = request.POST.get('cost_calculation_method', '')
                 subproject.cost_calculation_method = cost_calculation_method
                 
-                # Step 3: Save again after setting contract/non-contract fields
+                # Save the subproject with non-contract information
                 subproject.save()
                 
-                # Step 4: Now handle relationships separately
-                if not has_contract:
-                    related_id = request.POST.get('related_subproject')
-                    relationship_type = request.POST.get('relationship_type')
-                    
-                    # Only process relationship if both related_id and relationship_type are provided
-                    if related_id and related_id.strip() and related_id != 'floating' and relationship_type:
-                        try:
-                            # Convert to integer and look up the related subproject
-                            related_id_int = int(related_id)
-                            related_subproject = SubProject.objects.get(pk=related_id_int)
-                            
-                            # Update the subproject with relationship info
-                            subproject.related_subproject = related_subproject
-                            subproject.relationship_type = relationship_type
-                            
-                            # Set relationship delay if provided
-                            if request.POST.get('relationship_delay'):
-                                subproject.relationship_delay = int(request.POST.get('relationship_delay'))
-                            
-                            # Save again to update relationship fields
-                            subproject.save()
-                            
-                            # Now calculate dates based on the relationship
-                            calculate_dates_based_on_relationship(subproject, request.POST, related_subproject)
-                            # Final save with updated dates
-                            subproject.save()
-                            
-                        except ValueError:
-                            messages.warning(request, "خطا: شناسه زیرپروژه مرتبط نامعتبر است.")
-                        except SubProject.DoesNotExist:
-                            messages.warning(request, "خطا: زیرپروژه مرتبط یافت نشد.")
-                        except Exception as e:
-                            messages.warning(request, f"خطا در ارتباط با زیرپروژه دیگر: {str(e)}")
-                    else:
-                        # No relationship or floating relationship
-                        calculate_dates_based_on_relationship(subproject, request.POST)
-                        subproject.save()
+                # Handle relationships for non-contract subprojects
+                related_id = request.POST.get('related_subproject')
+                relationship_type = request.POST.get('relationship_type')
                 
-                # Add this at the end of the contract processing block
+                # Only process relationship if both related_id and relationship_type are provided
+                if related_id and related_id.strip() and related_id != 'floating' and relationship_type:
+                    try:
+                        # Convert to integer and look up the related subproject
+                        related_id_int = int(related_id)
+                        related_subproject = SubProject.objects.get(pk=related_id_int)
+                        
+                        # Update the subproject with relationship info
+                        subproject.related_subproject = related_subproject
+                        subproject.relationship_type = relationship_type
+                        
+                        # Set relationship delay if provided
+                        if request.POST.get('relationship_delay'):
+                            subproject.relationship_delay = int(request.POST.get('relationship_delay'))
+                        
+                        # Save again to update relationship fields
+                        subproject.save()
+                        
+                        # Now calculate dates based on the relationship
+                        calculate_dates_based_on_relationship(subproject, request.POST, related_subproject)
+                        # Final save with updated dates
+                        subproject.save()
+                        
+                    except ValueError:
+                        messages.warning(request, "خطا: شناسه زیرپروژه مرتبط نامعتبر است.")
+                    except SubProject.DoesNotExist:
+                        messages.warning(request, "خطا: زیرپروژه مرتبط یافت نشد.")
+                    except Exception as e:
+                        messages.warning(request, f"خطا در ارتباط با زیرپروژه دیگر: {str(e)}")
+                else:
+                    # No relationship or floating relationship
+                    calculate_dates_based_on_relationship(subproject, request.POST)
+                    subproject.save()
+                
                 messages.success(request, "زیرپروژه با موفقیت ایجاد شد.")
                 return redirect('creator_project:project_detail', pk=project.id)
-            
-            # For non-contract subprojects
-            messages.success(request, "زیرپروژه با موفقیت ایجاد شد.")
-            return redirect('creator_project:project_detail', pk=project.id)
             
         except ValueError as e:
             messages.error(request, f"خطا در مقادیر ورودی: {str(e)}")
