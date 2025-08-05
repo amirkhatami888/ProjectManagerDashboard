@@ -121,13 +121,13 @@
         <h1>{{ project.name }}</h1>
         
         <div class="d-flex gap-2">
-            {% if user.is_admin or project.created_by == user %}
+            {% if user.is_admin or project.created_by == user or user.is_province_manager and project.province in user.get_assigned_provinces %}
             <a href="{% url 'creator_project:project_update' project.id %}" class="btn btn-primary">
                 <i class="bi bi-pencil-square"></i> بروزرسانی
             </a>
             {% endif %}
             
-            {% if project.created_by == user and not project.is_submitted %}
+            {% if project.created_by == user and not project.is_submitted or user.is_province_manager and project.province in user.get_assigned_provinces and not project.is_submitted %}
             <a href="{% url 'creator_project:project_submit' project.id %}" class="btn btn-success">
                 <i class="bi bi-send-check"></i> ارسال برای تایید
             </a>
@@ -144,7 +144,7 @@
             {% endif %}
             {% endif %}
             
-            {% if user.is_province_manager and project.created_by == user and project.is_approved %}
+            {% if user.is_province_manager and project.province in user.get_assigned_provinces and project.is_approved %}
             <a href="{% url 'creator_project:funding_request_create' %}?project={{ project.id }}" class="btn btn-info">
                 <i class="bi bi-currency-dollar"></i> درخواست اعتبار
             </a>
@@ -800,7 +800,7 @@
             <div class="card mb-4">
                 <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">درخواست‌های اعتبار</h5>
-                    {% if user.is_province_manager and project.created_by == user %}
+                    {% if user.is_province_manager and project.province in user.get_assigned_provinces %}
                     <a href="{% url 'creator_project:funding_request_create' %}?project={{ project.id }}" class="btn btn-sm btn-light">
                         <i class="bi bi-plus-circle"></i> درخواست جدید
                     </a>
@@ -856,7 +856,7 @@
                 <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">تخصیص مالی</h5>
                     <div class="d-flex gap-2">
-                    {% if user.is_admin or user.is_expert or project.created_by == user %}
+                    {% if user.is_admin or user.is_expert or project.created_by == user or user.is_province_manager and project.province in user.get_assigned_provinces %}
                     <a href="{% url 'creator_project:project_add_allocation' project.id %}" class="btn btn-sm btn-light">
                         <i class="bi bi-plus-circle"></i> افزودن
                     </a>
@@ -1013,7 +1013,7 @@
         <!-- Removed duplicate funding request button -->
     </div>
     <div>
-        {% if user.is_admin or project.created_by == user %}
+        {% if user.is_admin or project.created_by == user or user.is_province_manager and project.province in user.get_assigned_provinces %}
         <a href="{% url 'creator_project:project_update' project.id %}" class="btn btn-primary">
             <i class="bi bi-pencil"></i> بروز رسانی
         </a>
