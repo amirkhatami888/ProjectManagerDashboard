@@ -34,7 +34,10 @@ def project_detail(request, pk):
     # Check permissions
     if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
             request.user.is_vice_chief_executive or request.user.is_expert or 
-            (request.user.is_province_manager and project.created_by == request.user)):
+            (request.user.is_province_manager and (
+                project.created_by == request.user or 
+                project.province in request.user.get_assigned_provinces()
+            ))):
         return HttpResponseForbidden("You don't have permission to view this project.")
     
     subprojects = project.get_all_subprojects()
@@ -137,11 +140,17 @@ def project_update(request, pk):
     if request.user.is_admin:
         # Admins can update any project
         pass
-    elif request.user.is_province_manager and project.created_by == request.user:
-        # Province managers can only update their own projects
-        # Ensure the project belongs to the manager's province
-        if request.user.province and project.province != request.user.province:
-            return HttpResponseForbidden("You can only update projects in your own province.")
+    elif request.user.is_province_manager:
+        # Province managers can update projects from their assigned provinces
+        user_provinces = request.user.get_assigned_provinces()
+        if user_provinces and project.province in user_provinces:
+            # User can update projects from their assigned provinces
+            pass
+        elif project.created_by == request.user:
+            # User can update their own projects (fallback)
+            pass
+        else:
+            return HttpResponseForbidden("You don't have permission to update this project.")
     else:
         return HttpResponseForbidden("You don't have permission to update this project.")
     
@@ -183,8 +192,10 @@ def project_update(request, pk):
 def project_delete(request, pk):
     project = get_object_or_404(Project, pk=pk)
     
-    # Only admins or the project creator can delete projects
-    if not (request.user.is_admin or project.created_by == request.user):
+    # Only admins, the project creator, or province managers from the same province can delete projects
+    if not (request.user.is_admin or 
+            project.created_by == request.user or
+            (request.user.is_province_manager and project.province in request.user.get_assigned_provinces())):
         return HttpResponseForbidden("You don't have permission to delete this project.")
     
     # Placeholder for actual implementation
@@ -265,7 +276,11 @@ def project_financials(request, pk):
     
     # Check permissions
     if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
-            request.user.is_vice_chief_executive or project.created_by == request.user):
+            request.user.is_vice_chief_executive or 
+            (request.user.is_province_manager and (
+                project.created_by == request.user or 
+                project.province in request.user.get_assigned_provinces()
+            ))):
         return HttpResponseForbidden("You don't have permission to view financial details.")
     
     # Placeholder for actual implementation
@@ -275,8 +290,10 @@ def project_financials(request, pk):
 def project_add_allocation(request, pk):
     project = get_object_or_404(Project, pk=pk)
     
-    # Only admins, experts or the project creator can add allocations
-    if not (request.user.is_admin or request.user.is_expert or project.created_by == request.user):
+    # Only admins, experts, the project creator, or province managers from the same province can add allocations
+    if not (request.user.is_admin or request.user.is_expert or 
+            project.created_by == request.user or
+            (request.user.is_province_manager and project.province in request.user.get_assigned_provinces())):
         return HttpResponseForbidden("You don't have permission to add allocations to this project.")
     
     if request.method == 'POST':
