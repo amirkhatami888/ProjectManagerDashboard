@@ -48,18 +48,25 @@ class ProgramForm(forms.ModelForm):
         # Add help text for program_opening_date
         self.fields['program_opening_date'].help_text = 'این فیلد به صورت خودکار بر اساس تاریخ پایان پروژه‌های این طرح محاسبه می‌شود'
         
-        # If user is a province manager, restrict province choices to their assigned provinces
-        if user and hasattr(user, 'is_province_manager') and user.is_province_manager:
+        # Handle province restrictions based on user role and province assignments
+        if user:
+            # Get user's assigned provinces
             assigned_provinces = user.get_assigned_provinces()
-            if assigned_provinces:
+            
+            # If user has specific province assignments, restrict choices
+            if assigned_provinces and not (user.is_admin or user.is_ceo or user.is_chief_executive):
                 # Create choices from the user's assigned provinces
                 province_choices = [(province, province) for province in assigned_provinces]
                 self.fields['province'].choices = province_choices
-                # Set initial value to the first assigned province
-                self.fields['province'].initial = assigned_provinces[0]
+                
+                # Set initial value to the first assigned province if creating new program
+                if not self.instance.pk and assigned_provinces:
+                    self.fields['province'].initial = assigned_provinces[0]
+                
                 # Make the field read-only if there's only one choice
                 if len(assigned_provinces) == 1:
                     self.fields['province'].widget.attrs['readonly'] = True
+                    self.fields['province'].help_text = f'شما فقط به استان {assigned_provinces[0]} دسترسی دارید'
     
     def clean_province(self):
         """Custom validation for province field with debugging"""
@@ -75,3 +82,12 @@ class ProgramForm(forms.ModelForm):
             raise forms.ValidationError(f"استان '{province}' در لیست استان‌های مجاز نیست.")
         
         return province
+    
+    def clean(self):
+        """Additional validation for the entire form"""
+        cleaned_data = super().clean()
+        
+        # Add any additional validation logic here if needed
+        # For example, you could validate that longitude and latitude are within valid ranges
+        
+        return cleaned_data
