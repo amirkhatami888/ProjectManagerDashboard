@@ -40,23 +40,20 @@ def fix_migration_issue():
             # Insert the migration record without running the operations
             cursor.execute("""
                 INSERT INTO django_migrations (app, name, applied) 
-                VALUES ('creator_subproject', '0003_documentfile_file_mime_type', NOW())
+                VALUES ('creator_subproject', '0003_documentfile_file_mime_type', datetime('now'))
             """)
             
             print("✓ Migration 0003_documentfile_file_mime_type marked as applied.")
         else:
             print("✓ Migration 0003_documentfile_file_mime_type is already applied.")
     
-    # Check if the file_mime_type column actually exists
+    # Check if the file_mime_type column actually exists (SQLite syntax)
     with connection.cursor() as cursor:
-        cursor.execute("""
-            SELECT COUNT(*) FROM information_schema.columns 
-            WHERE table_name = 'creator_subproject_documentfile' 
-            AND column_name = 'file_mime_type'
-        """)
-        count = cursor.fetchone()[0]
+        cursor.execute("PRAGMA table_info(creator_subproject_documentfile)")
+        columns = cursor.fetchall()
+        column_names = [column[1] for column in columns]
         
-        if count > 0:
+        if 'file_mime_type' in column_names:
             print("✓ file_mime_type column exists in the database.")
         else:
             print("⚠ file_mime_type column does not exist in the database.")
