@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load jalali_tags %}
+{% load humanize %}
+
+{% block title %}لیست سند مالی زیرپروژه{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between mb-4">
+        <h2>لیست سند مالی زیرپروژه: {{ subproject.name|default:subproject.sub_project_type }}</h2>
+        <div>
+            <a href="{% url 'creator_subproject:add_financial_document' subproject.id %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i>
+                افزودن سند مالی جدید
+            </a>
+            <a href="{% url 'creator_subproject:subproject_detail' subproject.id %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i>
+                بازگشت به جزئیات زیرپروژه
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-cash-coin me-2"></i>
+                لیست سند مالی
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if documents %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="text-center">ردیف</th>
+                                <th scope="col" class="text-center">نوع سند مالی</th>
+                                <th scope="col" class="text-center">ارتباط با سند مالی</th>
+                                <th scope="col" class="text-center">شماره سند مالی</th>
+                                <th scope="col" class="text-center">مبلغ ناخالص پیمان کار (ریال)</th>
+                                <th scope="col" class="text-center">تاریخ ارسال سند مالی پیمان کار</th>
+                                <th scope="col" class="text-center">مبلغ ناخالص تایید شده (ریال)</th>
+                                <th scope="col" class="text-center">تاریخ تایید سند مالی</th>
+                                <th scope="col" class="text-center">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for document in documents %}
+                            <tr>
+                                <td class="text-center">{{ forloop.counter }}</td>
+                                <td class="text-center">{{ document.get_document_type_display }}</td>
+                                <td class="text-center">
+                                    {% if document.related_document %}
+                                        {{ document.related_document.get_document_type_display }} شماره {{ document.related_document.document_number }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">{{ document.document_number }}</td>
+                                <td class="text-center">{{ document.contractor_amount|intcomma }}</td>
+                                <td class="text-center">{{ document.contractor_submit_date|to_jalali:'%Y/%m/%d' }}</td>
+                                <td class="text-center">{{ document.approved_amount|intcomma }}</td>
+                                <td class="text-center">{{ document.approval_date|to_jalali:'%Y/%m/%d' }}</td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'creator_subproject:edit_financial_document' document.id %}" class="btn btn-sm btn-warning">
+                                            <i class="bi bi-pencil-square"></i>
+                                            ویرایش
+                                        </a>
+                                        <a href="{% url 'creator_subproject:delete_financial_document' document.id %}" class="btn btn-sm btn-danger ms-1" 
+                                           onclick="return confirm('آیا از حذف این سند مالی اطمینان دارید؟')">
+                                            <i class="bi bi-trash"></i>
+                                            حذف
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle me-2"></i>
+                    هیچ سند مالی برای این زیرپروژه ثبت نشده است.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

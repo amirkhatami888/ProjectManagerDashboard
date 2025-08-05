@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load jalali_tags %}
+
+{% block title %}جزئیات طرح {{ program.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="bi bi-info-circle me-2"></i>اطلاعات طرح</h4>
+                    <div>
+                        <a href="{% url 'creator_program:program_update' program.pk %}" class="btn btn-light btn-sm">
+                            <i class="bi bi-pencil"></i> ویرایش
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Basic Information Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2 mb-3">
+                                <i class="bi bi-card-text me-2"></i>اطلاعات پایه
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-hash text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">کد طرح</small>
+                                    <p class="mb-0 fw-bold text-dark">{{ program.program_id }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-file-text text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">عنوان طرح</small>
+                                    <p class="mb-0 fw-bold text-dark">{{ program.title }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-tag text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">نوع طرح</small>
+                                    <p class="mb-0">{{ program.get_program_type_display }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar-event text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">تاریخ ایجاد</small>
+                                    <p class="mb-0">{{ program.created_at|to_jalali }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- License Information Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-success border-bottom pb-2 mb-3">
+                                <i class="bi bi-file-earmark-check me-2"></i>اطلاعات مجوز
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-check-circle text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">وضعیت مجوز دفترچه توجیهی</small>
+                                    <p class="mb-0">
+                                        <span class="badge {% if program.license_state == 'دارد' %}bg-success{% elif program.license_state == 'ندارد' %}bg-danger{% elif program.license_state == 'دردست اقدام' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ program.get_license_state_display }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-upc text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">کد مجوز دفترچه توجیهی</small>
+                                    <p class="mb-0">{{ program.license_code|default:"--" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location Information Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-info border-bottom pb-2 mb-3">
+                                <i class="bi bi-geo-alt me-2"></i>اطلاعات موقعیت
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-map text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">استان</small>
+                                    <p class="mb-0">{{ program.province }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% if program.city %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-building text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">شهر</small>
+                                    <p class="mb-0">{{ program.city }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if program.address %}
+                        <div class="col-12 mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-geo-alt text-muted me-2 mt-1"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">آدرس</small>
+                                    <p class="mb-0">{{ program.address|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if program.longitude or program.latitude %}
+                        <div class="col-12 mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-geo-alt-fill text-muted me-2 mt-1"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">موقعیت جغرافیایی (GIS)</small>
+                                    <p class="mb-0" dir="ltr">
+                                        {% if program.longitude and program.latitude %}
+                                            <span class="badge bg-info">طول جغرافیایی: {{ program.longitude }}</span>
+                                            <span class="badge bg-info ms-2">عرض جغرافیایی: {{ program.latitude }}</span>
+                                        {% elif program.longitude %}
+                                            <span class="badge bg-info">طول جغرافیایی: {{ program.longitude }}</span>
+                                        {% elif program.latitude %}
+                                            <span class="badge bg-info">عرض جغرافیایی: {{ program.latitude }}</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Timeline Information Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-warning border-bottom pb-2 mb-3">
+                                <i class="bi bi-clock-history me-2"></i>اطلاعات زمانی
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar-plus text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">تاریخ افتتاح طرح</small>
+                                    <p class="mb-0">
+                                        {% if program.program_opening_date %}
+                                            <span class="badge bg-success">{{ program.program_opening_date|to_jalali }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">تعیین نشده</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description Section -->
+                    {% if program.description %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-secondary border-bottom pb-2 mb-3">
+                                <i class="bi bi-chat-text me-2"></i>توضیحات
+                            </h6>
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-chat-quote text-muted me-2 mt-1"></i>
+                                <div>
+                                    <p class="mb-0">{{ program.description|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="bi bi-graph-up me-2"></i>آمار</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-folder text-primary me-2"></i>
+                            <span class="fw-bold">تعداد پروژه‌ها</span>
+                        </div>
+                        <h3 class="text-primary mb-0">{{ program.get_project_count }}</h3>
+                    </div>
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-diagram-3 text-success me-2"></i>
+                            <span class="fw-bold">تعداد کل زیرپروژه‌ها</span>
+                        </div>
+                        <h3 class="text-success mb-0">{{ program.get_total_subproject_count }}</h3>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-speedometer2 text-warning me-2"></i>
+                            <span class="fw-bold">پیشرفت فیزیکی کل</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ program.calculate_overall_physical_progress }}%;" aria-valuenow="{{ program.calculate_overall_physical_progress }}" aria-valuemin="0" aria-valuemax="100">{{ program.calculate_overall_physical_progress }}%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>پروژه‌های طرح</h1>
+        <div>
+            <a href="{% url 'creator_project:project_create' %}?program={{ program.id }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> ایجاد پروژه جدید
+            </a>
+        </div>
+    </div>
+    
+    {% if program.projects.all %}
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>شناسه</th>
+                            <th>نام</th>
+                            <th>نوع</th>
+                            <th>استان</th>
+                            <th>شهر</th>
+                            <th>متراژ زیر بنا</th>
+                            <th>طبقه</th>
+                            <th>تاریخ ایجاد</th>
+                            <th>پیشرفت</th>
+                            <th>وضعیت</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for project in program.projects.all %}
+                        <tr>
+                            <td>{{ project.project_id }}</td>
+                            <td>{{ project.name }}</td>
+                            <td>{{ project.get_project_type_display }}</td>
+                            <td>{{ project.province }}</td>
+                            <td>{{ project.city }}</td>
+                            <td>{% if project.building_area %}{{ project.building_area }}{% else %}-{% endif %}</td>
+                            <td>{% if project.floor %}{{ project.floor }}{% else %}-{% endif %}</td>
+                            <td>{{ project.created_at|to_jalali }}</td>
+                            <td style="width: 150px;">
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ project.physical_progress }}%;" aria-valuenow="{{ project.physical_progress }}" aria-valuemin="0" aria-valuemax="100">{{ project.physical_progress }}%</div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if project.is_approved %}
+                                    <span class="badge bg-success">تایید شده</span>
+                                {% elif project.is_submitted %}
+                                    <span class="badge bg-warning">در انتظار تایید</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">پیش‌نویس</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'creator_project:project_detail' project.id %}" class="btn btn-sm btn-primary">
+                                    مشاهده
+                                </a>
+                                
+                                {% if user.is_admin or project.created_by == user %}
+                                <a href="{% url 'creator_project:project_update' project.id %}" class="btn btn-sm btn-secondary">
+                                    بروزرسانی
+                                </a>
+                                {% endif %}
+                                
+                                {% if user.is_province_manager and project.created_by == user and not project.is_submitted %}
+                                <a href="{% url 'creator_project:project_submit' project.id %}" class="btn btn-sm btn-success">
+                                    ارسال
+                                </a>
+                                {% endif %}
+                                
+                                {% if user.is_admin or user.is_expert or user.is_vice_chief_executive %}
+                                {% if project.is_submitted and not project.is_approved %}
+                                <a href="{% url 'creator_project:project_approve' project.id %}" class="btn btn-sm btn-success">
+                                    تایید
+                                </a>
+                                <a href="{% url 'creator_project:project_reject' project.id %}" class="btn btn-sm btn-danger">
+                                    رد
+                                </a>
+                                {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        هیچ پروژه‌ای برای این طرح یافت نشد.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

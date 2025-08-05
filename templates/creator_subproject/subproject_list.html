@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}لیست زیرپروژه‌ها{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>لیست زیرپروژه‌ها</h1>
+    </div>
+    
+    {% if subprojects %}
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>طرح</th>
+                            <th>پروژه</th>
+                            <th>نوع</th>
+                            <th>شماره</th>
+                            <th>وضعیت</th>
+                            <th>پیشرفت</th>
+                            <th>حالت</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subproject in subprojects %}
+                        <tr>
+                            <td>
+                                {% if subproject.project.program %}
+                                    <a href="{% url 'creator_program:program_detail' subproject.project.program.id %}">{{ subproject.project.program.title }}</a>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'creator_project:project_detail' subproject.project.id %}">{{ subproject.project.name }}</a>
+                                <small class="text-muted">({{ subproject.project.project_id }})</small>
+                            </td>
+                            <td>{{ subproject.sub_project_type }}</td>
+                            <td>{{ subproject.sub_project_number }}</td>
+                            <td>{{ subproject.state }}</td>
+                            <td style="width: 150px;">
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ subproject.physical_progress }}%;" aria-valuenow="{{ subproject.physical_progress }}" aria-valuemin="0" aria-valuemax="100">{{ subproject.physical_progress }}%</div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if subproject.project.is_approved %}
+                                    <span class="badge bg-success">تایید شده</span>
+                                {% elif subproject.project.is_submitted %}
+                                    <span class="badge bg-warning">در انتظار تایید</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">پیش‌نویس</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'creator_subproject:subproject_detail' subproject.id %}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-eye"></i> مشاهده
+                                </a>
+                                
+                                {% if user.is_admin or subproject.created_by == user %}
+                                <a href="{% url 'creator_subproject:subproject_update' subproject.id %}" class="btn btn-sm btn-secondary">
+                                    <i class="bi bi-pencil"></i> ویرایش
+                                </a>
+                                {% endif %}
+                                
+                                {% if user.is_admin or user.is_expert or user.is_vice_chief_executive %}
+                                {% if subproject.project.is_submitted and not subproject.project.is_approved %}
+                                <a href="{% url 'creator_project:project_approve' subproject.project.id %}" class="btn btn-sm btn-success">
+                                    تایید پروژه
+                                </a>
+                                <a href="{% url 'creator_project:project_reject' subproject.project.id %}" class="btn btn-sm btn-danger">
+                                    رد پروژه
+                                </a>
+                                {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        هیچ زیرپروژه‌ای موجود نیست.
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

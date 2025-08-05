@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}
+    ویرایش صورت وضعیت کارکرد
+{% endblock %}
+
+{% block extra_head %}
+<!-- Add Persian Datepicker -->
+<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+{% endblock %}
+
+{% block breadcrumb %}
+    <ol class="breadcrumb float-sm-left">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">خانه</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'creator_subproject:index' %}">زیرپروژه‌ها</a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'creator_subproject:detail' subproject.id %}">{{ subproject }}</a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'creator_subproject:situation_reports' subproject.id %}">صورت وضعیت‌ها کارکرد</a></li>
+        <li class="breadcrumb-item active">ویرایش صورت وضعیت کارکرد</li>
+    </ol>
+{% endblock %}
+
+{% block sidebar %}
+    {% include 'creator_subproject/includes/sidebar.html' with active='situation_reports' %}
+{% endblock %}
+
+{% block content %}
+    <div class="card card-info">
+        <div class="card-header">
+            <h3 class="card-title">ویرایش صورت وضعیت کارکرد</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.report_number }}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.payment_amount_field.id_for_label }}">{{ form.payment_amount_field.label }}</label>
+                            {{ form.payment_amount_field }}
+                            {% if form.payment_amount_field.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.payment_amount_field.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.allocation_type.id_for_label }}">{{ form.allocation_type.label }}</label>
+                            {{ form.allocation_type }}
+                            {% if form.allocation_type.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.allocation_type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.allocation_date.id_for_label }}">تاریخ صورت وضعیت:</label>
+                            {{ form.allocation_date }}
+                            {% if form.allocation_date.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.allocation_date.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}">توضیحات:</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-success">ذخیره</button>
+                        <a href="{% url 'creator_subproject:situation_reports' subproject.id %}"
+                           class="btn btn-secondary">انصراف</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Persian Datepicker -->
+<script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Initialize Persian Datepicker
+        $(".persian-date").persianDatepicker({
+            format: 'YYYY/MM/DD',
+            initialValue: true,
+            autoClose: true
+        });
+        
+        // Format numbers with commas
+        function formatWithCommas(input) {
+            $(input).on('input', function() {
+                // Remove any non-digit characters
+                let value = $(this).val().replace(/\D/g, '');
+                // Format with commas
+                if (value) {
+                    value = parseInt(value, 10).toLocaleString('en-US');
+                    $(this).val(value);
+                }
+            });
+        }
+        
+        // Apply formatting to payment field
+        formatWithCommas('#id_payment_amount_field');
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,34 @@
+{% load static %}
+
+<div class="date-input-container">
+    <input type="text" 
+           id="{{ field_id }}_display" 
+           name="{{ field_name }}_display" 
+           class="form-control date-input"
+           value="{{ initial_value|default:'' }}"
+           {% if required %}required{% endif %}
+           placeholder="انتخاب تاریخ"
+           autocomplete="off">
+    <i class="bi bi-calendar3 calendar-icon" data-input="{{ field_id }}_display"></i>
+    <input type="hidden" name="{{ field_name }}" id="{{ field_id }}_gregorian" value="">
+</div>
+
+<style>
+.date-input-container {
+    position: relative;
+}
+.calendar-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    z-index: 2;
+    color: #6c757d;
+}
+.date-input {
+    direction: rtl;
+    text-align: right;
+    padding-left: 35px !important;
+}
+</style> 

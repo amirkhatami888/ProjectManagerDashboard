@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h2>بروزرسانی زیرپروژه</h2>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-group mb-3">
+                    <label for="sub_project_number">اولویت زیرپروژه:</label>
+                    <input type="number" id="sub_project_number" name="sub_project_number" class="form-control" value="{{ subproject.sub_project_number }}" required>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="state">وضعیت:</label>
+                    <select id="state" name="state" class="form-control" required>
+                        {% for value, label in subproject.STATE_CHOICES %}
+                            <option value="{{ value }}" {% if subproject.state == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="physical_progress">پیشرفت فیزیکی (درصد):</label>
+                    <input type="number" step="0.01" id="physical_progress" name="physical_progress" class="form-control" value="{{ subproject.physical_progress }}" required>
+                </div>
+                
+
+                
+                <div class="form-group mb-3">
+                    <label for="remaining_work">کار باقیمانده:</label>
+                    <textarea id="remaining_work" name="remaining_work" class="form-control" rows="3">{{ subproject.remaining_work }}</textarea>
+                </div>
+                
+                <!-- Contract Start Date -->
+                <div class="form-group mb-3">
+                    <label for="contract_start_date">تاریخ شروع قرارداد:</label>
+                    <div class="input-group">
+                        <input type="text" id="contract_start_date" name="contract_start_date" class="form-control persian-date" 
+                               value="{% if subproject.contract_start_date %}{{ subproject.contract_start_date|date:'Y/m/d' }}{% endif %}">
+                        <span class="input-group-text calendar-icon-container" style="cursor:pointer; background:transparent; border-left:0;">
+                            <img src="{% static 'admin/img/icon-calendar.svg' %}" alt="calendar" width="20" height="20">
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Contract End Date -->
+                <div class="form-group mb-3">
+                    <label for="contract_end_date">تاریخ پایان قرارداد:</label>
+                    <div class="input-group">
+                        <input type="text" id="contract_end_date" name="contract_end_date" class="form-control persian-date" 
+                               value="{% if subproject.contract_end_date %}{{ subproject.contract_end_date|date:'Y/m/d' }}{% endif %}">
+                        <span class="input-group-text calendar-icon-container" style="cursor:pointer; background:transparent; border-left:0;">
+                            <img src="{% static 'admin/img/icon-calendar.svg' %}" alt="calendar" width="20" height="20">
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="estimated_opening_time">تاریخ پایان پروژه:</label>
+                    <div class="input-group">
+                        <input type="text" id="estimated_opening_time" name="estimated_opening_time" class="form-control persian-date" 
+                               value="{% if subproject.estimated_opening_time %}{{ subproject.estimated_opening_time|date:'Y/m/d' }}{% endif %}">
+                        <span class="input-group-text calendar-icon-container" style="cursor:pointer; background:transparent; border-left:0;">
+                            <img src="{% static 'admin/img/icon-calendar.svg' %}" alt="calendar" width="20" height="20">
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Contract Amount -->
+                <div class="form-group mb-3">
+                    <label for="contract_amount">مبلغ قرارداد (ریال):</label>
+                    <input type="number" step="0.01" id="contract_amount" name="contract_amount" class="form-control" value="{{ subproject.contract_amount|default_if_none:'' }}">
+                </div>
+                
+                <!-- افزایش 25 درصدی قرار داد Field -->
+                <div class="form-group mb-3">
+                    <label for="has_adjustment">افزایش 25 درصدی قرار داد:</label>
+                    <select id="has_adjustment" name="has_adjustment" class="form-control" required>
+                        {% for value, label in subproject.HAS_ADJUSTMENT_CHOICES %}
+                            <option value="{{ value }}" {% if subproject.has_adjustment == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- درصد افزایش مبلغ قرار داد Field - Will be shown/hidden based on selection -->
+                <div class="form-group mb-3" id="adjustment_coefficient_container" style="{% if subproject.has_adjustment != 'دارد' %}display: none;{% endif %}">
+                    <label for="adjustment_coefficient">درصد افزایش مبلغ قرار داد:</label>
+                    <input type="number" step="0.01" id="adjustment_coefficient" name="adjustment_coefficient" class="form-control" value="{{ subproject.adjustment_coefficient|default_if_none:'' }}">
+                    <small class="text-muted">مقدار را به صورت اعشاری وارد کنید. مثلا: 0.25 برای 25 درصد</small>
+                </div>
+                
+                <!-- Final Contract Amount (Read Only) -->
+                <div class="form-group mb-3">
+                    <label>مبلغ نهایی قرارداد (ریال):</label>
+                    <div class="form-control" id="final_contract_amount" readonly>{{ subproject.final_contract_amount|default_if_none:'0' }}</div>
+                    <small class="text-muted">این مقدار پس از اعمال افزایش بر روی مبلغ قرارداد محاسبه می‌شود</small>
+                </div>
+                
+                <!-- Advisor Information -->
+                <div class="form-group mb-3">
+                    <label for="has_consultant">مشاور:</label>
+                    <select id="has_consultant" name="has_consultant" class="form-control" required onchange="toggleConsultantFields()">
+                        {% for value, label in subproject.HAS_CONSULTANT_CHOICES %}
+                            <option value="{{ value }}" {% if subproject.has_consultant == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div id="consultant_fields" class="consultant-fields" style="{% if subproject.has_consultant != 'دارد' %}display: none;{% endif %}">
+                    <div class="form-group mb-3">
+                        <label for="consultant_name">نام مشاور:</label>
+                        <input type="text" id="consultant_name" name="consultant_name" class="form-control" 
+                               value="{{ subproject.consultant_name|default_if_none:'' }}"
+                               placeholder="نام مشاور را وارد کنید">
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label for="consultant_national_id">شناسه ملی مشاور:</label>
+                        <input type="text" id="consultant_national_id" name="consultant_national_id" class="form-control" 
+                               value="{{ subproject.consultant_national_id|default_if_none:'' }}"
+                               placeholder="شناسه ملی مشاور را وارد کنید">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">ذخیره تغییرات</button>
+                    <a href="{% url 'creator_subproject:subproject_detail' subproject.pk %}" class="btn btn-secondary">انصراف</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Show/hide consultant fields based on selection
+        function toggleConsultantFields() {
+            const hasConsultantSelect = document.getElementById('has_consultant');
+            const consultantFieldsContainer = document.getElementById('consultant_fields');
+            
+            if (hasConsultantSelect.value === 'دارد') {
+                consultantFieldsContainer.style.display = 'block';
+            } else {
+                consultantFieldsContainer.style.display = 'none';
+            }
+        }
+        
+        // Make the function globally available
+        window.toggleConsultantFields = toggleConsultantFields;
+        
+        // Show/hide adjustment coefficient based on selection
+        const hasAdjustmentSelect = document.getElementById('has_adjustment');
+        const adjustmentCoefficientContainer = document.getElementById('adjustment_coefficient_container');
+        
+        hasAdjustmentSelect.addEventListener('change', function() {
+            if (this.value === 'دارد') {
+                adjustmentCoefficientContainer.style.display = 'block';
+            } else {
+                adjustmentCoefficientContainer.style.display = 'none';
+            }
+            calculateFinalAmount();
+        });
+        
+        // Calculate final contract amount when values change
+        const contractAmountInput = document.getElementById('contract_amount');
+        const adjustmentCoefficientInput = document.getElementById('adjustment_coefficient');
+        const finalContractAmountDisplay = document.getElementById('final_contract_amount');
+        
+        function calculateFinalAmount() {
+            const contractAmount = parseFloat(contractAmountInput.value) || 0;
+            let finalAmount = contractAmount;
+            
+            if (hasAdjustmentSelect.value === 'دارد') {
+                const adjustmentCoefficient = parseFloat(adjustmentCoefficientInput.value) || 0;
+                finalAmount = contractAmount * (1 + adjustmentCoefficient);
+            }
+            
+            finalContractAmountDisplay.textContent = finalAmount.toLocaleString();
+        }
+        
+        // Add event listeners for value changes
+        contractAmountInput.addEventListener('input', calculateFinalAmount);
+        adjustmentCoefficientInput.addEventListener('input', calculateFinalAmount);
+        
+        // Calculate initial value
+        calculateFinalAmount();
+    });
+</script>
+{% endblock %} 

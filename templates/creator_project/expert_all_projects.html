@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold">{{ title }}</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        این صفحه تمام پروژه‌های استان‌های تحت نظارت شما را نمایش می‌دهد، حتی آن‌هایی که هنوز برای تایید ارسال نشده‌اند.
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>نام پروژه</th>
+                                    <th>استان</th>
+                                    <th>شهر</th>
+                                    <th>نوع پروژه</th>
+                                    <th>پیشرفت فیزیکی</th>
+                                    <th>وضعیت</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for project in projects %}
+                                <tr>
+                                    <td>{{ project.name }}</td>
+                                    <td>{{ project.province }}</td>
+                                    <td>{{ project.city }}</td>
+                                    <td>{{ project.project_type }}</td>
+                                    <td>{{ project.physical_progress }}%</td>
+                                    <td>
+                                        {% if project.is_submitted %}
+                                            {% if project.is_expert_approved %}
+                                                <span class="badge bg-success">تایید شده</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">در انتظار تایید</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-secondary">ارسال نشده</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'creator_project:project_detail' project.id %}" class="btn btn-sm btn-info">جزئیات</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center">هیچ پروژه‌ای یافت نشد.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

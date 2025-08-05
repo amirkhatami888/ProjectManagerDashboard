@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}درخواست اعتبار جدید{% endblock %}
+{% block content %}
+<div class="container my-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2>درخواست اعتبار جدید</h2>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                تعداد پروژه‌های موجود: {{ projects|length }}
+            </div>
+            <form method="get" action="{% url 'creator_project:funding_request_create' %}">
+                <div class="mb-3">
+                    <label for="project" class="form-label">انتخاب پروژه</label>
+                    <select class="form-select" id="project" name="project" required>
+                        <option value="">یک پروژه را انتخاب کنید</option>
+                        {% for project in projects %}
+                        <option value="{{ project.id }}">{{ project.name }} ({{ project.province }}) {% if project.is_approved %}✓ تایید شده{% else %}⨯ تایید نشده{% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> ثبت درخواست اعتبار
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

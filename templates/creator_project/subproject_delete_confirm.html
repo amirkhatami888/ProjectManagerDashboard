@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+{% load jalali_tags %}
+{% load humanize %}
+
+{% block title %}حذف زیرپروژه - {{ subproject.sub_project_type }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .delete-warning {
+        border-left: 4px solid #dc3545;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+    }
+    
+    .subproject-info {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 8px;
+        padding: 20px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .danger-zone {
+        background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+        border: 2px solid #fc8181;
+        border-radius: 8px;
+        padding: 20px;
+    }
+    
+    .confirmation-input {
+        background-color: #fff;
+        border: 2px solid #e53e3e;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        text-align: center;
+    }
+    
+    .confirmation-input:focus {
+        border-color: #c53030;
+        box-shadow: 0 0 0 0.2rem rgba(197, 48, 48, 0.25);
+    }
+    
+    .related-item {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 8px;
+    }
+    
+    .stats-item {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 6px;
+        padding: 8px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-lg">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        تایید حذف زیرپروژه - تأیید قوی مورد نیاز
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger delete-warning" role="alert">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            هشدار شدید: این عمل قابل بازگشت نیست!
+                        </h6>
+                        <p class="mb-0">
+                            حذف این زیرپروژه باعث از بین رفتن تمام اطلاعات، تاریخچه، تصاویر و داده‌های مرتبط خواهد شد.
+                        </p>
+                    </div>
+                    
+                    <!-- Subproject Information -->
+                    <div class="subproject-info mb-4">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            اطلاعات زیرپروژه:
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>نوع زیرپروژه:</strong> {{ subproject.sub_project_type }}</p>
+                                <p><strong>شماره:</strong> #{{ subproject.sub_project_number }}</p>
+                                {% if subproject.name %}
+                                <p><strong>نام:</strong> {{ subproject.name }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>پروژه اصلی:</strong> {{ project.name }}</p>
+                                <p><strong>وضعیت:</strong> {{ subproject.state }}</p>
+                                <p><strong>پیشرفت فیزیکی:</strong> {{ subproject.physical_progress }}%</p>
+                            </div>
+                        </div>
+                        
+                        {% if subproject.contract_amount %}
+                        <div class="mt-3 p-2 bg-light rounded">
+                            <p class="mb-0"><strong>مبلغ قرارداد:</strong> 
+                                <span class="text-success fw-bold">ریال {{ subproject.contract_amount|floatformat:0|intcomma }}</span>
+                            </p>
+                        </div>
+                        {% elif subproject.imagenrary_cost %}
+                        <div class="mt-3 p-2 bg-light rounded">
+                            <p class="mb-0"><strong>هزینه تخمینی:</strong> 
+                                <span class="text-info fw-bold">ریال {{ subproject.imagenrary_cost|floatformat:0|intcomma }}</span>
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Data Statistics -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="stats-item">
+                                <h6 class="mb-1">تصاویر گالری</h6>
+                                <span class="badge bg-info">{{ gallery_images_count }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-item">
+                                <h6 class="mb-1">تاریخچه تغییرات</h6>
+                                <span class="badge bg-secondary">{{ update_history_count }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-item">
+                                <h6 class="mb-1">اسناد مالی</h6>
+                                <span class="badge bg-warning">{{ subproject.allocations.count }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-item">
+                                <h6 class="mb-1">پرداختی‌ها</h6>
+                                <span class="badge bg-success">{{ subproject.payments.count }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Related Subprojects Warning -->
+                    {% if related_subprojects %}
+                    <div class="alert alert-warning" role="alert">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-link me-2"></i>
+                            زیرپروژه‌های مرتبط یافت شد:
+                        </h6>
+                        <p>زیرپروژه‌های زیر به این زیرپروژه مرتبط هستند و ابتدا باید ارتباط آنها قطع شود:</p>
+                        {% for related in related_subprojects %}
+                        <div class="related-item">
+                            <strong>{{ related.sub_project_type }} #{{ related.sub_project_number }}</strong>
+                            {% if related.name %}- {{ related.name }}{% endif %}
+                            <br>
+                            <small class="text-muted">نوع ارتباط: {{ related.get_relationship_type_display|default:"نامشخص" }}</small>
+                        </div>
+                        {% endfor %}
+                        <div class="mt-3">
+                            <strong>این زیرپروژه به دلیل وجود ارتباط با زیرپروژه‌های دیگر قابل حذف نیست.</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-center">
+                        <a href="{% url 'creator_project:subproject_list' project.id %}" class="btn btn-primary btn-lg">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            بازگشت به لیست زیرپروژه‌ها
+                        </a>
+                    </div>
+                    
+                    {% else %}
+                    <!-- Confirmation Form (only shown if no related subprojects) -->
+                    <div class="danger-zone">
+                        <h6 class="text-danger mb-3">
+                            <i class="bi bi-shield-exclamation me-2"></i>
+                            منطقه خطرناک - تأیید نهایی
+                        </h6>
+                        
+                        <p class="text-danger fw-bold mb-3">
+                            برای تأیید حذف، متن زیر را دقیقاً در کادر پایین وارد کنید:
+                        </p>
+                        
+                        <div class="text-center mb-3">
+                            <code class="bg-dark text-light p-2 rounded fs-5">{{ expected_confirmation }}</code>
+                        </div>
+                        
+                        <form method="post" id="deleteForm">
+                            {% csrf_token %}
+                            
+                            <div class="mb-4">
+                                <label for="confirmation_text" class="form-label fw-bold text-danger">
+                                    متن تأیید:
+                                </label>
+                                <input type="text" 
+                                       class="form-control form-control-lg confirmation-input" 
+                                       id="confirmation_text" 
+                                       name="confirmation_text"
+                                       placeholder="متن تأیید را وارد کنید"
+                                       autocomplete="off"
+                                       required>
+                                <div class="form-text text-danger">
+                                    <i class="bi bi-exclamation-circle me-1"></i>
+                                    دقت کنید: باید دقیقاً مطابق متن بالا وارد شود
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="understand_permanent" required>
+                                        <label class="form-check-label text-danger" for="understand_permanent">
+                                            می‌دانم این عمل قابل بازگشت نیست
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="understand_data_loss" required>
+                                        <label class="form-check-label text-danger" for="understand_data_loss">
+                                            می‌دانم تمام داده‌ها حذف خواهد شد
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mt-4">
+                                <a href="{% url 'creator_project:subproject_list' project.id %}" class="btn btn-secondary btn-lg">
+                                    <i class="bi bi-arrow-left me-2"></i>
+                                    انصراف
+                                </a>
+                                
+                                <button type="submit" class="btn btn-danger btn-lg" id="deleteButton" disabled>
+                                    <i class="bi bi-trash me-2"></i>
+                                    تایید حذف نهایی
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('deleteForm');
+        const confirmationInput = document.getElementById('confirmation_text');
+        const deleteButton = document.getElementById('deleteButton');
+        const understandPermanent = document.getElementById('understand_permanent');
+        const understandDataLoss = document.getElementById('understand_data_loss');
+        const expectedText = '{{ expected_confirmation }}';
+        
+        if (form) {
+            function checkFormValidity() {
+                const textMatches = confirmationInput.value.trim() === expectedText;
+                const allChecked = understandPermanent.checked && understandDataLoss.checked;
+                
+                deleteButton.disabled = !(textMatches && allChecked);
+                
+                // Visual feedback for text input
+                if (confirmationInput.value.trim() === '') {
+                    confirmationInput.classList.remove('is-valid', 'is-invalid');
+                } else if (textMatches) {
+                    confirmationInput.classList.remove('is-invalid');
+                    confirmationInput.classList.add('is-valid');
+                } else {
+                    confirmationInput.classList.remove('is-valid');
+                    confirmationInput.classList.add('is-invalid');
+                }
+            }
+            
+            // Event listeners
+            confirmationInput.addEventListener('input', checkFormValidity);
+            understandPermanent.addEventListener('change', checkFormValidity);
+            understandDataLoss.addEventListener('change', checkFormValidity);
+            
+            // Final confirmation before form submission
+            form.addEventListener('submit', function(e) {
+                if (!confirm('آیا واقعاً می‌خواهید این زیرپروژه را برای همیشه حذف کنید؟\n\nاین عمل قابل بازگشت نیست!')) {
+                    e.preventDefault();
+                }
+            });
+            
+            // Auto-focus on confirmation input
+            confirmationInput.focus();
+        }
+    });
+</script>
+{% endblock %} 

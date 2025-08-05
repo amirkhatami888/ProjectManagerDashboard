@@ -1,0 +1,1021 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load custom_filters %}
+{% load jalali_tags %}
+{% load static %}
+{% load gallery_tags %}  {# Add this line #}
+
+{% block title %}{{ subproject.sub_project_type }} - {{ subproject.project.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .currency-amount {
+        font-weight: bold;
+        color: #28a745;
+        direction: ltr;
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ subproject.name|default:subproject.sub_project_type }} <small class="text-muted">#{{ subproject.sub_project_number }}</small></h1>
+        
+        <div class="btn-group">
+            {% if user.is_admin or subproject.created_by == user %}
+            <a href="{% url 'creator_subproject:subproject_update' subproject.id %}" class="btn btn-outline-primary">
+                <i class="bi bi-pencil"></i> بروزرسانی
+            </a>
+            {% endif %}
+            
+            <!-- Show Submit/Approve buttons based on parent project status -->
+            {% if subproject.project.created_by == user and not subproject.project.is_submitted %}
+            <a href="{% url 'creator_project:project_submit' subproject.project.id %}" class="btn btn-outline-success">
+                <i class="bi bi-send"></i> ارسال پروژه برای تایید
+            </a>
+            {% endif %}
+            
+            {% if user.is_admin or user.is_expert or user.is_vice_chief_executive %}
+            {% if subproject.project.is_submitted and not subproject.project.is_approved %}
+            <a href="{% url 'creator_project:project_approve' subproject.project.id %}" class="btn btn-outline-success">
+                <i class="bi bi-check-circle"></i> تایید پروژه
+            </a>
+            <a href="{% url 'creator_project:project_reject' subproject.project.id %}" class="btn btn-outline-danger">
+                <i class="bi bi-x-circle"></i> رد پروژه
+            </a>
+            {% endif %}
+            {% endif %}
+            
+            <a href="{% url 'creator_project:project_detail' subproject.project.id %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-right"></i> بازگشت به پروژه
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Subproject Information Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="bi bi-info-circle me-2"></i>اطلاعات زیرپروژه</h4>
+                    <div>
+                        <a href="{% url 'creator_subproject:subproject_update' subproject.id %}" class="btn btn-light btn-sm">
+                            <i class="bi bi-pencil"></i> ویرایش
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Basic Information Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-1 mb-2">
+                                <i class="bi bi-card-text me-2"></i>اطلاعات پایه
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-hash text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">شماره زیرپروژه</small>
+                                    <p class="mb-0 fw-bold text-dark">#{{ subproject.sub_project_number }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-file-text text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">نام زیرپروژه</small>
+                                    <p class="mb-0 fw-bold text-dark">{{ subproject.name|default:subproject.sub_project_type }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-tag text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">نوع زیرپروژه</small>
+                                    <p class="mb-0">{{ subproject.sub_project_type }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar-event text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">تاریخ ایجاد</small>
+                                    <p class="mb-0">{{ subproject.created_at|to_jalali:'%Y/%m/%d' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project Information Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-info border-bottom pb-1 mb-2">
+                                <i class="bi bi-diagram-3 me-2"></i>اطلاعات پروژه
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-folder text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">پروژه اصلی</small>
+                                    <p class="mb-0">
+                                        <a href="{% url 'creator_project:project_detail' subproject.project.id %}" class="text-decoration-none">
+                                            {{ subproject.project.name }}
+                                        </a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-check-circle text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">وضعیت</small>
+                                    <p class="mb-0">
+                                        <span class="badge bg-info">{{ subproject.state }}</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline Information Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-warning border-bottom pb-1 mb-2">
+                                <i class="bi bi-clock-history me-2"></i>اطلاعات زمانی
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar-plus text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">تاریخ شروع زیرپروژه</small>
+                                    <p class="mb-0">
+                                        {% if subproject.start_date %}
+                                            <span class="badge bg-success">{{ subproject.start_date|to_jalali:'%Y/%m/%d' }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">تعیین نشده</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar-check text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">تاریخ پایان زیرپروژه</small>
+                                    <p class="mb-0">
+                                        {% if subproject.end_date %}
+                                            <span class="badge bg-success">{{ subproject.end_date|to_jalali:'%Y/%m/%d' }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">تعیین نشده</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Work Information Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-success border-bottom pb-1 mb-2">
+                                <i class="bi bi-clipboard-data me-2"></i>اطلاعات کاری
+                            </h6>
+                        </div>
+                        {% if subproject.remaining_work %}
+                        <div class="col-12 mb-2">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-list-task text-muted me-2 mt-1"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">کارهای باقیمانده</small>
+                                    <p class="mb-0">{{ subproject.remaining_work }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-heart text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">مشارکت خیرین</small>
+                                    <p class="mb-0">
+                                        <span class="badge {% if subproject.is_suportting_charity == 'دارد' %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {{ subproject.is_suportting_charity }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Relationship Information Section -->
+                    {% if not subproject.contract_amount and subproject.related_subproject %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-secondary border-bottom pb-1 mb-2">
+                                <i class="bi bi-link-45deg me-2"></i>اطلاعات ارتباط
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-arrow-left-right text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">ارتباط زیرپروژه</small>
+                                    <p class="mb-0">
+                                        <span class="badge bg-primary">{{ subproject.get_relationship_type_display|default:"-" }}</span>
+                                        {{ subproject.related_subproject.sub_project_type }} #{{ subproject.related_subproject.sub_project_number }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-clock text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">تعجیل و تاخیر ارتباط</small>
+                                    <p class="mb-0">
+                                        <span class="badge bg-warning">{{ subproject.relationship_delay|default:"0" }} روز</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Creator Information Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-dark border-bottom pb-1 mb-2">
+                                <i class="bi bi-person me-2"></i>اطلاعات ایجاد کننده
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-person-circle text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">ایجاد شده توسط</small>
+                                    <p class="mb-0">{{ subproject.created_by.username }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Financial Information Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="bi bi-info-circle me-2"></i>اطلاعات مالی زیرپروژه</h4>
+                    <div>
+                        <a href="{% url 'creator_subproject:financial_ledger' subproject.id %}" class="btn btn-light btn-sm">
+                            <i class="bi bi-journal-text"></i> کاردکس مالی
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Contract Information Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-2 mb-3">
+                                <i class="bi bi-file-earmark-text me-2"></i>اطلاعات قرارداد
+                            </h6>
+                        </div>
+                        {% if subproject.contract_start_date or subproject.contract_end_date or subproject.contract_amount or subproject.contract_type %}
+                            <!-- Subproject has contract information -->
+                            {% if subproject.contract_start_date %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-calendar-plus text-muted me-2"></i>
+                                    <div>
+                                        <small class="text-muted fw-bold">تاریخ شروع قرارداد</small>
+                                        <p class="mb-0">{{ subproject.contract_start_date|to_jalali:'%Y/%m/%d' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if subproject.contract_end_date %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-calendar-check text-muted me-2"></i>
+                                    <div>
+                                        <small class="text-muted fw-bold">تاریخ پایان قرارداد</small>
+                                        <p class="mb-0">{{ subproject.contract_end_date|to_jalali:'%Y/%m/%d' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if subproject.contract_amount %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-cash-coin text-muted me-2"></i>
+                                    <div>
+                                        <small class="text-muted fw-bold">مبلغ قرارداد</small>
+                                        <p class="mb-0 fw-bold text-success">ریال {{ subproject.contract_amount|floatformat:0|intcomma }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if subproject.final_contract_amount %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-cash-stack text-muted me-2"></i>
+                                    <div>
+                                        <small class="text-muted fw-bold">مبلغ نهایی قرارداد</small>
+                                        <p class="mb-0 fw-bold text-success">ریال {{ subproject.final_contract_amount|floatformat:0|intcomma }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if subproject.contract_type %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-file-text text-muted me-2"></i>
+                                    <div>
+                                        <small class="text-muted fw-bold">نوع قرارداد</small>
+                                        <p class="mb-0">{{ subproject.get_contract_type_display }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if subproject.transaction_threshold %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-graph-up text-muted me-2"></i>
+                                    <div>
+                                        <small class="text-muted fw-bold">نصاب معاملات</small>
+                                        <p class="mb-0">{{ subproject.get_transaction_threshold_display }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if subproject.tender_type %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-auction text-muted me-2"></i>
+                                    <div>
+                                        <small class="text-muted fw-bold">نوع مناقصه</small>
+                                        <p class="mb-0">{{ subproject.get_tender_type_display }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if subproject.has_consultant == 'دارد' %}
+                                {% if subproject.consultant_name %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-person-badge text-muted me-2"></i>
+                                        <div>
+                                            <small class="text-muted fw-bold">نام مشاور</small>
+                                            <p class="mb-0">{{ subproject.consultant_name }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if subproject.consultant_national_id %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-card-text text-muted me-2"></i>
+                                        <div>
+                                            <small class="text-muted fw-bold">شناسه ملی مشاور</small>
+                                            <p class="mb-0">{{ subproject.consultant_national_id }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endif %}
+                            
+                            {% if subproject.adjustment_coefficient %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-percent text-muted me-2"></i>
+                                    <div>
+                                        <small class="text-muted fw-bold">درصد افزایش مبلغ قرارداد</small>
+                                        <p class="mb-0">{{ subproject.adjustment_coefficient }}%</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if subproject.predicted_adjustment_amount %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-calculator text-muted me-2"></i>
+                                    <div>
+                                        <small class="text-muted fw-bold">مجموع مبلغ پیشبینی شده ی تعدیل های تا انتهای پروژه</small>
+                                        <p class="mb-0 fw-bold text-warning">ریال {{ subproject.predicted_adjustment_amount|floatformat:0|intcomma }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if subproject.execution_method %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-gear text-muted me-2"></i>
+                                    <div>
+                                        <small class="text-muted fw-bold">روش اجرا</small>
+                                        <p class="mb-0">{{ subproject.execution_method }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if subproject.contractor_name %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-building text-muted me-2"></i>
+                                    <div>
+                                        <small class="text-muted fw-bold">نام پیمانکار</small>
+                                        <p class="mb-0">{{ subproject.contractor_name }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if subproject.contractor_id %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-hash text-muted me-2"></i>
+                                    <div>
+                                        <small class="text-muted fw-bold">شناسه پیمانکار</small>
+                                        <p class="mb-0">{{ subproject.contractor_id }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% else %}
+                            <!-- Subproject does not have contract information -->
+                            {% if subproject.imagenrary_cost %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-calculator text-muted me-2"></i>
+                                    <div>
+                                        <small class="text-muted fw-bold">هزینه تخمینی</small>
+                                        <p class="mb-0 fw-bold text-info">ریال {{ subproject.imagenrary_cost|floatformat:0|intcomma }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if subproject.cost_calculation_method %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-clipboard-data text-muted me-2"></i>
+                                    <div>
+                                        <small class="text-muted fw-bold">روش محاسبه هزینه تقریبی</small>
+                                        <p class="mb-0">{{ subproject.cost_calculation_method }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Payment Information Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-success border-bottom pb-2 mb-3">
+                                <i class="bi bi-cash-stack me-2"></i>اطلاعات پرداخت و وضعیت
+                            </h6>
+                        </div>
+                        {% if subproject.total_adjustment_amount %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calculator text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">جمع مبلغ صورت وضعیت تعدیل</small>
+                                    <p class="mb-0 fw-bold text-warning">ریال {{ subproject.total_adjustment_amount|floatformat:0|intcomma }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-exclamation-triangle text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">دیون زیرپروژه</small>
+                                    <p class="mb-0 fw-bold text-danger">ریال {{ subproject.subproject_debts|floatformat:0|intcomma }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-graph-up text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">مبلغ پیشرفت مالی زیرپروژه</small>
+                                    <p class="mb-0 fw-bold text-success">ریال {{ subproject.financial_progress_amount|floatformat:0|intcomma }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-cash-coin text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">جمع مبلغ های پیش پرداخت</small>
+                                    <p class="mb-0 fw-bold text-primary">ریال {{ subproject.total_advance_payments|default:0|floatformat:0|intcomma }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-file-text text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">مبلغ صورت وضعیت</small>
+                                    <p class="mb-0 fw-bold text-info">ریال {{ subproject.situation_report_amount|default:0|floatformat:0|intcomma }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calculator text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">جمع مبلغ صورت وضعیت تعدیل</small>
+                                    <p class="mb-0 fw-bold text-warning">ریال {{ subproject.total_adjustment_reports|default:0|floatformat:0|intcomma }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-cash-stack text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">جمع مبلغ پرداخت ها</small>
+                                    <p class="mb-0 fw-bold text-success">ریال {{ subproject.total_payment_amount|default:0|floatformat:0|intcomma }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-credit-card text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">اعتبار مورد نیاز تکمیل قرار داد</small>
+                                    <p class="mb-0 fw-bold text-danger">ریال {{ subproject.required_credit_for_contract_completion|default:0|floatformat:0|intcomma }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Allocations Card (renamed to Financial Documents) -->
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">لیست سند مالی</h5>
+                    <div>
+                        <a href="{% url 'creator_subproject:financial_ledger' subproject.id %}" class="btn btn-sm btn-outline-light me-2">
+                            <i class="bi bi-journal-text"></i> کاردکس مالی
+                        </a>
+                        <a href="{% url 'creator_subproject:allocations' subproject.id %}" class="btn btn-sm btn-outline-light me-2">
+                            <i class="bi bi-list"></i> مشاهده همه
+                        </a>
+                        {% if user.is_admin or subproject.created_by == user %}
+                        <a href="{% url 'creator_subproject:add_allocation' subproject.id %}" class="btn btn-sm btn-outline-light">
+                            <i class="bi bi-plus"></i> افزودن
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if allocations %}
+                    <div class="list-group">
+                        {% for allocation in allocations %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <h6 class="mb-0">
+                                    {% if allocation.document_type == 'adjustment_report' and allocation.related_document %}
+                                        {{ allocation.get_document_type_display }} شماره {{ allocation.document_number }} برای {{ allocation.related_document.get_document_type_display }} شماره {{ allocation.related_document.document_number }}
+                                    {% else %}
+                                        {{ allocation.get_document_type_display }} شماره {{ allocation.document_number }}
+                                    {% endif %}
+                                </h6>
+                                <div class="text-end">
+                                    <div class="fw-bold text-success">ریال {{ allocation.approved_amount|intcomma }}</div>
+                                    <small class="text-muted">{{ allocation.approval_date|to_jalali:'%Y/%m/%d' }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        هنوز هیچ سند مالی ثبت نشده است.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="row text-muted small">
+                        <div class="col-md-4">
+                            <strong>جمع مبلغ های پیش پرداخت:</strong> ریال {{ subproject.total_advance_payments|default:0|intcomma }}
+                        </div>
+                        <div class="col-md-4">
+                            <strong>مبلغ صورت وضعیت:</strong> ریال {{ subproject.situation_report_amount|default:0|intcomma }}
+                        </div>
+                        <div class="col-md-4">
+                            <strong>جمع مبلغ صورت وضعیت تعدیل:</strong> ریال {{ subproject.total_adjustment_reports|default:0|intcomma }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Adjustment Situation Reports Card (renamed to Payments List) -->
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">لیست پرداختی ها</h5>
+                    <div>
+                        <a href="{% url 'creator_subproject:payments' subproject.id %}" class="btn btn-sm btn-outline-light me-2">
+                            <i class="bi bi-list"></i> مشاهده همه
+                        </a>
+                        {% if user.is_admin or subproject.created_by == user %}
+                        <a href="{% url 'creator_subproject:add_payment' subproject.id %}" class="btn btn-sm btn-outline-light">
+                            <i class="bi bi-plus"></i> افزودن
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if subproject.payments.all %}
+                    <div class="list-group">
+                        {% for payment in subproject.payments.all|slice:":5" %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <h6 class="mb-0">پرداختی شماره {{ forloop.counter }}</h6>
+                                <div class="text-end">
+                                    <div class="fw-bold text-success">ریال {{ payment.amount|intcomma }}</div>
+                                    <small class="text-muted">{{ payment.payment_date|to_jalali:'%Y/%m/%d' }}</small>
+                                </div>
+                            </div>
+                            {% if payment.related_document %}
+                            <small class="text-muted">
+                                سند مرتبط: {{ payment.related_document.get_document_type_display }} شماره {{ payment.related_document.document_number }}
+                            </small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        هنوز هیچ پرداختی ثبت نشده است.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <small class="text-muted">جمع مبلغ پرداخت ها: ریال {{ subproject.total_payment_amount|default:"0"|intcomma }}</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Project Status Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">وضعیت پروژه</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>وضعیت پروژه:</strong>
+                        <div class="badge bg-primary">{{ subproject.project.get_project_type_display }}</div>
+                        <div class="badge {% if subproject.project.is_approved %}bg-success{% elif subproject.project.is_expert_approved %}bg-info{% elif subproject.project.is_submitted %}bg-warning{% else %}bg-secondary{% endif %}">
+                        {% if subproject.project.is_approved %}
+                            تایید شده
+                        {% elif subproject.project.is_expert_approved %}
+                            تایید کارشناس - در انتظار تایید معاون
+                        {% elif subproject.project.is_submitted %}
+                            در انتظار بررسی
+                        {% else %}
+                            پیش‌نویس
+                        {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>وضعیت زیرپروژه:</strong>
+                        <div class="badge bg-info">{{ subproject.state }}</div>
+                    </div>
+                    
+                    <!-- Progress bars -->
+                    <div class="mb-3">
+                        <h6 class="border-bottom pb-2">نمودار پیشرفت</h6>
+                        
+                        <!-- Physical progress -->
+                        <div class="mb-3">
+                            <strong>پیشرفت فیزیکی:</strong> {{ subproject.physical_progress }}%
+                            <div class="progress mt-2" style="height: 20px;">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: {{ subproject.physical_progress }}%;"
+                                     aria-valuenow="{{ subproject.physical_progress }}" 
+                                     aria-valuemin="0" aria-valuemax="100">
+                                    {{ subproject.physical_progress }}%
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Financial progress -->
+                        <div class="mb-3">
+                            <strong>پیشرفت مالی:</strong> {{ subproject.financial_progress_percentage }}%
+                            <div class="progress mt-2" style="height: 20px;">
+                                <div class="progress-bar bg-info" role="progressbar" 
+                                     style="width: {{ subproject.financial_progress_percentage }}%;"
+                                     aria-valuenow="{{ subproject.financial_progress_percentage }}" 
+                                     aria-valuemin="0" aria-valuemax="100">
+                                    {{ subproject.financial_progress_percentage }}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <strong>آخرین بروزرسانی:</strong> {{ subproject.updated_at|to_jalali:'%Y/%m/%d' }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gallery Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">گالری تصاویر</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <a href="{% url 'creator_subproject:subproject_gallery' subproject.id %}" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-images"></i> مشاهده گالری
+                        </a>
+                    </div>
+                    
+                    {% with latest_images=subproject.gallery_images.all|slice:":3" %}
+                    {% if latest_images %}
+                    <div class="row mt-3">
+                        {% for image in latest_images %}
+                        <div class="col-4 mb-2">
+                            <img 
+                                src="data:{{ image.image_mime_type }};base64,{{ image.image|base64_encode }}" 
+                                class="img-thumbnail" 
+                                alt="{{ image.title|default:'تصویر' }}" 
+                                style="height: 80px; object-fit: cover;"
+                            >
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-light mt-3 text-center">
+                        <small>تصویری برای نمایش وجود ندارد</small>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Graphical Summary Section -->
+<div class="container-fluid my-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">خلاصه گرافیکی زیر پروژه</h5>
+        </div>
+        <div class="card-body">
+            <!-- Physical Progress Over Time Chart -->
+            <div class="row">
+                <div class="col-md-12 mb-4">
+                    <div class="card">
+                        <div class="card-header">پیشرفت فیزیکی در زمان</div>
+                        <div class="card-body">
+                            <canvas id="physicalProgressTimelineChart" width="800" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Update Button -->
+<div class="d-flex justify-content-end mt-4 mb-3">
+    {% if user.is_admin or subproject.created_by == user %}
+    <a href="{% url 'creator_subproject:subproject_update' subproject.id %}" class="btn btn-primary">
+        <i class="bi bi-pencil"></i> بروز رسانی
+    </a>
+    {% endif %}
+</div>
+
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM content loaded, initializing charts...');
+        
+        // Physical Progress Over Time Chart
+        const physicalProgressTimelineCtx = document.getElementById('physicalProgressTimelineChart');
+        if (physicalProgressTimelineCtx) {
+            console.log('Creating physical progress over time chart...');
+            
+            // Debug logs to check available data
+            console.log('Contract start date:', '{{ subproject.contract_start_date|default:"None" }}');
+            console.log('Contract end date:', '{{ subproject.contract_end_date|default:"None" }}');
+            console.log('Physical progress:', {{ subproject.physical_progress|default:0 }});
+            console.log('Update history items:', {% if subproject.update_history.all %}{{ subproject.update_history.all.count }}{% else %}0{% endif %});
+            
+            {% if subproject.contract_start_date and subproject.contract_end_date %}
+            // Define dates for timeline
+            const today = new Date();
+            
+            // Persian month names
+            const persianMonths = [
+                'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+                'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+            ];
+            
+            // Generate monthly date points between start and end date
+            const labels = [];
+            const physicalProgressData = [];
+            
+            // Load Jalali dates from template
+            const jalaliStartDate = "{{ subproject.contract_start_date|to_jalali:'%Y/%m/%d' }}";
+            const jalaliEndDate = "{{ subproject.contract_end_date|to_jalali:'%Y/%m/%d' }}";
+            
+            {% if subproject.update_history.all %}
+            // Get physical progress history from update history
+            const physicalProgressUpdates = [
+                {% for history in subproject.update_history.all %}
+                {% if history.field_name == 'physical_progress' %}
+                {
+                    jalaliDate: "{{ history.updated_at|to_jalali:'%Y/%m/%d' }}",
+                    value: parseFloat('{{ history.new_value }}'.replace(/[^\d.]/g, '') || 0),
+                    displayDate: "{{ history.updated_at|to_jalali:'%Y/%m/%d' }}",
+                    sortableDate: "{{ history.updated_at|date:'Y-m-d' }}"
+                },
+                {% endif %}
+                {% endfor %}
+                // Add current progress at current date
+                {
+                    jalaliDate: "{{ subproject.updated_at|to_jalali:'%Y/%m/%d' }}",
+                    value: {{ subproject.physical_progress|default:0 }},
+                    displayDate: "{{ subproject.updated_at|to_jalali:'%Y/%m/%d' }}",
+                    sortableDate: "{{ subproject.updated_at|date:'Y-m-d' }}"
+                }
+            ];
+            
+            // Debug log updates
+            console.log('Progress updates before sorting:', [...physicalProgressUpdates]);
+            
+            // Sort by date using standard Gregorian dates for reliable sorting
+            physicalProgressUpdates.sort((a, b) => {
+                return new Date(a.sortableDate) - new Date(b.sortableDate);
+            });
+            
+            // Debug log updates after sorting
+            console.log('Progress updates after sorting:', physicalProgressUpdates);
+            
+            // Use actual update dates for chart points instead of monthly intervals
+            // Create arrays for chart after sorting is done
+            const sortedLabels = [];
+            const sortedData = [];
+            
+            physicalProgressUpdates.forEach(update => {
+                sortedLabels.push(update.displayDate);
+                sortedData.push(update.value);
+            });
+            
+            // Debug the final arrays
+            console.log('Sorted labels:', sortedLabels);
+            console.log('Sorted data:', sortedData);
+            
+            {% else %}
+            // If no update history, create at least two points for start and current
+            const startDate = "{{ subproject.contract_start_date|date:'Y-m-d' }}";
+            const currentDate = "{{ subproject.updated_at|date:'Y-m-d' }}"; 
+            
+            // Create sorted arrays for the two points
+            const sortedLabels = [
+                jalaliStartDate,
+                "{{ subproject.updated_at|to_jalali:'%Y/%m/%d' }}"
+            ];
+            
+            const sortedData = [
+                0,
+                {{ subproject.physical_progress|default:0 }}
+            ];
+            
+            // Debug the created arrays
+            console.log('Simple timeline - labels:', sortedLabels);
+            console.log('Simple timeline - data:', sortedData);
+            {% endif %}
+            
+            // Create the chart
+            new Chart(physicalProgressTimelineCtx, {
+                type: 'line',
+                data: {
+                    labels: sortedLabels,
+                    datasets: [{
+                        label: 'پیشرفت فیزیکی',
+                        data: sortedData,
+                        borderColor: '#2196F3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.1,
+                        fill: true,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#2196F3'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'تاریخ'
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'درصد پیشرفت'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    return `${context.dataset.label}: ${value.toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            {% else %}
+            // No contract dates available - show empty chart with message
+            new Chart(physicalProgressTimelineCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['تاریخ قرارداد تنظیم نشده است'],
+                    datasets: [{
+                        data: [1],
+                        backgroundColor: '#e0e0e0'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function() {
+                                    return 'برای نمایش پیشرفت زمانی، تاریخ قرارداد را تنظیم کنید';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            {% endif %}
+        } else {
+            console.error('Physical progress timeline chart canvas not found');
+        }
+    });
+</script>
+{% endblock %} 

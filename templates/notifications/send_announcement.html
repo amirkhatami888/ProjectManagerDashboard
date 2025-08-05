@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .recipient-options {
+        margin-top: 15px;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold">{{ title }}</h6>
+                    <div>
+                        <a href="{% url 'notifications:sms_logs' %}" class="btn btn-sm btn-outline-primary ms-2">گزارش پیامک‌ها</a>
+                        <a href="{% url 'notifications:sms_settings' %}" class="btn btn-sm btn-outline-secondary">تنظیمات پیامک</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="announcement-form">
+                        {% csrf_token %}
+                        
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle-fill"></i> 
+                            پیامک به کاربرانی ارسال می‌شود که شماره تلفن همراه در پروفایل خود ثبت کرده‌اند.
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label class="form-label">{{ form.recipient_type.label }}</label>
+                            <div class="recipient-options">
+                                {% for radio in form.recipient_type %}
+                                <div class="form-check">
+                                    {{ radio.tag }}
+                                    <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                        {{ radio.choice_label }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6" id="province-container">
+                                <div class="form-group">
+                                    <label for="{{ form.province.id_for_label }}">{{ form.province.label }}</label>
+                                    {{ form.province }}
+                                    {% if form.province.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.province.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6" id="role-container">
+                                <div class="form-group">
+                                    <label for="{{ form.role.id_for_label }}">{{ form.role.label }}</label>
+                                    {{ form.role }}
+                                    {% if form.role.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.role.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+                            {{ form.message }}
+                            {% if form.message.errors %}
+                                <div class="invalid-feedback d-block">{{ form.message.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                <span class="char-counter">0</span> / 160 کاراکتر
+                            </small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">ارسال پیامک</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const recipientTypeRadios = document.querySelectorAll('input[name="recipient_type"]');
+        const provinceField = document.getElementById('id_province');
+        const roleField = document.getElementById('id_role');
+        const provinceContainer = document.getElementById('province-container');
+        const roleContainer = document.getElementById('role-container');
+        const messageField = document.getElementById('id_message');
+        const charCounter = document.querySelector('.char-counter');
+        
+        // Function to toggle visibility of province and role fields
+        function toggleRecipientFields() {
+            const selectedType = document.querySelector('input[name="recipient_type"]:checked').value;
+            
+            if (selectedType === 'province') {
+                provinceField.disabled = false;
+                roleField.disabled = true;
+                provinceContainer.style.display = 'block';
+                roleContainer.style.display = 'none';
+            } else if (selectedType === 'role') {
+                provinceField.disabled = true;
+                roleField.disabled = false;
+                provinceContainer.style.display = 'none';
+                roleContainer.style.display = 'block';
+            } else {
+                // All users
+                provinceField.disabled = true;
+                roleField.disabled = true;
+                provinceContainer.style.display = 'none';
+                roleContainer.style.display = 'none';
+            }
+        }
+        
+        // Add event listeners for radio buttons
+        recipientTypeRadios.forEach(radio => {
+            radio.addEventListener('change', toggleRecipientFields);
+        });
+        
+        // Update character counter for message
+        messageField.addEventListener('input', function() {
+            charCounter.textContent = this.value.length;
+            if (this.value.length > 160) {
+                charCounter.classList.add('text-danger');
+            } else {
+                charCounter.classList.remove('text-danger');
+            }
+        });
+        
+        // Form submission validation
+        document.getElementById('announcement-form').addEventListener('submit', function(event) {
+            const selectedType = document.querySelector('input[name="recipient_type"]:checked').value;
+            
+            if (selectedType === 'province' && !provinceField.value) {
+                event.preventDefault();
+                alert('لطفاً یک استان انتخاب کنید.');
+            } else if (selectedType === 'role' && !roleField.value) {
+                event.preventDefault();
+                alert('لطفاً یک نقش انتخاب کنید.');
+            }
+            
+            if (messageField.value.trim() === '') {
+                event.preventDefault();
+                alert('لطفاً متن پیام را وارد کنید.');
+            }
+        });
+        
+        // Initialize fields on page load
+        toggleRecipientFields();
+        charCounter.textContent = messageField.value.length;
+    });
+</script>
+{% endblock %} 

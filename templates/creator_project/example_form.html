@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}فرم نمونه ورودی مبلغ{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-currency-dollar me-2"></i>
+                        فرم نمونه ورودی مبلغ
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="amount_field" class="form-label fw-bold">
+                                مبلغ (ریال) <span class="text-danger">*</span>
+                            </label>
+                            {% include "field_templates/currency_input.html" with 
+                                field_id="amount_field" 
+                                field_name="amount" 
+                                required=True 
+                                value="1000000" 
+                                help_text="مبلغ را به ریال وارد کنید. فقط اعداد صحیح قابل قبول است." %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="suggested_amount" class="form-label fw-bold">
+                                مبلغ پیشنهادی (ریال)
+                            </label>
+                            {% include "field_templates/currency_input.html" with 
+                                field_id="suggested_amount" 
+                                field_name="suggested_amount" 
+                                required=False 
+                                value="2500000" %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="readonly_amount" class="form-label fw-bold">
+                                مبلغ غیرقابل تغییر (ریال)
+                            </label>
+                            {% include "field_templates/currency_input.html" with 
+                                field_id="readonly_amount" 
+                                field_name="readonly_amount" 
+                                readonly=True 
+                                value="5000000" %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="disabled_amount" class="form-label fw-bold">
+                                مبلغ غیرفعال (ریال)
+                            </label>
+                            {% include "field_templates/currency_input.html" with 
+                                field_id="disabled_amount" 
+                                field_name="disabled_amount" 
+                                disabled=True 
+                                value="7500000" %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                نمایش مبلغ (غیرقابل ویرایش)
+                            </label>
+                            <div class="currency-display">10000000</div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i>
+                                ذخیره
+                            </button>
+                            <button type="reset" class="btn btn-secondary">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i>
+                                بازنشانی
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

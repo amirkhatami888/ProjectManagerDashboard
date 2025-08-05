@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% load tz %}
+
+{% block title %}گزارش پیامک‌ها{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #34495e;
+    --accent-color: #3498db;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --danger-color: #e74c3c;
+    --light-bg: #ecf0f1;
+    --white: #ffffff;
+    --text-dark: #2c3e50;
+    --text-muted: #7f8c8d;
+    --border-color: #bdc3c7;
+    --card-shadow: 0 4px 12px rgba(44, 62, 80, 0.1);
+    --card-hover-shadow: 0 8px 20px rgba(44, 62, 80, 0.15);
+}
+
+body {
+    background: var(--light-bg);
+    font-family: 'Tahoma', 'Segoe UI', sans-serif;
+    direction: rtl;
+}
+
+.page-header {
+    background: var(--white);
+    border-bottom: 3px solid var(--primary-color);
+    padding: 25px 0;
+    margin-bottom: 25px;
+    box-shadow: var(--card-shadow);
+}
+
+.page-header h1 {
+    margin: 0;
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 1.8rem;
+}
+
+.dashboard-card {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.card-header-gradient {
+    background: var(--primary-color);
+    color: var(--white);
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.card-header-gradient h6 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.btn-modern {
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: none;
+    font-family: 'Tahoma', 'Segoe UI', sans-serif;
+    text-decoration: none;
+}
+
+.btn-primary.btn-modern {
+    background: var(--primary-color);
+    color: var(--white);
+}
+
+.btn-primary.btn-modern:hover {
+    background: var(--secondary-color);
+    box-shadow: var(--card-shadow);
+}
+
+.table {
+    font-family: 'Tahoma', 'Segoe UI', sans-serif;
+}
+
+.badge {
+    border-radius: 4px;
+    font-weight: 600;
+    padding: 6px 12px;
+}
+
+.badge-success {
+    background-color: var(--success-color);
+}
+
+.badge-danger {
+    background-color: var(--danger-color);
+}
+
+.badge-warning {
+    background-color: var(--warning-color);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h1 class="mb-2">
+                        <i class="fas fa-list-alt ml-3"></i>
+                        گزارش پیامک‌ها
+                    </h1>
+                    <p class="mb-0 text-muted">تاریخچه و وضعیت ارسال پیامک‌ها</p>
+                </div>
+                <div>
+                    <a href="{% url 'send_sms' %}" class="btn btn-primary btn-modern">
+                        <i class="fas fa-paper-plane ml-2"></i>ارسال پیامک جدید
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="dashboard-card">
+                <div class="card-header-gradient">
+                    <h6 class="m-0">
+                        <i class="fas fa-history ml-2"></i>
+                        تاریخچه پیام‌های پیامکی
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>تاریخ/زمان</th>
+                                    <th>فرستنده</th>
+                                    <th>گیرنده</th>
+                                    <th>پیام</th>
+                                    <th>قالب</th>
+                                    <th>وضعیت</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs %}
+                                <tr>
+                                    <td>{% timezone "Asia/Tehran" %}{{ log.sent_at|date:"Y/m/d H:i" }}{% endtimezone %}</td>
+                                    <td>
+                                        {% if log.sender %}
+                                            {{ log.sender.get_full_name|default:log.sender.username }}
+                                        {% else %}
+                                            سیستم
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if log.recipient_user %}
+                                            {{ log.recipient_user.get_full_name|default:log.recipient_user.username }}
+                                            <br>
+                                            <small class="text-muted">{{ log.recipient_number }}</small>
+                                        {% else %}
+                                            {{ log.recipient_number }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ log.message|linebreaksbr|truncatechars:80 }}</td>
+                                    <td>
+                                        {% if log.template %}
+                                            {{ log.template.name }}
+                                        {% else %}
+                                            <span class="text-muted">هیچ</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if log.status == 'SENT' %}
+                                            <span class="badge badge-success">ارسال شده</span>
+                                        {% elif log.status == 'FAILED' %}
+                                            <span class="badge badge-danger" data-toggle="tooltip" title="{{ log.error_message }}">
+                                                ناموفق
+                                                <i class="fas fa-exclamation-circle ml-1"></i>
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-warning">در انتظار</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">هیچ گزارش پیامکی یافت نشد.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Initialize tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+        
+        // Initialize DataTable for sorting, searching, and pagination
+        $('#dataTable').DataTable({
+            "order": [[ 0, "desc" ]],  // Sort by date descending
+            "language": {
+                "search": "جستجو:",
+                "lengthMenu": "نمایش _MENU_ مورد",
+                "info": "نمایش _START_ تا _END_ از _TOTAL_ مورد",
+                "infoEmpty": "نمایش 0 تا 0 از 0 مورد",
+                "infoFiltered": "(فیلتر شده از _MAX_ مورد)",
+                "paginate": {
+                    "first": "اولین",
+                    "last": "آخرین",
+                    "next": "بعدی",
+                    "previous": "قبلی"
+                }
+            }
+        });
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,1918 @@
+{% extends 'base.html' %}
+{% load jalali_tags %}
+{% load humanize %}
+
+{% block title %}{{ project.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .currency-amount {
+        font-weight: 600;
+        color: #2c5530;
+        font-family: 'Courier New', monospace;
+        direction: ltr;
+        display: inline-block;
+        font-size: 1.3em;
+    }
+    
+    .financial-info .currency-amount {
+        font-size: 1.5em;
+    }
+    
+    .table .currency-amount {
+        font-size: 1.2em;
+    }
+    
+    .list-group-item .currency-amount {
+        font-size: 1.3em;
+        color: #198754;
+    }
+    
+    /* Professional table styling */
+    .financial-table {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        overflow: hidden;
+        border: none;
+    }
+    
+    .financial-table thead th {
+        background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+        border: none;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        padding: 15px 12px;
+    }
+    
+    .financial-table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .financial-table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .financial-table tbody td {
+        padding: 12px;
+        vertical-align: middle;
+        border-color: #e9ecef;
+    }
+    
+    .credit-table {
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid #e9ecef;
+    }
+    
+    .credit-table thead th {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: none;
+        font-weight: 600;
+        font-size: 0.9em;
+        padding: 10px 8px;
+        color: #495057;
+    }
+    
+    .credit-table tbody tr:hover {
+        background-color: #f1f3f4;
+    }
+    
+    .credit-table tbody td {
+        padding: 8px;
+        border-color: #f1f3f4;
+        font-size: 0.9em;
+    }
+    
+    /* Enhanced currency styling */
+    .text-danger .currency-amount {
+        color: #dc3545 !important;
+    }
+    
+    .table-primary .currency-amount {
+        color: #0d6efd !important;
+        font-weight: 700;
+    }
+    
+    /* Icon styling */
+    .bi-cash-stack, .bi-cash-coin, .bi-bank {
+        color: #28a745;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .financial-table tbody td {
+            padding: 8px 6px;
+            font-size: 0.85em;
+        }
+        
+        .currency-amount {
+            font-size: 1.1em !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ project.name }}</h1>
+        
+        <div class="d-flex gap-2">
+            {% if user.is_admin or project.created_by == user %}
+            <a href="{% url 'creator_project:project_update' project.id %}" class="btn btn-primary">
+                <i class="bi bi-pencil-square"></i> بروزرسانی
+            </a>
+            {% endif %}
+            
+            {% if project.created_by == user and not project.is_submitted %}
+            <a href="{% url 'creator_project:project_submit' project.id %}" class="btn btn-success">
+                <i class="bi bi-send-check"></i> ارسال برای تایید
+            </a>
+            {% endif %}
+            
+            {% if user.is_admin or user.is_expert or user.is_vice_chief_executive %}
+            {% if project.is_submitted and not project.is_approved %}
+            <a href="{% url 'creator_project:project_approve' project.id %}" class="btn btn-success">
+                <i class="bi bi-check2-circle"></i> تایید
+            </a>
+            <a href="{% url 'creator_project:project_reject' project.id %}" class="btn btn-danger">
+                <i class="bi bi-x-circle"></i> رد
+            </a>
+            {% endif %}
+            {% endif %}
+            
+            {% if user.is_province_manager and project.created_by == user and project.is_approved %}
+            <a href="{% url 'creator_project:funding_request_create' %}?project={{ project.id }}" class="btn btn-info">
+                <i class="bi bi-currency-dollar"></i> درخواست اعتبار
+            </a>
+            {% endif %}
+            
+            {% if project.program %}
+            <a href="{% url 'creator_program:program_detail' project.program.id %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-return-left"></i> بازگشت به طرح
+            </a>
+            {% else %}
+            <a href="{% url 'creator_project:project_list' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-return-left"></i> بازگشت به لیست
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <style>
+        /* Consistent button styling for top action buttons */
+        .d-flex.gap-2 .btn {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            min-width: 120px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .d-flex.gap-2 .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .d-flex.gap-2 .btn i {
+            font-size: 1.1rem;
+        }
+        
+        .btn-info {
+            color: white;
+        }
+        
+        .btn-info:hover {
+            color: white;
+        }
+    </style>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Project Information Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="bi bi-info-circle me-2"></i>اطلاعات پروژه</h4>
+                    <div>
+                        <a href="{% url 'creator_project:project_update' project.id %}" class="btn btn-light btn-sm">
+                            <i class="bi bi-pencil"></i> ویرایش
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Basic Information Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-1 mb-2">
+                                <i class="bi bi-card-text me-2"></i>اطلاعات پایه
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-hash text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">شناسه پروژه</small>
+                                    <p class="mb-0 fw-bold text-dark">{{ project.project_id }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-file-text text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">نام پروژه</small>
+                                    <p class="mb-0 fw-bold text-dark">{{ project.name }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-tag text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">نوع پروژه</small>
+                                    <p class="mb-0">{{ project.get_project_type_display }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar-event text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">تاریخ ایجاد</small>
+                                    <p class="mb-0">{{ project.created_at|to_jalali:'%Y/%m/%d' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location Information Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-info border-bottom pb-1 mb-2">
+                                <i class="bi bi-geo-alt me-2"></i>اطلاعات موقعیت
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-map text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">استان</small>
+                                    <p class="mb-0">{{ project.province }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% if project.city %}
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-building text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">شهر</small>
+                                    <p class="mb-0">{{ project.city }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Project Details Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-success border-bottom pb-1 mb-2">
+                                <i class="bi bi-clipboard-data me-2"></i>جزئیات پروژه
+                            </h6>
+                        </div>
+                        {% if project.area_size %}
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-square text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">عرصه</small>
+                                    <p class="mb-0">{{ project.area_size }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if project.notables %}
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-building text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">اعیان</small>
+                                    <p class="mb-0">{{ project.notables }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if project.floor %}
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-layers text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">طبقه</small>
+                                    <p class="mb-0">{{ project.floor }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+
+                    <!-- Creator Information Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-secondary border-bottom pb-1 mb-2">
+                                <i class="bi bi-person me-2"></i>اطلاعات ایجاد کننده
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-person-circle text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">ایجاد شده توسط</small>
+                                    <p class="mb-0">{{ project.created_by.username }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Program Information Card -->
+            {% if project.program %}
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="bi bi-info-circle me-2"></i>اطلاعات طرح مربوطه</h4>
+                    <div>
+                        <a href="{% url 'creator_program:program_detail' project.program.id %}" class="btn btn-light btn-sm">
+                            <i class="bi bi-eye"></i> مشاهده کامل
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Basic Information Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-primary border-bottom pb-1 mb-2">
+                                <i class="bi bi-card-text me-2"></i>اطلاعات پایه
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-hash text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">کد طرح</small>
+                                    <p class="mb-0 fw-bold text-dark">{{ project.program.program_id }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-file-text text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">عنوان طرح</small>
+                                    <p class="mb-0 fw-bold text-dark">
+                                        <a href="{% url 'creator_program:program_detail' project.program.id %}" class="text-decoration-none">
+                                            {{ project.program.title }}
+                                        </a>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-tag text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">نوع طرح</small>
+                                    <p class="mb-0">{{ project.program.get_program_type_display }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar-event text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">تاریخ ایجاد</small>
+                                    <p class="mb-0">{{ project.program.created_at|to_jalali:'%Y/%m/%d' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- License Information Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-success border-bottom pb-1 mb-2">
+                                <i class="bi bi-file-earmark-check me-2"></i>اطلاعات مجوز
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-check-circle text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">وضعیت مجوز دفترچه توجیهی</small>
+                                    <p class="mb-0">
+                                        <span class="badge {% if project.program.license_state == 'دارد' %}bg-success{% elif project.program.license_state == 'ندارد' %}bg-danger{% elif project.program.license_state == 'دردست اقدام' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ project.program.get_license_state_display }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% if project.program.license_code %}
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-upc text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">کد مجوز دفترچه توجیهی</small>
+                                    <p class="mb-0">{{ project.program.license_code }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Location Information Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-info border-bottom pb-1 mb-2">
+                                <i class="bi bi-geo-alt me-2"></i>اطلاعات موقعیت
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-map text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">استان</small>
+                                    <p class="mb-0">{{ project.program.province }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% if project.program.city %}
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-building text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">شهر</small>
+                                    <p class="mb-0">{{ project.program.city }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if project.program.address %}
+                        <div class="col-12 mb-2">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-geo-alt text-muted me-2 mt-1"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">آدرس</small>
+                                    <p class="mb-0">{{ project.program.address|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if project.program.longitude or project.program.latitude %}
+                        <div class="col-12 mb-2">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-geo-alt-fill text-muted me-2 mt-1"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">موقعیت جغرافیایی (GIS)</small>
+                                    <p class="mb-0" dir="ltr">
+                                        {% if project.program.longitude and project.program.latitude %}
+                                            <span class="badge bg-info">طول جغرافیایی: {{ project.program.longitude }}</span>
+                                            <span class="badge bg-info ms-2">عرض جغرافیایی: {{ project.program.latitude }}</span>
+                                        {% elif project.program.longitude %}
+                                            <span class="badge bg-info">طول جغرافیایی: {{ project.program.longitude }}</span>
+                                        {% elif project.program.latitude %}
+                                            <span class="badge bg-info">عرض جغرافیایی: {{ project.program.latitude }}</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Timeline Information Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-warning border-bottom pb-1 mb-2">
+                                <i class="bi bi-clock-history me-2"></i>اطلاعات زمانی
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-calendar-plus text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">تاریخ افتتاح طرح</small>
+                                    <p class="mb-0">
+                                        {% if project.program.program_opening_date %}
+                                            <span class="badge bg-success">{{ project.program.program_opening_date|to_jalali }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">تعیین نشده</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description Section -->
+                    {% if project.program.description %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-secondary border-bottom pb-1 mb-2">
+                                <i class="bi bi-chat-text me-2"></i>توضیحات
+                            </h6>
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-chat-quote text-muted me-2 mt-1"></i>
+                                <div>
+                                    <p class="mb-0">{{ project.program.description|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Statistics Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-dark border-bottom pb-1 mb-2">
+                                <i class="bi bi-graph-up me-2"></i>آمار
+                            </h6>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-folder text-primary me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">تعداد پروژه‌های این طرح</small>
+                                    <p class="mb-0 fw-bold text-primary">{{ project.program.get_project_count }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-diagram-3 text-success me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">مجموع زیرپروژه‌ها</small>
+                                    <p class="mb-0 fw-bold text-success">{{ project.program.get_total_subproject_count }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status Section -->
+                    {% if project.program.is_approved %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="alert alert-success">
+                                <i class="bi bi-check-circle-fill me-2"></i>
+                                <strong>این طرح تایید شده است.</strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% elif project.program.is_submitted %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="alert alert-warning">
+                                <i class="bi bi-clock-fill me-2"></i>
+                                <strong>این طرح در انتظار تایید است.</strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle-fill me-2"></i>
+                                <strong>این طرح در حالت پیش‌نویس است.</strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            آخرین بروزرسانی: {{ project.program.updated_at|to_jalali:'%Y/%m/%d' }}
+                        </small>
+                        <a href="{% url 'creator_program:program_detail' project.program.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i> مشاهده جزئیات کامل طرح
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Progress Information Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">اطلاعات پیشرفت</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>پیشرفت فیزیکی:</strong> {{ project.physical_progress }}%
+                        </div>
+                        <div class="col-md-8">
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar" role="progressbar" style="width: {{ project.physical_progress }}%;" 
+                                    aria-valuenow="{{ project.physical_progress }}" aria-valuemin="0" aria-valuemax="100">
+                                    {{ project.physical_progress }}%
+                                </div>
+                            </div>
+                            <small class="text-muted mt-2 d-block">محاسبه بر اساس میانگین وزنی پیشرفت زیرپروژه‌ها (وزن‌دهی بر اساس مبلغ نهایی قرارداد یا هزینه تخمینی در صورت عدم وجود قرارداد)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-4">
+                            <strong>پیشرفت مالی:</strong> {{ project.calculate_financial_progress }}%
+                        </div>
+                        <div class="col-md-8">
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ project.calculate_financial_progress }}%;" 
+                                    aria-valuenow="{{ project.calculate_financial_progress }}" aria-valuemin="0" aria-valuemax="100">
+                                    {{ project.calculate_financial_progress }}%
+                                </div>
+                            </div>
+                            <small class="text-muted mt-2 d-block">محاسبه بر اساس مجموع مبلغ پرداختی آخرین صورت وضعیت تقسیم بر مجموع مبلغ نهایی قرارداد زیرپروژه‌ها</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <strong>تاریخ پایان پروژه:</strong> {% if project.estimated_opening_time %}{{ project.estimated_opening_time|to_jalali:'%Y/%m/%d' }}{% else %}-{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Financial Information Card -->
+            <div class="card mb-4 financial-info">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-cash-stack me-2"></i>
+                        اطلاعات مالی
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Main Financial Summary Table -->
+                    <div class="table-responsive mb-4">
+                        <table class="table table-hover table-bordered financial-table">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th scope="col" class="text-center">شرح</th>
+                                    <th scope="col" class="text-center">مبلغ</th>
+                                    <th scope="col" class="text-center">توضیحات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold">مجموع دیون</td>
+                                    <td class="text-end">
+                                        <span class="currency-amount text-danger">{{ project.cached_total_debt|floatformat:0|intcomma }}</span>
+                                    </td>
+                                    <td class="text-muted small">مجموع دیون های زیرپروژه‌ها</td>
+                                </tr>
+                                <tr class="table-info">
+                                    <td class="fw-bold">اعتبار مورد نیاز تکمیل قرار داد ها</td>
+                                    <td class="text-end">
+                                        <span class="currency-amount">{{ project.cached_required_credit_contracts|floatformat:0|intcomma }}</span>
+                                    </td>
+                                    <td class="text-muted small">مجموع اعتبار مورد نیاز تکمیل قرار داد های زیرپروژه‌ها</td>
+                                </tr>
+                                <tr class="table-warning">
+                                    <td class="fw-bold">اعتبار مورد نیاز تکمیل پروژه</td>
+                                    <td class="text-end">
+                                        <span class="currency-amount">{{ project.cached_required_credit_project|floatformat:0|intcomma }}</span>
+                                    </td>
+                                    <td class="text-muted small">اعتبار لازم برای تکمیل کل پروژه</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Allocations Subsection -->
+                    <div class="mt-4">
+                        <h6 class="text-primary mb-3 border-bottom pb-2">
+                            <i class="bi bi-pie-chart me-2"></i>
+                            تخصیص ها
+                        </h6>
+                    
+                    <!-- Credit Details Tables -->
+                    <div class="row">
+                        <!-- Cash Credit Table -->
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted mb-3 border-bottom pb-2">
+                                <i class="bi bi-cash-coin me-2"></i>
+                                اعتبار نقدی
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped credit-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col">نوع</th>
+                                            <th scope="col" class="text-end">مبلغ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="fw-medium">ملی</td>
+                                            <td class="text-end">
+                                                <span class="currency-amount">{{ project.get_total_cash_national|floatformat:0|intcomma }}</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-medium">استانی</td>
+                                            <td class="text-end">
+                                                <span class="currency-amount">{{ project.get_total_cash_provincial|floatformat:0|intcomma }}</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-medium">خیریه</td>
+                                            <td class="text-end">
+                                                <span class="currency-amount">{{ project.get_total_cash_charity|floatformat:0|intcomma }}</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-medium">سفر</td>
+                                            <td class="text-end">
+                                                <span class="currency-amount">{{ project.get_total_cash_travel|floatformat:0|intcomma }}</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Treasury Credit Table -->
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted mb-3 border-bottom pb-2">
+                                <i class="bi bi-bank me-2"></i>
+                                اعتبار اسناد خزانه
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped credit-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col">نوع</th>
+                                            <th scope="col" class="text-end">مبلغ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="fw-medium">ملی</td>
+                                            <td class="text-end">
+                                                <span class="currency-amount">{{ project.get_total_treasury_national|floatformat:0|intcomma }}</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-medium">استانی</td>
+                                            <td class="text-end">
+                                                <span class="currency-amount">{{ project.get_total_treasury_provincial|floatformat:0|intcomma }}</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-medium">سفر</td>
+                                            <td class="text-end">
+                                                <span class="currency-amount">{{ project.get_total_treasury_travel|floatformat:0|intcomma }}</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Funding Requests section if there are any -->
+            {% if project.funding_requests.exists %}
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">درخواست‌های اعتبار</h5>
+                    {% if user.is_province_manager and project.created_by == user %}
+                    <a href="{% url 'creator_project:funding_request_create' %}?project={{ project.id }}" class="btn btn-sm btn-light">
+                        <i class="bi bi-plus-circle"></i> درخواست جدید
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>وضعیت</th>
+                                    <th>مبلغ پیشنهادی استان</th>
+                                    <th>مبلغ پیشنهادی ستاد</th>
+                                    <th>مبلغ نهایی</th>
+                                    <th>تاریخ ایجاد</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in project.funding_requests.all %}
+                                <tr>
+                                    <td>{{ request.get_status_display }}</td>
+                                    <td>
+                                        <span class="currency-amount">{{ request.province_suggested_amount|intcomma }}</span> 
+                                    </td>
+                                    <td>
+                                        {% if request.headquarters_suggested_amount %}
+                                            <span class="currency-amount">{{ request.headquarters_suggested_amount|intcomma }}</span>
+                                        {% else %}-{% endif %}
+                                    </td>
+                                    <td>
+                                        {% if request.final_amount %}
+                                            <span class="currency-amount">{{ request.final_amount|intcomma }}</span>
+                                        {% else %}-{% endif %}
+                                    </td>
+                                    <td>{{ request.created_at|to_jalali:"%Y/%m/%d" }}</td>
+                                    <td>
+                                        <a href="{% url 'creator_project:funding_request_detail' request.id %}" class="btn btn-sm btn-info">
+                                            <i class="bi bi-eye"></i> مشاهده
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Allocations Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">تخصیص مالی</h5>
+                    <div class="d-flex gap-2">
+                    {% if user.is_admin or user.is_expert or project.created_by == user %}
+                    <a href="{% url 'creator_project:project_add_allocation' project.id %}" class="btn btn-sm btn-light">
+                        <i class="bi bi-plus-circle"></i> افزودن
+                    </a>
+                    {% endif %}
+                        <a href="{% url 'creator_project:allocation_list' project.id %}" class="btn btn-sm btn-outline-light">
+                            <i class="bi bi-list-ul"></i> مشاهده همه
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if allocations %}
+                    <div class="list-group">
+                        {% for allocation in allocations %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ allocation.allocation_type }}</h6>
+                                <small>{{ allocation.allocation_date|to_jalali:'%Y/%m/%d' }}</small>
+                            </div>
+                            <p class="mb-1">
+                                <span class="currency-amount">{{ allocation.amount|intcomma }}</span>
+                            </p>
+                            <small class="text-muted">شماره نامه: {{ allocation.letter_number }}</small>
+                            {% if allocation.description %}
+                            <p class="mt-2 small">{{ allocation.description }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        هنوز هیچ تخصیص مالی ثبت نشده است.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <small class="text-muted">مجموع تخصیص‌ها: 
+                        <span class="currency-amount">{{ project.get_total_allocation|intcomma }}</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Project Status Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">وضعیت پروژه</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>وضعیت:</strong>
+                        <div class="badge bg-primary">{{ project.get_project_type_display }}</div>
+                        <div class="badge {% if project.is_approved %}bg-success{% elif project.is_expert_approved %}bg-info{% elif project.is_submitted %}bg-warning{% else %}bg-secondary{% endif %}">
+                        {% if project.is_approved %}
+                                تایید شده
+                            {% elif project.is_expert_approved %}
+                                تایید کارشناس - در انتظار تایید معاون
+                        {% elif project.is_submitted %}
+                                در انتظار بررسی
+                        {% else %}
+                                پیش‌نویس
+                        {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <strong>آخرین بروزرسانی:</strong> {{ project.updated_at|to_jalali:'%Y/%m/%d' }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Expert Comments Card -->
+            {% if project.rejection_comments.all and not project.is_approved %}
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0"><i class="bi bi-exclamation-triangle me-2"></i>نظر کارشناس</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for comment in project.rejection_comments.all %}
+                            {% if comment.field_name != 'province' %}
+                            <div class="list-group-item border-danger">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <small class="text-danger">{{ comment.created_at|to_jalali:'%Y/%m/%d' }}</small>
+                                </div>
+                                <p class="mb-1 text-dark">{{ comment.comment }}</p>
+                                <small class="text-danger">
+                                    <i class="bi bi-person-badge me-1"></i>
+                                    کارشناس: {{ comment.expert.first_name }} {{ comment.expert.last_name }}
+                                </small>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Subprojects Card -->
+            <div class="card">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">زیرپروژه‌ها</h5>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'creator_project:subproject_list' project.id %}" class="btn btn-sm btn-outline-light">
+                            <i class="bi bi-list"></i> مشاهده همه
+                        </a>
+                    {% if project.has_available_subproject_slots and user.is_admin or project.created_by == user %}
+                    <a href="{% url 'creator_subproject:subproject_create' project.id %}" class="btn btn-sm btn-light">
+                        <i class="bi bi-plus-circle"></i> افزودن
+                    </a>
+                    {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if subprojects %}
+                    <div class="list-group">
+                        {% for subproject in subprojects %}
+                        <a href="{% url 'creator_subproject:subproject_detail' subproject.id %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    {{ subproject.sub_project_type }}
+                                    {% if subproject.name %}- {{ subproject.name }}{% endif %}
+                                </h6>
+                                <small>#{{ subproject.sub_project_number }}</small>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small>{{ subproject.state }}</small>
+                                <div class="progress flex-grow-1 mx-2" style="height: 5px;">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ subproject.physical_progress }}%;" 
+                                         aria-valuenow="{{ subproject.physical_progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <small>{{ subproject.physical_progress }}%</small>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        هنوز هیچ زیرپروژه‌ای ایجاد نشده است.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <small class="text-muted">{{ subprojects|length }} از {{ project.max_subprojects }} زیرپروژه ایجاد شده</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Update Button -->
+<div class="d-flex justify-content-between mt-4 mb-3">
+    <div>
+        <!-- Removed duplicate funding request button -->
+    </div>
+    <div>
+        {% if user.is_admin or project.created_by == user %}
+        <a href="{% url 'creator_project:project_update' project.id %}" class="btn btn-primary">
+            <i class="bi bi-pencil"></i> بروز رسانی
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Gantt Chart -->
+<div class="card mt-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">نمودار گانت زیرپروژه‌ها</h5>
+        <div class="d-flex gap-2">
+            <button id="gantt-refresh-btn" class="btn btn-sm btn-outline-light">
+                <i class="bi bi-arrow-clockwise"></i> بروزرسانی
+            </button>
+            <button id="gantt-fullscreen-btn" class="btn btn-sm btn-outline-light">
+                <i class="bi bi-arrows-fullscreen"></i> نمایش تمام صفحه
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-12">
+                <small class="text-muted">
+                    <strong>راهنمای انواع ارتباط:</strong>
+                    <span class="ms-3"><span style="color: #FF0000;">●</span> بعد از</span>
+                    <span class="ms-3"><span style="color: #0066CC;">●</span> قبل از</span>
+                    <span class="ms-3"><span style="color: #00AA00;">●</span> شروع با</span>
+                    <span class="ms-3"><span style="color: #FF6600;">●</span> پایان با</span>
+                </small>
+            </div>
+        </div>
+        <div id="gantt-chart-container" style="height: 450px;"></div>
+    </div>
+</div>
+
+
+
+<!-- Fullscreen Modal -->
+<div id="gantt-modal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">نمودار گانت زیرپروژه‌ها</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3">
+                <div id="gantt-chart-fullscreen" style="height: 85vh; width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- ApexCharts JS -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<!-- Moment.js with Jalali plugin for Persian calendar support -->
+<script src="https://cdn.jsdelivr.net/npm/moment"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment-jalaali@0.9.2/build/moment-jalaali.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Convert dates to Jalali format for display
+        function toJalali(date) {
+            if (!date) return null;
+            return moment(date).format('jYYYY/jMM/jDD');
+        }
+        
+        // Prepare data for the Gantt chart
+        var subprojects = [
+            {% for subproject in subprojects %}
+            {
+                id: {{ subproject.id }},
+                name: "{{ subproject.sub_project_type }}{% if subproject.name %} - {{ subproject.name }}{% endif %}",
+                start: {% if subproject.contract_amount and subproject.start_date %}"{{ subproject.start_date|date:'Y-m-d' }}"{% else %}""{% endif %},
+                end: {% if subproject.contract_amount and subproject.end_date %}"{{ subproject.end_date|date:'Y-m-d' }}"{% else %}""{% endif %},
+                progress: {{ subproject.physical_progress }},
+                type: "{{ subproject.relationship_type|default:'مستقل' }}",
+                relatedId: {% if subproject.related_subproject %}{{ subproject.related_subproject.id }}{% else %}null{% endif %},
+                relationshipType: "{{ subproject.relationship_type|default:'' }}",
+                relationshipDelay: {{ subproject.relationship_delay|default:0 }},
+                hasContract: {% if subproject.contract_amount %}true{% else %}false{% endif %},
+                imaginaryDuration: {{ subproject.imagenary_duration|default:180 }}
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+        
+        // Function to calculate dynamic dates for subprojects without contracts
+        function calculateDynamicDates(subprojects) {
+            const today = new Date();
+            const processedSubprojects = JSON.parse(JSON.stringify(subprojects)); // Deep copy
+            
+            console.log("Starting dynamic date calculation for subprojects:", processedSubprojects);
+            
+            // First pass: Handle floating subprojects and those with contracts
+            processedSubprojects.forEach(sp => {
+                if (sp.hasContract) {
+                    // Keep original dates for subprojects with contracts, but validate them
+                    if (!sp.start || !sp.end) {
+                        console.warn(`Subproject ${sp.name} has contract but missing dates:`, sp);
+                        // Set default dates even for contract subprojects if dates are missing
+                        sp.start = today.toISOString().split('T')[0];
+                        sp.end = new Date(today.getTime() + (sp.imaginaryDuration * 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
+                    }
+                    console.log(`Contract subproject ${sp.name}: ${sp.start} to ${sp.end}`);
+                } else if (sp.relationshipType === 'شناور' || !sp.relatedId || !sp.relationshipType) {
+                    // Floating subprojects or those without relationships start from today
+                    const startDate = new Date(today);
+                    const endDate = new Date(startDate);
+                    endDate.setDate(startDate.getDate() + sp.imaginaryDuration);
+                    
+                    sp.start = startDate.toISOString().split('T')[0];
+                    sp.end = endDate.toISOString().split('T')[0];
+                    console.log(`Floating/No-relation subproject ${sp.name}: ${sp.start} to ${sp.end} (${sp.imaginaryDuration} days)`);
+                } else {
+                    // Clear any existing dates for subprojects that will be calculated based on relationships
+                    sp.start = "";
+                    sp.end = "";
+                    console.log(`Relationship-based subproject ${sp.name}: will be calculated based on ${sp.relationshipType} relationship`);
+                }
+            });
+            
+            // Multiple passes to resolve dependencies (up to 10 iterations to prevent infinite loops)
+            let maxIterations = 10;
+            let changed = true;
+            
+            while (changed && maxIterations > 0) {
+                changed = false;
+                maxIterations--;
+                console.log(`Dependency resolution iteration ${10 - maxIterations}`);
+                
+                processedSubprojects.forEach(sp => {
+                    if (sp.hasContract || sp.relationshipType === 'شناور' || !sp.relatedId || !sp.relationshipType) {
+                        return; // Skip if has contract, floating, or no relationship
+                    }
+                    
+                    const relatedSp = processedSubprojects.find(rsp => rsp.id === sp.relatedId);
+                    if (!relatedSp) {
+                        console.warn(`Related subproject not found for ${sp.name} (looking for ID: ${sp.relatedId})`);
+                        return;
+                    }
+                    
+                    if (!relatedSp.start || !relatedSp.end) {
+                        console.log(`Related subproject ${relatedSp.name} doesn't have dates yet, skipping ${sp.name}`);
+                        return; // Skip if related subproject doesn't have dates yet
+                    }
+                    
+                    const relatedStart = new Date(relatedSp.start);
+                    const relatedEnd = new Date(relatedSp.end);
+                    const delay = sp.relationshipDelay || 0;
+                    let newStart, newEnd;
+                    
+                    switch (sp.relationshipType) {
+                        case 'بعد از': // After - sp starts when relatedSp ends
+                            newStart = new Date(relatedEnd);
+                            newStart.setDate(newStart.getDate() + delay);
+                            newEnd = new Date(newStart);
+                            newEnd.setDate(newStart.getDate() + sp.imaginaryDuration);
+                            console.log(`${sp.name} بعد از ${relatedSp.name}: starts ${newStart.toISOString().split('T')[0]}, ends ${newEnd.toISOString().split('T')[0]} (duration: ${sp.imaginaryDuration} days, delay: ${delay})`);
+                            break;
+                            
+                        case 'قبل از': // Before - sp ends when relatedSp starts  
+                            newEnd = new Date(relatedStart);
+                            newEnd.setDate(newEnd.getDate() - delay);
+                            newStart = new Date(newEnd);
+                            newStart.setDate(newEnd.getDate() - sp.imaginaryDuration);
+                            console.log(`${sp.name} قبل از ${relatedSp.name}: ends ${newEnd.toISOString().split('T')[0]}, starts ${newStart.toISOString().split('T')[0]} (duration: ${sp.imaginaryDuration} days, delay: ${delay})`);
+                            break;
+                            
+                        case 'شروع با': // Start with - sp starts with relatedSp
+                            newStart = new Date(relatedStart);
+                            newStart.setDate(newStart.getDate() + delay);
+                            newEnd = new Date(newStart);
+                            newEnd.setDate(newStart.getDate() + sp.imaginaryDuration);
+                            console.log(`${sp.name} شروع با ${relatedSp.name}: starts ${newStart.toISOString().split('T')[0]}, ends ${newEnd.toISOString().split('T')[0]} (duration: ${sp.imaginaryDuration} days, delay: ${delay})`);
+                            break;
+                            
+                        case 'پایان با': // End with - sp ends with relatedSp
+                            newEnd = new Date(relatedEnd);
+                            newEnd.setDate(newEnd.getDate() + delay);
+                            newStart = new Date(newEnd);
+                            newStart.setDate(newEnd.getDate() - sp.imaginaryDuration);
+                            console.log(`${sp.name} پایان با ${relatedSp.name}: ends ${newEnd.toISOString().split('T')[0]}, starts ${newStart.toISOString().split('T')[0]} (duration: ${sp.imaginaryDuration} days, delay: ${delay})`);
+                            break;
+                            
+                        default:
+                            console.warn(`Unknown relationship type: ${sp.relationshipType} for subproject ${sp.name}`);
+                            return;
+                    }
+                    
+                    const newStartStr = newStart.toISOString().split('T')[0];
+                    const newEndStr = newEnd.toISOString().split('T')[0];
+                    
+                    if (sp.start !== newStartStr || sp.end !== newEndStr) {
+                        console.log(`Updating ${sp.name} (${sp.relationshipType} ${relatedSp.name}): ${newStartStr} to ${newEndStr} (delay: ${delay} days)`);
+                        sp.start = newStartStr;
+                        sp.end = newEndStr;
+                        changed = true;
+                    }
+                });
+            }
+            
+            console.log("Final calculated subprojects:", processedSubprojects);
+            return processedSubprojects;
+        }
+        
+        // Check for Gantt chart refresh trigger from subproject edits
+        if (sessionStorage.getItem('triggerGanttRefresh') === 'true' && 
+            sessionStorage.getItem('projectId') === '{{ project.id }}') {
+            
+            console.log('Detected Gantt chart refresh trigger from subproject edit');
+            sessionStorage.removeItem('triggerGanttRefresh');
+            sessionStorage.removeItem('projectId');
+            
+            // Refresh the chart data immediately
+            setTimeout(function() {
+                const refreshBtn = document.getElementById('gantt-refresh-btn');
+                if (refreshBtn) {
+                    refreshBtn.click();
+                }
+            }, 1000); // Wait 1 second for page to fully load
+        }
+        
+        // Calculate dynamic dates
+        var calculatedSubprojects = calculateDynamicDates(subprojects);
+        
+        // Filter out subprojects without start or end dates
+        var validSubprojects = calculatedSubprojects.filter(function(sp) {
+            return sp.start && sp.end;
+        });
+        
+        function drawGanttArrows(chartContext, config, subprojectsData) {
+            console.log("drawGanttArrows called. Chart ID:", chartContext.el.id, "Subprojects data:", subprojectsData);
+
+            if (!chartContext || !config || !subprojectsData) {
+                console.error("drawGanttArrows: Missing chartContext, config, or subprojectsData");
+                return;
+            }
+
+            var dependencies = [];
+            subprojectsData.forEach(currentSpInfo => {
+                if (currentSpInfo.relatedId) {
+                    const relatedSpInfo = subprojectsData.find(rsp => rsp.id === currentSpInfo.relatedId);
+                    if (relatedSpInfo) {
+                        let predecessorChartName, successorChartName;
+                        if (currentSpInfo.relationshipType === 'بعد از') { // currentSpInfo is successor, relatedSpInfo is predecessor
+                            predecessorChartName = relatedSpInfo.name;
+                            successorChartName = currentSpInfo.name;
+                        } else if (currentSpInfo.relationshipType === 'قبل از') { // currentSpInfo is predecessor, relatedSpInfo is successor
+                            predecessorChartName = currentSpInfo.name;
+                            successorChartName = relatedSpInfo.name;
+                        } else if (currentSpInfo.relationshipType === 'شروع با') { // Start with - both start together
+                            predecessorChartName = relatedSpInfo.name;
+                            successorChartName = currentSpInfo.name;
+                        } else if (currentSpInfo.relationshipType === 'پایان با') { // End with - both end together  
+                            predecessorChartName = relatedSpInfo.name;
+                            successorChartName = currentSpInfo.name;
+                        } else if (currentSpInfo.relationshipType === 'شناور') { // Floating - no dependency arrow
+                            // console.log("Skipping arrow for floating relationship:", currentSpInfo.name);
+                            return;
+                        } else {
+                            // console.log("Skipping arrow for:", currentSpInfo.name, "due to relationshipType:", currentSpInfo.relationshipType);
+                            return; 
+                        }
+
+                        if (predecessorChartName && successorChartName) {
+                            dependencies.push({
+                                fromName: predecessorChartName,
+                                toName: successorChartName,
+                                relType: currentSpInfo.relationshipType
+                            });
+                        }
+                    } else {
+                        // console.warn("Could not find related subproject with ID:", currentSpInfo.relatedId, "for subproject:", currentSpInfo.name);
+                    }
+                }
+            });
+
+            console.log("Dependencies found:", dependencies);
+
+            var svg = chartContext.el.querySelector('svg');
+            if (!svg) {
+                console.error("drawGanttArrows: SVG element not found in chart.");
+                return;
+            }
+
+            var defs = svg.querySelector('defs');
+            if (!defs) {
+                defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                svg.prepend(defs);
+            }
+
+            // Create multiple arrowhead markers for different colors
+            const arrowheadColors = ['#FF0000', '#0066CC', '#00AA00', '#FF6600'];
+            arrowheadColors.forEach(color => {
+                const colorId = color.replace('#', '');
+                if (!defs.querySelector(`#arrowhead-${colorId}`)) {
+                    var marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                    marker.setAttribute('id', `arrowhead-${colorId}`);
+                    marker.setAttribute('markerWidth', '10');
+                    marker.setAttribute('markerHeight', '7');
+                    marker.setAttribute('refX', '9'); 
+                    marker.setAttribute('refY', '3.5');
+                    marker.setAttribute('orient', 'auto');
+                    marker.setAttribute('fill', color);
+                    var polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                    polygon.setAttribute('points', '0 0, 10 3.5, 0 7');
+                    marker.appendChild(polygon);
+                    defs.appendChild(marker);
+                    console.log(`Arrowhead marker created for color: ${color}`);
+                }
+            });
+            
+            var arrowGroupClass = 'dependency-arrow-group';
+            var arrowGroup = svg.querySelector('.' + arrowGroupClass);
+            if (arrowGroup) {
+                arrowGroup.innerHTML = ''; // Clear existing arrows
+            } else {
+                arrowGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                arrowGroup.setAttribute('class', arrowGroupClass);
+                // Try to insert before the tooltips group, or after datalabels, or after series.
+                let tooltipsGroup = svg.querySelector('.apexcharts-tooltip-series-group');
+                let dataLabelsGroup = svg.querySelector('.apexcharts-datalabels');
+                let seriesGroup = svg.querySelector('.apexcharts-series');
+
+                if (tooltipsGroup && tooltipsGroup.parentNode) {
+                     tooltipsGroup.parentNode.insertBefore(arrowGroup, tooltipsGroup);
+                } else if (dataLabelsGroup && dataLabelsGroup.parentNode) {
+                    dataLabelsGroup.parentNode.insertBefore(arrowGroup, dataLabelsGroup);
+                } else if (seriesGroup && seriesGroup.parentNode) {
+                     seriesGroup.parentNode.insertBefore(arrowGroup, seriesGroup.nextSibling || null); // Insert after series if possible
+                } else {
+                    svg.appendChild(arrowGroup); // Fallback
+                }
+                console.log("Arrow group created/found.");
+            }
+
+            if (dependencies.length === 0) {
+                console.log("No dependencies to draw arrows for.");
+                return;
+            }
+
+            dependencies.forEach(dep => {
+                if (!chartContext.w || !chartContext.w.globals || !chartContext.w.globals.labels) {
+                    console.warn('drawGanttArrows: ApexCharts globals not available for dependency:', dep);
+                    return;
+                }
+                let fromIndex = chartContext.w.globals.labels.indexOf(dep.fromName);
+                let toIndex = chartContext.w.globals.labels.indexOf(dep.toName);
+
+                console.log("Processing dependency:", dep, "fromIndex:", fromIndex, "toIndex:", toIndex);
+
+                if (fromIndex === -1 || toIndex === -1) {
+                    console.warn('drawGanttArrows: Could not find tasks in chart labels for dependency:', dep, "Available labels:", chartContext.w.globals.labels);
+                    return;
+                }
+                
+                if (!chartContext.w.globals.barseriesXY || 
+                    !chartContext.w.globals.barseriesXY[0] ||
+                    !chartContext.w.globals.barseriesXY[0].length || // check if array has elements
+                    !chartContext.w.globals.barseriesXY[0][fromIndex] || 
+                    !chartContext.w.globals.barseriesXY[0][toIndex]) {
+                    console.warn("drawGanttArrows: barseriesXY not available or incomplete for dependency:", dep, "barseriesXY[0]:", chartContext.w.globals.barseriesXY ? chartContext.w.globals.barseriesXY[0] : 'undefined');
+                    return;
+                }
+
+                const fromBar = chartContext.w.globals.barseriesXY[0][fromIndex]; 
+                const toBar = chartContext.w.globals.barseriesXY[0][toIndex];     
+                console.log("fromBar:", fromBar, "toBar:", toBar);
+
+                // Calculate arrow coordinates based on relationship type
+                let fromX_px, fromY_px, toX_px, toY_px;
+                
+                if (dep.relType === 'بعد از') {
+                    // Arrow from end of predecessor to start of successor
+                    fromX_px = fromBar.y + fromBar.w; // End of predecessor bar
+                    fromY_px = fromBar.x + fromBar.h / 2; // Middle of predecessor bar
+                    toX_px = toBar.y; // Start of successor bar
+                    toY_px = toBar.x + toBar.h / 2; // Middle of successor bar
+                } else if (dep.relType === 'قبل از') {
+                    // Arrow from end of predecessor to start of successor
+                    fromX_px = fromBar.y + fromBar.w; // End of predecessor bar
+                    fromY_px = fromBar.x + fromBar.h / 2; // Middle of predecessor bar
+                    toX_px = toBar.y; // Start of successor bar
+                    toY_px = toBar.x + toBar.h / 2; // Middle of successor bar
+                } else if (dep.relType === 'شروع با') {
+                    // Arrow from start of first task to start of second task
+                    fromX_px = fromBar.y; // Start of first bar
+                    fromY_px = fromBar.x + fromBar.h / 2; // Middle of first bar
+                    toX_px = toBar.y; // Start of second bar
+                    toY_px = toBar.x + toBar.h / 2; // Middle of second bar
+                } else if (dep.relType === 'پایان با') {
+                    // Arrow from end of first task to end of second task
+                    fromX_px = fromBar.y + fromBar.w; // End of first bar
+                    fromY_px = fromBar.x + fromBar.h / 2; // Middle of first bar
+                    toX_px = toBar.y + toBar.w; // End of second bar
+                    toY_px = toBar.x + toBar.h / 2; // Middle of second bar
+                } else {
+                    // Default: end to start relationship
+                    fromX_px = fromBar.y + fromBar.w; // End of predecessor bar
+                    fromY_px = fromBar.x + fromBar.h / 2; // Middle of predecessor bar
+                    toX_px = toBar.y; // Start of successor bar
+                    toY_px = toBar.x + toBar.h / 2; // Middle of successor bar
+                } 
+
+                if (fromX_px === toX_px && fromY_px === toY_px) {
+                    console.log("Skipping zero-length line for dep:", dep);
+                    return; 
+                }
+                
+                console.log(`Drawing line for ${dep.fromName} -> ${dep.toName} (${dep.relType}) from (${fromX_px}, ${fromY_px}) to (${toX_px}, ${toY_px})`);
+
+                // Choose arrow color based on relationship type
+                let arrowColor = '#FF0000'; // Default red
+                switch(dep.relType) {
+                    case 'بعد از':
+                        arrowColor = '#FF0000'; // Red for "after"
+                        break;
+                    case 'قبل از':
+                        arrowColor = '#0066CC'; // Blue for "before"
+                        break;
+                    case 'شروع با':
+                        arrowColor = '#00AA00'; // Green for "start with"
+                        break;
+                    case 'پایان با':
+                        arrowColor = '#FF6600'; // Orange for "end with"
+                        break;
+                    default:
+                        arrowColor = '#FF0000'; // Default red
+                }
+
+                var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', String(fromX_px));
+                line.setAttribute('y1', String(fromY_px));
+                line.setAttribute('x2', String(toX_px));
+                line.setAttribute('y2', String(toY_px));
+                line.setAttribute('stroke', arrowColor);
+                line.setAttribute('stroke-width', '2');
+                
+                // Use the correct arrowhead marker for the color
+                const colorId = arrowColor.replace('#', '');
+                line.setAttribute('marker-end', `url(#arrowhead-${colorId})`);
+                line.setAttribute('class', 'dependency-arrow');
+                line.setAttribute('data-relationship-type', dep.relType);
+                arrowGroup.appendChild(line);
+                console.log("Appended line for dependency:", dep);
+            });
+        }
+        
+        if (validSubprojects.length === 0) {
+            document.getElementById('gantt-chart-container').innerHTML = 
+                '<div class="alert alert-info"><strong>اطلاعاتی برای نمایش وجود ندارد</strong><br>' +
+                'برای نمایش نمودار گانت:<br>' +
+                '• زیرپروژه‌هایی با قرارداد باید تاریخ شروع و پایان داشته باشند<br>' +
+                '• زیرپروژه‌های بدون قرارداد باید مدت تخمینی تعریف شده داشته باشند<br>' +
+                '<button class="btn btn-primary btn-sm mt-2" onclick="location.reload()">بارگذاری مجدد</button></div>';
+            return;
+        }
+        
+        // Format data for ApexCharts
+        var series = [{
+            data: validSubprojects.map(function(sp) {
+                // Calculate duration in days
+                var startDate = new Date(sp.start);
+                var endDate = new Date(sp.end);
+                var durationDays = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24));
+                
+                // Enforce minimum and maximum duration for better display
+                if (durationDays < 7) {
+                    // For very short projects, set a minimum of 7 days
+                    endDate = new Date(startDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+                } else if (durationDays > 365) {
+                    // For very long projects, cap at 1 year
+                    endDate = new Date(startDate.getTime() + (365 * 24 * 60 * 60 * 1000));
+                }
+                
+                // Add relationship details to the tooltip
+                var relationshipInfo = '';
+                if (sp.relationshipType && sp.relatedId) {
+                    var relatedSubproject = validSubprojects.find(r => r.id == sp.relatedId);
+                    if (relatedSubproject) {
+                        relationshipInfo = sp.relationshipType + ' ' + relatedSubproject.name;
+                        if (sp.relationshipDelay !== 0) {
+                            relationshipInfo += ' (' + (sp.relationshipDelay > 0 ? '+' : '') + sp.relationshipDelay + ' روز)';
+                        }
+                    }
+                }
+                
+                return {
+                    x: sp.name,
+                    y: [
+                        startDate.getTime(),
+                        endDate.getTime()
+                    ],
+                    fillColor: sp.progress > 80 ? '#00E396' : sp.progress > 40 ? '#FEB019' : '#FF4560',
+                    progress: sp.progress,
+                    subprojectId: sp.id,
+                    relationshipInfo: relationshipInfo
+                };
+            })
+        }];
+        
+        // Find min and max dates for chart range
+        var minDate = Math.min.apply(null, validSubprojects.map(function(sp) { return new Date(sp.start).getTime(); }));
+        var maxDate = Math.max.apply(null, validSubprojects.map(function(sp) { return new Date(sp.end).getTime(); }));
+        
+        // Configure the chart
+        var options = {
+            series: series,
+            chart: {
+                height: 450,
+                type: 'rangeBar',
+                fontFamily: 'inherit',
+                dir: 'rtl',
+                toolbar: {
+                    show: true
+                },
+                animations: {
+                    enabled: false
+                },
+                events: {
+                    mounted: function(chartContext, config) {
+                        drawGanttArrows(chartContext, config, validSubprojects);
+                    },
+                    updated: function(chartContext, config) {
+                        drawGanttArrows(chartContext, config, validSubprojects);
+                    }
+                }
+            },
+            annotations: {
+                points: [],
+                xaxis: []
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: true,
+                    distributed: true,
+                    dataLabels: {
+                        hideOverflowingLabels: false
+                    },
+                    barHeight: '60%',
+                    columnWidth: '70%',
+                    rangeBarOverlap: false,
+                    rangeBarGroupRows: true
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                formatter: function(val, opts) {
+                    var progress = opts.w.config.series[opts.seriesIndex].data[opts.dataPointIndex].progress;
+                    return progress + '%';
+                },
+                style: {
+                    colors: ['#f3f4f5']
+                },
+                background: {
+                    enabled: false
+                }
+            },
+            xaxis: {
+                type: 'datetime',
+                labels: {
+                    formatter: function(value) {
+                        return moment(value).format('jYYYY/jMM/jDD');
+                    },
+                    rotate: -45,
+                    rotateAlways: true,
+                    minHeight: 60,
+                    style: {
+                        fontSize: '11px'
+                    }
+                },
+                tickAmount: 10,
+                axisTicks: {
+                    show: true
+                },
+                axisBorder: {
+                    show: true
+                }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        fontSize: '12px'
+                    }
+                }
+            },
+            grid: {
+                padding: {
+                    left: 10,
+                    right: 0
+                },
+                xaxis: {
+                    lines: {
+                        show: true
+                    }
+                },
+                yaxis: {
+                    lines: {
+                        show: false
+                    }
+                }
+            },
+            tooltip: {
+                custom: function({seriesIndex, dataPointIndex, w}) {
+                    var data = w.config.series[seriesIndex].data[dataPointIndex];
+                    var startDate = moment(data.y[0]).format('jYYYY/jMM/jDD');
+                    var endDate = moment(data.y[1]).format('jYYYY/jMM/jDD');
+                    
+                    // Build tooltip with relationship info if available
+                    var relationshipHtml = '';
+                    if (data.relationshipInfo) {
+                        relationshipHtml = '<div class="apexcharts-tooltip-y-group">' +
+                            '<span class="apexcharts-tooltip-text-label">ارتباط: </span>' +
+                            '<span class="apexcharts-tooltip-text-value">' + data.relationshipInfo + '</span>' +
+                            '</div>';
+                    }
+                    
+                    return '<div class="apexcharts-tooltip-title">' + data.x + '</div>' +
+                           '<div class="apexcharts-tooltip-series-group">' +
+                           '<div class="apexcharts-tooltip-text">' +
+                           '<div class="apexcharts-tooltip-y-group">' +
+                           '<span class="apexcharts-tooltip-text-label">تاریخ شروع: </span>' +
+                           '<span class="apexcharts-tooltip-text-value">' + startDate + '</span>' +
+                           '</div>' +
+                           '<div class="apexcharts-tooltip-y-group">' +
+                           '<span class="apexcharts-tooltip-text-label">تاریخ پایان: </span>' +
+                           '<span class="apexcharts-tooltip-text-value">' + endDate + '</span>' +
+                           '</div>' +
+                           '<div class="apexcharts-tooltip-y-group">' +
+                           '<span class="apexcharts-tooltip-text-label">پیشرفت: </span>' +
+                           '<span class="apexcharts-tooltip-text-value">' + data.progress + '%</span>' +
+                           '</div>' +
+                           relationshipHtml +
+                           '</div>' +
+                           '</div>';
+                }
+            },
+            legend: {
+                show: false
+            }
+        };
+        
+        // Configure the chart for fullscreen display
+        var fullscreenOptions = JSON.parse(JSON.stringify(options)); // Deep copy
+        fullscreenOptions.chart.height = '100%'; // Adjust height for modal
+        // Ensure fullscreenOptions also has the event handlers for drawing arrows
+        fullscreenOptions.chart.events = { 
+            mounted: function(chartContext, config) {
+                drawGanttArrows(chartContext, config, validSubprojects);
+            },
+            updated: function(chartContext, config) {
+                drawGanttArrows(chartContext, config, validSubprojects);
+            }
+        };
+        
+        var chart = new ApexCharts(document.querySelector("#gantt-chart-container"), options);
+        chart.render();
+        
+        // Add click event to navigate to subproject detail
+        chart.addEventListener('dataPointSelection', function(event, chartContext, config) {
+            var subprojectId = config.w.config.series[config.seriesIndex].data[config.dataPointIndex].subprojectId;
+            window.location.href = "{% url 'creator_subproject:subproject_detail' 0 %}".replace('0', subprojectId);
+        });
+        
+        // Full-screen functionality
+        var fullscreenBtn = document.getElementById('gantt-fullscreen-btn');
+        var ganttModal = document.getElementById('gantt-modal');
+        var fullscreenChart = null;
+        
+        fullscreenBtn.addEventListener('click', function() {
+            var modal = new bootstrap.Modal(ganttModal);
+            modal.show();
+            
+            // Ensure the fullscreen chart is initialized or updated when modal is shown
+            if (!fullscreenChart) {
+                fullscreenChart = new ApexCharts(document.querySelector("#gantt-chart-fullscreen"), fullscreenOptions); // Use fullscreenOptions
+                fullscreenChart.render();
+            } else {
+                fullscreenChart.updateOptions(fullscreenOptions); // Use fullscreenOptions
+            }
+        });
+        
+        // Refresh functionality
+        var refreshBtn = document.getElementById('gantt-refresh-btn');
+        refreshBtn.addEventListener('click', function() {
+            refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise spinner-border spinner-border-sm"></i> در حال بروزرسانی...';
+            refreshBtn.disabled = true;
+            
+            // Fetch updated data from backend
+            fetch(`/creator_subproject/api/project/{{ project.id }}/gantt-data/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update the subprojects array with new data
+                        var updatedSubprojects = data.subprojects;
+                        
+                        // Recalculate dynamic dates
+                        var calculatedSubprojects = calculateDynamicDates(updatedSubprojects);
+                        
+                        // Filter valid subprojects
+                        var validSubprojects = calculatedSubprojects.filter(function(sp) {
+                            return sp.start && sp.end;
+                        });
+                        
+                        if (validSubprojects.length === 0) {
+                            document.getElementById('gantt-chart-container').innerHTML = 
+                                '<div class="alert alert-info"><strong>اطلاعاتی برای نمایش وجود ندارد</strong><br>' +
+                                'برای نمایش نمودار گانت:<br>' +
+                                '• زیرپروژه‌هایی با قرارداد باید تاریخ شروع و پایان داشته باشند<br>' +
+                                '• زیرپروژه‌های بدون قرارداد باید مدت تخمینی تعریف شده داشته باشند<br>' +
+                                '<button class="btn btn-primary btn-sm mt-2" onclick="location.reload()">بارگذاری مجدد</button></div>';
+                            return;
+                        }
+                        
+                        // Update chart data
+                        var newSeries = [{
+                            data: validSubprojects.map(function(sp) {
+                                var startDate = new Date(sp.start);
+                                var endDate = new Date(sp.end);
+                                var durationDays = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24));
+                                
+                                // Enforce minimum and maximum duration for better display
+                                if (durationDays < 7) {
+                                    endDate = new Date(startDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+                                } else if (durationDays > 365) {
+                                    endDate = new Date(startDate.getTime() + (365 * 24 * 60 * 60 * 1000));
+                                }
+                                
+                                var relationshipInfo = '';
+                                if (sp.relationshipType && sp.relatedId) {
+                                    var relatedSubproject = validSubprojects.find(r => r.id == sp.relatedId);
+                                    if (relatedSubproject) {
+                                        relationshipInfo = sp.relationshipType + ' ' + relatedSubproject.name;
+                                        if (sp.relationshipDelay !== 0) {
+                                            relationshipInfo += ' (' + (sp.relationshipDelay > 0 ? '+' : '') + sp.relationshipDelay + ' روز)';
+                                        }
+                                    }
+                                }
+                                
+                                return {
+                                    x: sp.name,
+                                    y: [startDate.getTime(), endDate.getTime()],
+                                    fillColor: sp.progress > 80 ? '#00E396' : sp.progress > 40 ? '#FEB019' : '#FF4560',
+                                    progress: sp.progress,
+                                    subprojectId: sp.id,
+                                    relationshipInfo: relationshipInfo
+                                };
+                            })
+                        }];
+                        
+                        // Update the chart with new data
+                        chart.updateSeries(newSeries);
+                        
+                        // Store updated subprojects for arrow drawing
+                        window.currentValidSubprojects = validSubprojects;
+                        
+                        // Redraw arrows after a short delay to ensure chart is updated
+                        setTimeout(function() {
+                            drawGanttArrows(chart, chart.w.config, validSubprojects);
+                        }, 500);
+                        
+                        refreshBtn.innerHTML = '<i class="bi bi-check-circle"></i> بروزرسانی شد';
+                        setTimeout(function() {
+                            refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> بروزرسانی';
+                            refreshBtn.disabled = false;
+                        }, 2000);
+                    } else {
+                        console.error('Error fetching updated data:', data.error);
+                        refreshBtn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> خطا';
+                        setTimeout(function() {
+                            refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> بروزرسانی';
+                            refreshBtn.disabled = false;
+                        }, 3000);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    refreshBtn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> خطا';
+                    setTimeout(function() {
+                        refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> بروزرسانی';
+                        refreshBtn.disabled = false;
+                    }, 3000);
+                });
+        });
+        
+        // Auto-refresh functionality - check for updates every 30 seconds
+        let autoRefreshInterval;
+        let lastUpdateTime = Date.now();
+        
+        function enableAutoRefresh() {
+            autoRefreshInterval = setInterval(function() {
+                // Only refresh if the page is visible to avoid unnecessary API calls
+                if (!document.hidden) {
+                    fetch(`/creator_subproject/api/project/{{ project.id }}/gantt-data/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Check if data has actually changed
+                                const dataString = JSON.stringify(data.subprojects);
+                                const currentDataString = JSON.stringify(subprojects);
+                                
+                                if (dataString !== currentDataString) {
+                                    console.log("Auto-refresh: Data changed, updating chart");
+                                    updateChartWithNewData(data.subprojects);
+                                } else {
+                                    console.log("Auto-refresh: No changes detected");
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.log("Auto-refresh error (will continue trying):", error);
+                        });
+                }
+            }, 30000); // Check every 30 seconds
+        }
+        
+        function updateChartWithNewData(newSubprojects) {
+            // Update the global subprojects array
+            subprojects = newSubprojects;
+            
+            // Recalculate dynamic dates
+            var calculatedSubprojects = calculateDynamicDates(newSubprojects);
+            
+            // Filter valid subprojects
+            var validSubprojects = calculatedSubprojects.filter(function(sp) {
+                return sp.start && sp.end;
+            });
+            
+            if (validSubprojects.length === 0) {
+                document.getElementById('gantt-chart-container').innerHTML = 
+                    '<div class="alert alert-info"><strong>اطلاعاتی برای نمایش وجود ندارد</strong><br>' +
+                    'برای نمایش نمودار گانت:<br>' +
+                    '• زیرپروژه‌هایی با قرارداد باید تاریخ شروع و پایان داشته باشند<br>' +
+                    '• زیرپروژه‌های بدون قرارداد باید مدت تخمینی تعریف شده داشته باشند<br>' +
+                    '<button class="btn btn-primary btn-sm mt-2" onclick="location.reload()">بارگذاری مجدد</button></div>';
+                return;
+            }
+            
+            // Update chart data
+            var newSeries = [{
+                data: validSubprojects.map(function(sp) {
+                    var startDate = new Date(sp.start);
+                    var endDate = new Date(sp.end);
+                    var durationDays = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24));
+                    
+                    // Enforce minimum and maximum duration for better display
+                    if (durationDays < 7) {
+                        endDate = new Date(startDate.getTime() + (7 * 24 * 60 * 60 * 1000));
+                    } else if (durationDays > 365) {
+                        endDate = new Date(startDate.getTime() + (365 * 24 * 60 * 60 * 1000));
+                    }
+                    
+                    var relationshipInfo = '';
+                    if (sp.relationshipType && sp.relatedId) {
+                        var relatedSubproject = validSubprojects.find(r => r.id == sp.relatedId);
+                        if (relatedSubproject) {
+                            relationshipInfo = sp.relationshipType + ' ' + relatedSubproject.name;
+                            if (sp.relationshipDelay !== 0) {
+                                relationshipInfo += ' (' + (sp.relationshipDelay > 0 ? '+' : '') + sp.relationshipDelay + ' روز)';
+                            }
+                        }
+                    }
+                    
+                    return {
+                        x: sp.name,
+                        y: [startDate.getTime(), endDate.getTime()],
+                        fillColor: sp.progress > 80 ? '#00E396' : sp.progress > 40 ? '#FEB019' : '#FF4560',
+                        progress: sp.progress,
+                        subprojectId: sp.id,
+                        relationshipInfo: relationshipInfo
+                    };
+                })
+            }];
+            
+            // Update the chart with new data
+            if (chart) {
+                chart.updateSeries(newSeries);
+                
+                // Store updated subprojects for arrow drawing
+                window.currentValidSubprojects = validSubprojects;
+                
+                // Redraw arrows after a short delay to ensure chart is updated
+                setTimeout(function() {
+                    drawGanttArrows(chart, chart.w.config, validSubprojects);
+                }, 500);
+            }
+        }
+        
+        // Enable auto-refresh
+        enableAutoRefresh();
+        
+        // Disable auto-refresh when page is about to unload
+        window.addEventListener('beforeunload', function() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        });
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,242 @@
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.db.models import Sum, Count, Avg, Q, F, Value
+from django.db.models.functions import Coalesce
+from django.http import HttpResponseForbidden
+from django.contrib import messages
+
+from creator_project.models import Project, ALL_Project
+from creator_subproject.models import SubProject, SituationReport
+from creator_review.models import ProjectReview, SubProjectReview
+from accounts.models import User
+
+
+@login_required
+def dashboard_redirect(request):
+    """Redirect to appropriate dashboard based on user role."""
+    user = request.user
+    
+    if user.is_admin:
+        return redirect('admin_dashboard')
+    elif user.is_ceo:
+        return redirect('ceo_dashboard')
+    elif user.is_chief_executive:
+        return redirect('chief_executive_dashboard')
+    elif user.is_vice_chief_executive:
+        return redirect('vice_chief_executive_dashboard')
+    elif user.is_expert:
+        return redirect('expert_dashboard')
+    elif user.is_province_manager:
+        return redirect('province_manager_dashboard')
+    else:
+        return redirect('login')
+
+
+@login_required
+def dashboard(request):
+    """General dashboard view."""
+    user = request.user
+    context = {'user': user}
+    
+    # Redirect to role-specific dashboard
+    return dashboard_redirect(request)
+
+
+@login_required
+def admin_dashboard(request):
+    """Admin dashboard view."""
+    if not request.user.is_admin:
+        return HttpResponseForbidden("You don't have permission to access this page.")
+    
+    users_count = {
+        'total': request.user._meta.model.objects.count(),
+        'active': request.user._meta.model.objects.filter(is_active=True).count(),
+        'admin': request.user._meta.model.objects.filter(role='ADMIN').count(),
+        'ceo': request.user._meta.model.objects.filter(role='CEO').count(),
+        'chief_executive': request.user._meta.model.objects.filter(role='CHIEF_EXECUTIVE').count(),
+        'vice_chief_executive': request.user._meta.model.objects.filter(role='VICE_CHIEF_EXECUTIVE').count(),
+        'expert': request.user._meta.model.objects.filter(role='EXPERT').count(),
+        'province_manager': request.user._meta.model.objects.filter(role='PROVINCE_MANAGER').count(),
+    }
+    
+    context = {
+        'user': request.user,
+        'users_count': users_count,
+    }
+    
+    return render(request, 'dashboard/admin_dashboard.html', context)
+
+
+@login_required
+def ceo_dashboard(request):
+    """CEO dashboard view."""
+    if not request.user.is_ceo:
+        return HttpResponseForbidden("You don't have permission to access this page.")
+    
+    # Get summary of all projects
+    all_projects = ALL_Project.objects.all()
+    
+    # Count projects by type
+    projects_by_type = ALL_Project.objects.values('project_type').annotate(
+        count=Count('id'),
+        avg_progress=Avg('physical_progress'),
+        total_allocation=Sum('total_allocation_cash') + Sum('total_allocation_treasury')
+    )
+    
+    # Count projects by province
+    projects_by_province = ALL_Project.objects.values('province').annotate(
+        count=Count('id'),
+        avg_progress=Avg('physical_progress'),
+        total_allocation=Sum('total_allocation_cash') + Sum('total_allocation_treasury')
+    )
+    
+    # Financial totals
+    financial_totals = {
+        'total_allocation_cash': ALL_Project.objects.aggregate(Sum('total_allocation_cash'))['total_allocation_cash__sum'] or 0,
+        'total_allocation_treasury': ALL_Project.objects.aggregate(Sum('total_allocation_treasury'))['total_allocation_treasury__sum'] or 0,
+    }
+    financial_totals['total_allocation'] = financial_totals['total_allocation_cash'] + financial_totals['total_allocation_treasury']
+    
+    # Projects needing approval
+    pending_projects = Project.objects.filter(is_submitted=True, is_approved=False).count()
+    
+    context = {
+        'user': request.user,
+        'projects_count': all_projects.count(),
+        'projects_by_type': projects_by_type,
+        'projects_by_province': projects_by_province,
+        'financial_totals': financial_totals,
+        'pending_projects': pending_projects,
+    }
+    
+    return render(request, 'dashboard/ceo_dashboard.html', context)
+
+
+@login_required
+def chief_executive_dashboard(request):
+    """Chief Executive dashboard view."""
+    if not request.user.is_chief_executive:
+        return HttpResponseForbidden("You don't have permission to access this page.")
+    
+    # Similar to CEO dashboard but with more operational details
+    all_projects = ALL_Project.objects.all()
+    
+    # Projects by status
+    projects_by_status = {
+        'approved': Project.objects.filter(is_approved=True).count(),
+        'pending': Project.objects.filter(is_submitted=True, is_approved=False).count(),
+        'draft': Project.objects.filter(is_submitted=False).count(),
+    }
+    
+    # Subprojects by status
+    subprojects_by_status = {
+        'approved': SubProject.objects.filter(is_approved=True).count(),
+        'pending': SubProject.objects.filter(is_submitted=True, is_approved=False).count(),
+        'draft': SubProject.objects.filter(is_submitted=False).count(),
+    }
+    
+    context = {
+        'user': request.user,
+        'projects_count': all_projects.count(),
+        'projects_by_status': projects_by_status,
+        'subprojects_by_status': subprojects_by_status,
+    }
+    
+    return render(request, 'dashboard/chief_executive_dashboard.html', context)
+
+
+@login_required
+def vice_chief_executive_dashboard(request):
+    """Vice Chief Executive dashboard view."""
+    if not request.user.is_vice_chief_executive:
+        return HttpResponseForbidden("You don't have permission to access this page.")
+    
+    # Projects pending approval
+    pending_projects = Project.objects.filter(is_submitted=True, is_approved=False)
+    
+    # Subprojects pending approval
+    pending_subprojects = SubProject.objects.filter(is_submitted=True, is_approved=False)
+    
+    context = {
+        'user': request.user,
+        'pending_projects': pending_projects,
+        'pending_subprojects': pending_subprojects,
+    }
+    
+    return render(request, 'dashboard/vice_chief_executive_dashboard.html', context)
+
+
+@login_required
+def expert_dashboard(request):
+    """
+    Display the expert dashboard with projects and subprojects that need review.
+    """
+    if not request.user.is_expert:
+        messages.error(request, 'شما مجوز دسترسی به این صفحه را ندارید.')
+        return redirect('home')
+    
+    # Get projects and subprojects that need review
+    projects_to_review = Project.objects.filter(status='submitted_for_review')
+    subprojects_to_review = SubProject.objects.filter(status='submitted_for_review')
+    
+    # Count of projects and subprojects already reviewed by this expert
+    reviewed_projects = ProjectReview.objects.filter(reviewer=request.user).count()
+    reviewed_subprojects = SubProjectReview.objects.filter(reviewer=request.user).count()
+    reviewed_count = reviewed_projects + reviewed_subprojects
+    
+    context = {
+        'user': request.user,
+        'projects_to_review': projects_to_review,
+        'subprojects_to_review': subprojects_to_review,
+        'projects_to_review_count': projects_to_review.count(),
+        'subprojects_to_review_count': subprojects_to_review.count(),
+        'reviewed_count': reviewed_count,
+    }
+    
+    return render(request, 'dashboard/expert_dashboard.html', context)
+
+
+@login_required
+def province_manager_dashboard(request):
+    """Province Manager dashboard view."""
+    if not request.user.is_province_manager:
+        return HttpResponseForbidden("You don't have permission to access this page.")
+    
+    # Filter projects by user's province
+    user_province = request.user.province
+    
+    if user_province:
+        user_projects = Project.objects.filter(
+            province=user_province,
+            created_by=request.user
+        )
+    else:
+        user_projects = Project.objects.filter(created_by=request.user)
+    
+    # Get subprojects for the user's projects
+    user_subprojects = SubProject.objects.filter(project__in=user_projects)
+    
+    # Count by status
+    projects_by_status = {
+        'total': user_projects.count(),
+        'approved': user_projects.filter(is_approved=True).count(),
+        'pending': user_projects.filter(is_submitted=True, is_approved=False).count(),
+        'draft': user_projects.filter(is_submitted=False).count(),
+    }
+    
+    subprojects_by_status = {
+        'total': user_subprojects.count(),
+        'approved': user_subprojects.filter(is_approved=True).count(),
+        'pending': user_subprojects.filter(is_submitted=True, is_approved=False).count(),
+        'draft': user_subprojects.filter(is_submitted=False).count(),
+    }
+    
+    context = {
+        'user': request.user,
+        'user_projects': user_projects,
+        'user_subprojects': user_subprojects,
+        'projects_by_status': projects_by_status,
+        'subprojects_by_status': subprojects_by_status,
+    }
+    
+    return render(request, 'dashboard/province_manager_dashboard.html', context) 

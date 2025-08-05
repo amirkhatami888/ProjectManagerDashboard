@@ -1,0 +1,373 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}درخواست اعتبار{% endblock %}
+
+{% block extra_head %}
+<style>
+    .form-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+    .form-section-title {
+        border-bottom: 2px solid #dee2e6;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        color: #495057;
+        font-weight: 600;
+    }
+    .funding-card {
+        transition: all 0.3s;
+    }
+    .funding-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .priority-badge {
+        font-size: 0.9em;
+        padding: 5px 10px;
+        border-radius: 20px;
+    }
+    .btn-funding {
+        border-radius: 5px;
+        font-weight: 500;
+        padding: 8px 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow funding-card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-cash-coin me-2"></i>
+                {% if form.instance.pk %}ویرایش درخواست اعتبار{% else %}ایجاد درخواست اعتبار جدید{% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <!-- انتخاب پروژه -->
+                <div class="form-section">
+                    <h6 class="form-section-title">
+                        <i class="bi bi-building me-2"></i>اطلاعات پروژه
+                    </h6>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                            <label for="{{ form.project.id_for_label }}" class="form-label fw-bold">انتخاب پروژه</label>
+                            <div class="alert alert-info mb-2 d-flex align-items-center">
+                                <i class="bi bi-info-circle me-2 fs-5"></i>
+                                <span>تعداد پروژه‌های موجود: <strong>{{ form.project.field.queryset|length }}</strong></span>
+                        </div>
+                        {{ form.project }}
+                        {% if form.project.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.project.errors }}
+                        </div>
+                        {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- اطلاعات درخواست -->
+                <div class="form-section">
+                    <h6 class="form-section-title">
+                        <i class="bi bi-currency-dollar me-2"></i>اطلاعات درخواست
+                    </h6>
+                    <div class="row mb-4">
+                    <div class="col-md-6">
+                            <label for="{{ form.province_suggested_amount.id_for_label }}" class="form-label fw-bold">مبلغ پیشنهادی استان (ریال)</label>
+                            <div class="input-group">
+                                <input type="text"
+                                       id="{{ form.province_suggested_amount.id_for_label }}"
+                                       name="{{ form.province_suggested_amount.html_name }}"
+                                       class="form-control currency-input currency-input-enhanced {% if form.province_suggested_amount.errors %}is-invalid{% endif %}"
+                                       value="{{ form.province_suggested_amount.value|default:'' }}"
+                                       required
+                                       placeholder="0"
+                                       autocomplete="off"
+                                       data-currency-field="true"
+                                       dir="ltr"
+                                       style="text-align: left;">
+                                
+                                <span class="input-group-text bg-light text-muted" style="border-left: 0;">ریال</span>
+                                
+                                {% if form.province_suggested_amount.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.province_suggested_amount.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted mt-1 d-block">لطفاً مبلغ را به ریال وارد کنید</small>
+                    </div>
+                    
+                    <div class="col-md-6">
+                            <label for="{{ form.priority.id_for_label }}" class="form-label fw-bold">اولویت</label>
+                        {{ form.priority }}
+                            <small class="text-muted mt-1 d-block">اولویت این درخواست را مشخص کنید</small>
+                        {% if form.priority.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.priority.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                            <label for="{{ form.province_description.id_for_label }}" class="form-label fw-bold">توضیحات استان</label>
+                        {{ form.province_description }}
+                            <small class="text-muted mt-1 d-block">توضیحات خود را درباره علت درخواست و نحوه استفاده از اعتبار وارد کنید</small>
+                        {% if form.province_description.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.province_description.errors }}
+                        </div>
+                        {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {% if user.is_expert %}
+                <div class="form-section">
+                    <h6 class="form-section-title">
+                        <i class="bi bi-pencil-square me-2"></i>بررسی کارشناسی
+                    </h6>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                            <label for="{{ form.headquarters_suggested_amount.id_for_label }}" class="form-label fw-bold">مبلغ پیشنهادی ستاد (ریال)</label>
+                        {% include "field_templates/currency_input.html" with 
+                            field_id=form.headquarters_suggested_amount.id_for_label
+                            field_name=form.headquarters_suggested_amount.html_name
+                            value=form.headquarters_suggested_amount.value|default:''
+                            errors=form.headquarters_suggested_amount.errors %}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                            <label for="{{ form.expert_description.id_for_label }}" class="form-label fw-bold">توضیحات کارشناس</label>
+                        {{ form.expert_description }}
+                        {% if form.expert_description.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.expert_description.errors }}
+                        </div>
+                        {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if user.is_chief_executive %}
+                <div class="form-section">
+                    <h6 class="form-section-title">
+                        <i class="bi bi-check-circle me-2"></i>تایید نهایی
+                    </h6>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                            <label for="{{ form.final_amount.id_for_label }}" class="form-label fw-bold">مبلغ نهایی (ریال)</label>
+                        {% include "field_templates/currency_input.html" with 
+                            field_id=form.final_amount.id_for_label
+                            field_name=form.final_amount.html_name
+                            value=form.final_amount.value|default:''
+                            errors=form.final_amount.errors %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="mt-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-funding">
+                        <i class="bi bi-check-lg me-1"></i> {{ submit_text|default:"ذخیره" }}
+                    </button>
+                    <a href="{% url 'creator_project:funding_request_list' %}" class="btn btn-secondary btn-funding">
+                        <i class="bi bi-x-lg me-1"></i> انصراف
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/currency-formatter.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        // Add Bootstrap form-control class to all form inputs
+        $('form input, form select, form textarea').addClass('form-control');
+        
+        // Add class for textareas
+        $('form textarea').addClass('form-control-lg');
+        
+        // Form processing state variables
+        let isProcessing = false;
+        
+        // Improved form validation with processing state handling
+        $('.needs-validation').on('submit', function(event) {
+            // Prevent multiple submissions
+            if (isProcessing) {
+                event.preventDefault();
+                return false;
+            }
+            
+            // Process currency field - remove commas before submission
+            const amountField = $('#{{ form.province_suggested_amount.id_for_label }}');
+            if (amountField.length) {
+                // Get the value without commas
+                const rawValue = amountField.val().replace(/,/g, '');
+                
+                // Validate the numeric value
+                if (!rawValue || isNaN(rawValue) || parseInt(rawValue) <= 0) {
+                    amountField.addClass('is-invalid');
+                    // Show validation error
+                    if (!amountField.next('.invalid-feedback').length) {
+                        amountField.after('<div class="invalid-feedback">لطفاً یک مبلغ معتبر وارد کنید.</div>');
+                    }
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return false;
+                }
+            }
+            
+            // Check form validity
+            if (!this.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+                $(this).addClass('was-validated');
+                
+                // Show validation errors
+                showFormErrors();
+                return false;
+            }
+            
+            // Set processing state
+            isProcessing = true;
+            
+            // Add loading indicator
+            const submitBtn = $(this).find('button[type="submit"]');
+            const originalText = submitBtn.html();
+            submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> در حال پردازش...');
+            
+            // Set timeout to reset processing state if request takes too long
+            setTimeout(function() {
+                if (isProcessing) {
+                    isProcessing = false;
+                    submitBtn.prop('disabled', false).html(originalText);
+                    showAlert('هشدار', 'درخواست با تأخیر مواجه شد. لطفاً دوباره تلاش کنید.', 'warning');
+                }
+            }, 30000); // 30 seconds timeout
+            
+            return true;
+        });
+        
+        // Function to show form errors
+        function showFormErrors() {
+            // Check each required field
+            $('form input[required], form select[required], form textarea[required]').each(function() {
+                if (!$(this).val()) {
+                    $(this).addClass('is-invalid');
+                    
+                    // Find or create the invalid feedback element
+                    let feedback = $(this).next('.invalid-feedback');
+                    if (feedback.length === 0) {
+                        $(this).after('<div class="invalid-feedback">این فیلد الزامی است.</div>');
+                    }
+                    
+                    // Focus on the first invalid field
+                    if (!$(':focus').is(':invalid')) {
+                        $(this).focus();
+                    }
+                }
+            });
+            
+            // Check specific field validations
+            validateAmountField();
+        }
+        
+        // Function to validate the amount field
+        function validateAmountField() {
+            const amountField = $('#{{ form.province_suggested_amount.id_for_label }}');
+            const value = amountField.val().replace(/,/g, '');
+            
+            if (amountField.prop('required') && (!value || value === '0')) {
+                amountField.addClass('is-invalid');
+                
+                // Find or create the invalid feedback element
+                let feedback = amountField.siblings('.invalid-feedback');
+                if (feedback.length === 0) {
+                    amountField.after('<div class="invalid-feedback">لطفاً مبلغ معتبر وارد کنید.</div>');
+                } else {
+                    feedback.text('لطفاً مبلغ معتبر وارد کنید.');
+                }
+                
+                // Focus on the field if it's the first invalid field
+                if (!$(':focus').is(':invalid')) {
+                    amountField.focus();
+                }
+                
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // Function to show alerts
+        function showAlert(title, message, type) {
+            const alertDiv = $('<div class="alert alert-' + type + ' alert-dismissible fade show mt-3" role="alert">')
+                .html('<strong>' + title + '</strong> ' + message +
+                      '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>');
+            
+            $('.card-body').prepend(alertDiv);
+            
+            // Auto dismiss after 8 seconds
+            setTimeout(function() {
+                alertDiv.alert('close');
+            }, 8000);
+        }
+        
+        // Live validation on input change
+        $('form input, form select, form textarea').on('input change', function() {
+            if ($(this).hasClass('is-invalid')) {
+                if (this.checkValidity()) {
+                    $(this).removeClass('is-invalid');
+                }
+            }
+        });
+        
+        // Style select fields
+        $('select').addClass('form-select');
+        
+        // Apply custom styling to project select
+        $('#{{ form.project.id_for_label }}').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'یک پروژه انتخاب کنید...',
+            language: {
+                noResults: function() {
+                    return "پروژه‌ای یافت نشد!";
+                }
+            }
+        });
+        
+        // Apply custom styling to priority select
+        $('#{{ form.priority.id_for_label }}').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            minimumResultsForSearch: -1
+        });
+        
+        // Initialize currency formatter for amount field
+        const amountField = document.getElementById('{{ form.province_suggested_amount.id_for_label }}');
+        if (amountField && window.CurrencyFormatter) {
+            window.CurrencyFormatter.setupEnhancedCurrencyField(amountField);
+        }
+    });
+</script>
+{% endblock %} 

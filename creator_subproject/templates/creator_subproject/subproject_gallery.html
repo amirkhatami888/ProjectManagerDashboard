@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load jalali_tags %}
+{% load static %}
+
+{% block title %}گالری تصاویر {{ subproject.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2>گالری تصاویر</h2>
+            <div>
+                <a href="{% url 'creator_subproject:upload_gallery_image' subproject.id %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> آپلود تصویر جدید
+                </a>
+                <a href="{% url 'creator_subproject:subproject_detail' subproject.id %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-right"></i> بازگشت به جزئیات زیرپروژه
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <h3>زیرپروژه: {{ subproject.name|default:subproject.get_sub_project_type_display }}</h3>
+            <hr>
+            {% if images %}
+                <div class="row">
+                    {% for image in images %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card">
+                                <img src="{{ image.image.url }}" class="card-img-top" alt="{{ image.title|default:'تصویر پروژه' }}" style="height: 200px; object-fit: cover;">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ image.title|default:'بدون عنوان' }}</h5>
+                                    {% if image.description %}
+                                        <p class="card-text">{{ image.description }}</p>
+                                    {% endif %}
+                                    <p class="card-text"><small class="text-muted">تاریخ آپلود: {{ image.upload_date|to_jalali:"%Y/%m/%d " }}</small></p>
+                                    <form method="post" action="{% url 'creator_subproject:delete_gallery_image' image.id %}" onsubmit="return confirm('آیا از حذف این تصویر اطمینان دارید؟');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i> حذف</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    هنوز تصویری برای این زیرپروژه آپلود نشده است.
+                </div>
+            {% endif %}
+        </div>
+        <div class="card-footer text-muted">
+            <small>تعداد تصاویر: {{ images|length }}</small>
+        </div>
+    </div>
+</div>
+
+<!-- Image Lightbox Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">نمایش تصویر</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="" id="modalImage" class="img-fluid" alt="تصویر پروژه">
+                <div class="mt-3">
+                    <h5 id="modalTitle"></h5>
+                    <p id="modalDescription"></p>
+                    <small id="modalDate" class="text-muted"></small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add click event to all gallery images
+        const galleryImages = document.querySelectorAll('.card-img-top');
+        const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+        
+        galleryImages.forEach(image => {
+            image.addEventListener('click', function() {
+                const card = this.closest('.card');
+                const title = card.querySelector('.card-title').textContent;
+                const description = card.querySelector('.card-text')?.textContent || '';
+                const date = card.querySelector('small.text-muted').textContent;
+                const imgSrc = this.src;
+                
+                document.getElementById('modalImage').src = imgSrc;
+                document.getElementById('modalTitle').textContent = title;
+                document.getElementById('modalDescription').textContent = description.replace('تاریخ آپلود:', '').trim();
+                document.getElementById('modalDate').textContent = date;
+                
+                imageModal.show();
+            });
+        });
+    });
+</script>
+{% endblock %} 

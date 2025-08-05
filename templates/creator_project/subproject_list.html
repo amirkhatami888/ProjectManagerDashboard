@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% load jalali_tags %}
+{% load humanize %}
+
+{% block title %}زیرپروژه‌ها - {{ project.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .subproject-table {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        overflow: hidden;
+        border: none;
+    }
+    
+    .subproject-table thead th {
+        background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+        border: none;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        padding: 15px 12px;
+        color: white;
+    }
+    
+    .subproject-table tbody tr {
+        border-bottom: 1px solid #e9ecef;
+        transition: all 0.2s ease;
+    }
+    
+    .subproject-table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .progress-mini {
+        height: 8px;
+        min-width: 100px;
+    }
+    
+    .btn-action {
+        padding: 4px 8px;
+        font-size: 0.8rem;
+        border-radius: 4px;
+    }
+    
+    .delete-btn {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border: none;
+        color: white;
+        transition: all 0.3s ease;
+    }
+    
+    .delete-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+    }
+    
+    .locked-btn {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        border: none;
+        color: white;
+        cursor: not-allowed;
+    }
+    
+    .locked-btn:hover {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        transform: none;
+        box-shadow: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>زیرپروژه‌های پروژه</h1>
+            <p class="text-muted mb-0">پروژه: {{ project.name }}</p>
+        </div>
+        
+        <div class="d-flex gap-2">
+            {% if project.has_available_subproject_slots and user.is_admin or project.created_by == user %}
+            <a href="{% url 'creator_subproject:subproject_create' project.id %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> افزودن زیرپروژه
+            </a>
+            {% endif %}
+            <a href="{% url 'creator_project:project_detail' project.id %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-right"></i> بازگشت به پروژه
+            </a>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-layers me-2"></i>
+                لیست زیرپروژه‌ها ({{ subprojects.count }} زیرپروژه)
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            {% if subprojects %}
+            <div class="table-responsive">
+                <table class="table table-hover subproject-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>شماره</th>
+                            <th>نوع زیرپروژه</th>
+                            <th>نام</th>
+                            <th>وضعیت</th>
+                            <th>پیشرفت فیزیکی</th>
+                            <th>تاریخ شروع</th>
+                            <th>تاریخ پایان</th>
+                            <th>مبلغ قرارداد</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subproject in subprojects %}
+                        <tr>
+                            <td class="fw-bold">#{{ subproject.sub_project_number }}</td>
+                            <td>{{ subproject.sub_project_type }}</td>
+                            <td>{{ subproject.name|default:"-" }}</td>
+                            <td>
+                                <span class="badge bg-{% if subproject.state == 'فعال' %}success{% elif subproject.state == 'تامین اعتبار' %}info{% else %}secondary{% endif %}">
+                                    {{ subproject.state }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="progress progress-mini me-2">
+                                        <div class="progress-bar bg-success" 
+                                             style="width: {{ subproject.physical_progress }}%;"
+                                             aria-valuenow="{{ subproject.physical_progress }}" 
+                                             aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">{{ subproject.physical_progress }}%</small>
+                                </div>
+                            </td>
+                            <td>
+                                {% if subproject.start_date %}
+                                    {{ subproject.start_date|to_jalali:'%Y/%m/%d' }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if subproject.end_date %}
+                                    {{ subproject.end_date|to_jalali:'%Y/%m/%d' }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if subproject.contract_amount %}
+                                    <span class="fw-bold text-success">{{ subproject.contract_amount|floatformat:0|intcomma }}</span>
+                                {% elif subproject.imagenrary_cost %}
+                                    <span class="text-muted">{{ subproject.imagenrary_cost|floatformat:0|intcomma }}</span>
+                                    <small class="d-block text-muted">(تخمینی)</small>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'creator_subproject:subproject_detail' subproject.id %}" 
+                                       class="btn btn-sm btn-outline-primary btn-action"
+                                       title="مشاهده جزئیات">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    
+                                    {% if user.is_admin or project.created_by == user %}
+                                    <a href="{% url 'creator_subproject:subproject_update' subproject.id %}" 
+                                       class="btn btn-sm btn-outline-warning btn-action"
+                                       title="ویرایش">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    
+                                    {% if subproject.allocations.exists or subproject.payments.exists %}
+                                    <button class="btn btn-sm locked-btn btn-action" 
+                                            title="این زیرپروژه دارای اسناد مالی است و قابل حذف نیست"
+                                            disabled>
+                                        <i class="bi bi-lock"></i>
+                                    </button>
+                                    {% else %}
+                                    <a href="{% url 'creator_project:subproject_delete' subproject.id %}" 
+                                       class="btn btn-sm delete-btn btn-action"
+                                       title="حذف"
+                                       onclick="return confirm('توجه: این عمل نیازمند تایید قوی است. آیا ادامه می‌دهید؟')">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center p-5">
+                <i class="bi bi-layers text-muted" style="font-size: 3rem;"></i>
+                <h5 class="mt-3 text-muted">هیچ زیرپروژه‌ای یافت نشد</h5>
+                <p class="text-muted">برای شروع، یک زیرپروژه جدید ایجاد کنید.</p>
+                {% if project.has_available_subproject_slots and user.is_admin or project.created_by == user %}
+                <a href="{% url 'creator_subproject:subproject_create' project.id %}" class="btn btn-primary mt-2">
+                    <i class="bi bi-plus-circle"></i> افزودن اولین زیرپروژه
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if subprojects %}
+        <div class="card-footer bg-light">
+            <div class="row text-muted small">
+                <div class="col-md-4">
+                    <strong>تعداد کل:</strong> {{ subprojects.count }} زیرپروژه
+                </div>
+                <div class="col-md-4">
+                    <strong>فعال:</strong> {{ subprojects|length|add:0 }} زیرپروژه
+                </div>
+                <div class="col-md-4">
+                    <strong>ظرفیت باقیمانده:</strong> {{ project.has_available_subproject_slots|yesno:"دارد,ندارد" }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteButtons = document.querySelectorAll('.delete-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const confirmationMessage = 
+                    'توجه: این عمل نیازمند تایید قوی و وارد کردن متن تأیید است.\n\n' +
+                    'آیا می‌خواهید به صفحه تأیید حذف بروید؟\n\n' +
+                    'در آن صفحه باید:\n' +
+                    '• متن تأیید را دقیقاً وارد کنید\n' +
+                    '• دو تیک تأیید را بزنید\n' +
+                    '• تأیید نهایی کنید';
+                
+                if (confirm(confirmationMessage)) {
+                    window.location.href = this.href;
+                }
+            });
+        });
+        
+        // Add tooltips for locked delete buttons
+        const lockedButtons = document.querySelectorAll('.locked-btn[disabled]');
+        lockedButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('این زیرپروژه دارای اسناد مالی یا پرداختی است و قابل حذف نیست.\n\nابتدا باید تمام اسناد مالی مرتبط را حذف کنید.');
+            });
+        });
+    });
+</script>
+{% endblock %} 

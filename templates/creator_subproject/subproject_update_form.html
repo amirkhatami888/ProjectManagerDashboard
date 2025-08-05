@@ -1,0 +1,1138 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load jalali_tags %}
+
+{% block title %}بروزرسانی زیرپروژه{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/jalali-datepicker.css' %}">
+<link rel="stylesheet" href="{% static 'css/currency-input.css' %}">
+<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+<style>
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e9ecef;
+    }
+    
+    .form-section-header {
+        border-bottom: 2px solid #0d6efd;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.25rem;
+        position: relative;
+    }
+    
+    .form-section-header h6 {
+        color: #0d6efd;
+        font-weight: 600;
+        margin: 0;
+        font-size: 1.1rem;
+    }
+    
+    .form-section-header::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 50px;
+        height: 2px;
+        background: linear-gradient(90deg, #0d6efd, #6610f2);
+    }
+    
+    .contract-toggle-section {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        border: 1px solid #bbdefb;
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-switch-enhanced {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .form-switch-enhanced .form-check-input {
+        width: 3rem;
+        height: 1.5rem;
+        border-radius: 1rem;
+    }
+    
+    .form-switch-enhanced .form-check-label {
+        font-weight: 600;
+        color: #495057;
+        font-size: 1.05rem;
+    }
+    
+    .priority-range-container {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+    }
+    
+    .range-output {
+        display: inline-block;
+        background: #0d6efd;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-weight: 600;
+        min-width: 2rem;
+        text-align: center;
+        margin-right: 0.5rem;
+    }
+    
+    .form-label-enhanced {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .form-control-enhanced {
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        padding: 0.75rem;
+        transition: all 0.2s ease;
+    }
+    
+    .form-control-enhanced:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    }
+    
+    .form-select-enhanced {
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        padding: 0.75rem;
+        transition: all 0.2s ease;
+        background-position: right 0.75rem center;
+    }
+    
+    .form-select-enhanced:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    }
+    
+    .action-buttons {
+        background: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        text-align: center;
+    }
+    
+    .btn-enhanced {
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        min-width: 120px;
+    }
+    
+    .btn-primary-enhanced {
+        background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+        border: none;
+        color: white;
+    }
+    
+    .btn-primary-enhanced:hover {
+        background: linear-gradient(135deg, #0b5ed7 0%, #520dc2 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+    }
+    
+    .btn-secondary-enhanced {
+        background: #6c757d;
+        border: none;
+        color: white;
+    }
+    
+    .btn-secondary-enhanced:hover {
+        background: #5a6268;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+    }
+    
+    .card-enhanced {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+    
+    .card-header-enhanced {
+        background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+        color: white;
+        padding: 1.5rem;
+        border: none;
+    }
+    
+    .card-header-enhanced h5 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.25rem;
+    }
+    
+    .section-divider {
+        border: none;
+        height: 2px;
+        background: linear-gradient(90deg, transparent 0%, #0d6efd 50%, transparent 100%);
+        margin: 2rem 0;
+    }
+    
+    /* Consultant section styles */
+    .consultant-section {
+        transition: all 0.3s ease;
+    }
+    
+    .consultant-section:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .consultant-toggle .btn-group {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .consultant-toggle .btn {
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        border-width: 2px;
+        transition: all 0.2s ease;
+    }
+    
+    .consultant-toggle .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .consultant-toggle .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .consultant-toggle .btn-check:checked + .btn-outline-success {
+        background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+        border-color: #198754;
+        color: white;
+    }
+    
+    .consultant-toggle .btn-check:checked + .btn-outline-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%);
+        border-color: #6c757d;
+        color: white;
+    }
+    
+    .consultant-details {
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 6px;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Contract section styles */
+    .contract-toggle .btn-group {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .contract-toggle .btn {
+        font-weight: 600;
+        border-width: 2px;
+        transition: all 0.2s ease;
+    }
+    
+    .contract-toggle .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .contract-toggle .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .contract-toggle .btn-check:checked + .btn-outline-primary {
+        background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+        border-color: #0d6efd;
+        color: white;
+    }
+    
+    .contract-details {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 6px;
+        padding: 1.5rem;
+        border: 1px solid #e9ecef;
+        animation: fadeIn 0.3s ease;
+        margin-top: 1rem;
+    }
+    
+    /* Calendar icon alignment */
+    .calendar-icon-container {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-width: 40px !important;
+        padding: 0.375rem 0.75rem !important;
+        border: 2px solid #e9ecef !important;
+        border-left: none !important;
+        border-radius: 0 6px 6px 0 !important;
+        background: #f8f9fa !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .calendar-icon-container:hover {
+        background: #e9ecef !important;
+        border-color: #0d6efd !important;
+    }
+    
+    .calendar-icon {
+        font-size: 1rem !important;
+        color: #6c757d !important;
+        transition: color 0.2s ease !important;
+    }
+    
+    .calendar-icon-container:hover .calendar-icon {
+        color: #0d6efd !important;
+    }
+    
+    /* Input group styling for date fields */
+    .input-group .form-control:focus + .calendar-icon-container {
+        border-color: #0d6efd !important;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15) !important;
+    }
+    
+    /* Center align dropdown fields */
+    .form-select,
+    .form-select-enhanced,
+    select.form-control,
+    select {
+        text-align: center !important;
+        text-align-last: center !important;
+    }
+    
+    .form-select option,
+    .form-select-enhanced option,
+    select.form-control option,
+    select option {
+        text-align: center !important;
+        text-align-last: center !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <div class="card card-enhanced">
+        <div class="card-header card-header-enhanced">
+            <h5 class="card-title mb-0">
+                <i class="bi bi-pencil-square me-2"></i>
+                بروزرسانی زیرپروژه: {{ subproject.name|default:"بدون نام" }}
+            </h5>
+        </div>
+        <div class="card-body" style="padding: 2rem;">
+            <form method="post" action="">
+                {% csrf_token %}
+                
+                <!-- Basic Information Section -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <h6><i class="bi bi-info-circle me-2"></i>اطلاعات اصلی زیرپروژه</h6>
+                    </div>
+                    
+                    <!-- Hidden fields -->
+                    <input type="hidden" name="start_date" id="start_date" value="{{ subproject.start_date|to_jalali:'%Y/%m/%d' }}">
+                    <input type="hidden" name="end_date" id="end_date" value="{{ subproject.end_date|to_jalali:'%Y/%m/%d' }}">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label form-label-enhanced">نام زیرپروژه</label>
+                            <input type="text" name="name" id="name" class="form-control form-control-enhanced" 
+                                   value="{{ subproject.name|default:'' }}"
+                                   placeholder="نام اختیاری برای زیرپروژه">
+                            <small class="form-text text-muted">نام توصیفی برای شناسایی بهتر زیرپروژه</small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="sub_project_type" class="form-label form-label-enhanced">نوع زیرپروژه <span class="text-danger">*</span></label>
+                            <select name="sub_project_type" id="sub_project_type" class="form-select form-select-enhanced" required>
+                                <option value="">انتخاب نوع زیرپروژه...</option>
+                                <option value="فاز مطالعاتی" {% if subproject.sub_project_type == 'فاز مطالعاتی' %}selected{% endif %}>فاز مطالعاتی</option>
+                                <option value="طراحی نقشه های فاز 1و2" {% if subproject.sub_project_type == 'طراحی نقشه های فاز 1و2' %}selected{% endif %}>طراحی نقشه های فاز 1و2</option>
+                                <option value="برگزاری مناقصه" {% if subproject.sub_project_type == 'برگزاری مناقصه' %}selected{% endif %}>برگزاری مناقصه</option>
+                                <option value="انعقاد قرار داد و تحویل زمین" {% if subproject.sub_project_type == 'انعقاد قرار داد و تحویل زمین' %}selected{% endif %}>انعقاد قرار داد و تحویل زمین</option>
+                                <option value="تجهیزات کارگاهی" {% if subproject.sub_project_type == 'تجهیزات کارگاهی' %}selected{% endif %}>تجهیزات کارگاهی</option>
+                                <option value="گودبرداری" {% if subproject.sub_project_type == 'گودبرداری' %}selected{% endif %}>گودبرداری</option>
+                                <option value="فونداسیون" {% if subproject.sub_project_type == 'فونداسیون' %}selected{% endif %}>فونداسیون</option>
+                                <option value="اسکلت" {% if subproject.sub_project_type == 'اسکلت' %}selected{% endif %}>اسکلت</option>
+                                <option value="سفت کاری" {% if subproject.sub_project_type == 'سفت کاری' %}selected{% endif %}>سفت کاری</option>
+                                <option value="نما" {% if subproject.sub_project_type == 'نما' %}selected{% endif %}>نما</option>
+                                <option value="اجرای تاسیسات" {% if subproject.sub_project_type == 'اجرای تاسیسات' %}selected{% endif %}>اجرای تاسیسات</option>
+                                <option value="نازک کاری" {% if subproject.sub_project_type == 'نازک کاری' %}selected{% endif %}>نازک کاری</option>
+                                <option value="اجرای نصبیات برقی و مکانیکی" {% if subproject.sub_project_type == 'اجرای نصبیات برقی و مکانیکی' %}selected{% endif %}>اجرای نصبیات برقی و مکانیکی</option>
+                                <option value="محوطه سازی" {% if subproject.sub_project_type == 'محوطه سازی' %}selected{% endif %}>محوطه سازی</option>
+                                <option value="دیوارکشی" {% if subproject.sub_project_type == 'دیوارکشی' %}selected{% endif %}>دیوارکشی</option>
+                                <option value="محوطه سازی و دیوار کشی" {% if subproject.sub_project_type == 'محوطه سازی و دیوار کشی' %}selected{% endif %}>محوطه سازی و دیوار کشی</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="sub_project_number" class="form-label form-label-enhanced">اولویت زیرپروژه <span class="text-danger">*</span></label>
+                            <div class="priority-range-container">
+                                <input type="range" name="sub_project_number" id="sub_project_number" class="form-range" 
+                                       min="1" max="5" step="1" value="{{ subproject.sub_project_number }}" required
+                                       oninput="this.nextElementSibling.value = this.value">
+                                <output class="range-output">{{ subproject.sub_project_number }}</output>
+                                <small class="form-text text-muted d-block mt-2">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    1: کمترین اولویت | 5: بیشترین اولویت
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="is_suportting_charity" class="form-label form-label-enhanced">مشارکت خیرین <span class="text-danger">*</span></label>
+                            <select name="is_suportting_charity" id="is_suportting_charity" class="form-select form-select-enhanced" required>
+                                <option value="ندارد" {% if subproject.is_suportting_charity == 'ندارد' %}selected{% endif %}>ندارد</option>
+                                <option value="دارد" {% if subproject.is_suportting_charity == 'دارد' %}selected{% endif %}>دارد</option>
+                            </select>
+                        </div>
+                        
+
+                    </div>
+                </div>
+
+                <!-- Status and Progress Section -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <h6><i class="bi bi-gear me-2"></i>وضعیت و پیشرفت پروژه</h6>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="state" class="form-label form-label-enhanced">وضعیت پروژه <span class="text-danger">*</span></label>
+                            <select name="state" id="state" class="form-select form-select-enhanced" required>
+                                <option value="">انتخاب وضعیت...</option>
+                                <option value="فعال" {% if subproject.state == 'فعال' %}selected{% endif %}>فعال</option>
+                                <option value="غیرفعال-ختم پیمان" {% if subproject.state == 'غیرفعال-ختم پیمان' %}selected{% endif %}>غیرفعال-ختم پیمان</option>
+                                <option value="غیر فعال- ماده 46" {% if subproject.state == 'غیر فعال- ماده 46' %}selected{% endif %}>غیر فعال- ماده 46</option>
+                                <option value="غیره فعال-تعلیق" {% if subproject.state == 'غیره فعال-تعلیق' %}selected{% endif %}>غیره فعال-تعلیق</option>
+                                <option value="غیره فعال-اتمام قرار داد" {% if subproject.state == 'غیره فعال-اتمام قرار داد' %}selected{% endif %}>غیره فعال-اتمام قرار داد</option>
+                                <option value="تحویل موقت" {% if subproject.state == 'تحویل موقت' %}selected{% endif %}>تحویل موقت</option>
+                                <option value="تحویل قطعی" {% if subproject.state == 'تحویل قطعی' %}selected{% endif %}>تحویل قطعی</option>
+                                <option value="تامین اعتبار" {% if subproject.state == 'تامین اعتبار' %}selected{% endif %}>تامین اعتبار</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="physical_progress" class="form-label form-label-enhanced">پیشرفت فیزیکی <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number" name="physical_progress" id="physical_progress" class="form-control form-control-enhanced" 
+                                       min="0" max="100" step="0.01" value="{{ subproject.physical_progress }}" required>
+                                <span class="input-group-text"><i class="bi bi-percent"></i></span>
+                            </div>
+                            <small class="form-text text-muted">درصد پیشرفت فیزیکی پروژه</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="remaining_work" class="form-label form-label-enhanced">کارهای باقیمانده</label>
+                            <textarea name="remaining_work" id="remaining_work" class="form-control form-control-enhanced" rows="3" 
+                                      placeholder="توضیح مختصر از کارهای باقیمانده...">{{ subproject.remaining_work }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contract section with toggle -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <h6><i class="bi bi-file-earmark-text me-2"></i>اطلاعات قرارداد</h6>
+                    </div>
+                    
+                    <div class="contract-toggle mb-3">
+                        <label class="form-label form-label-enhanced mb-2">وضعیت قرارداد:</label>
+                        <div class="btn-group" role="group" aria-label="Contract status" style="width: auto;">
+                            <input type="checkbox" class="btn-check" id="has_contract_toggle" 
+                                   {% if subproject.contract_amount or subproject.contract_start_date or subproject.contract_end_date or subproject.contract_type or subproject.execution_method %}checked{% endif %}>
+                            <label class="btn btn-outline-primary btn-sm" for="has_contract_toggle">
+                                <i class="bi bi-file-earmark-check me-1"></i>دارای قرارداد
+                            </label>
+                        </div>
+                        <input type="hidden" name="has_contract" id="has_contract" 
+                               value="{% if subproject.contract_amount or subproject.contract_start_date or subproject.contract_end_date or subproject.contract_type or subproject.execution_method %}true{% else %}false{% endif %}">
+                    </div>
+                    
+                    <!-- Contract information -->
+                    <div id="contract_fields" class="contract-details" 
+                         {% if not subproject.contract_amount and not subproject.contract_start_date and not subproject.contract_end_date and not subproject.contract_type and not subproject.execution_method %}style="display:none;"{% endif %}>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="contract_start_date" class="form-label">تاریخ شروع قرارداد</label>
+                                <div class="input-group">
+                                    <input type="text" name="contract_start_date" id="contract_start_date" 
+                                           class="form-control persian-date date-field-only" 
+                                           data-exclude-currency="true"
+                                           value="{% if subproject.contract_start_date %}{{ subproject.contract_start_date|to_jalali:'%Y/%m/%d' }}{% endif %}"
+                                           placeholder="YYYY/MM/DD مثال: 1402/05/15" readonly>
+                                    <span class="input-group-text calendar-icon-container" style="cursor:pointer; background:transparent; border-left:0;">
+                                        <i class="bi bi-calendar3 calendar-icon" data-input="contract_start_date"></i>
+                                    </span>
+                                </div>
+                                <small class="form-text text-muted">تاریخ شروع قرارداد به صورت شمسی</small>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="contract_end_date" class="form-label">تاریخ پایان قرارداد</label>
+                                <div class="input-group">
+                                    <input type="text" name="contract_end_date" id="contract_end_date" 
+                                           class="form-control persian-date date-field-only" 
+                                           data-exclude-currency="true"
+                                           value="{% if subproject.contract_end_date %}{{ subproject.contract_end_date|to_jalali:'%Y/%m/%d' }}{% endif %}"
+                                           placeholder="YYYY/MM/DD مثال: 1403/05/15" readonly>
+                                    <span class="input-group-text calendar-icon-container" style="cursor:pointer; background:transparent; border-left:0;">
+                                        <i class="bi bi-calendar3 calendar-icon" data-input="contract_end_date"></i>
+                                    </span>
+                                </div>
+                                <small class="form-text text-muted">تاریخ پایان قرارداد به صورت شمسی</small>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="contract_amount" class="form-label">مبلغ قرارداد</label>
+                                {% if subproject.contract_amount %}
+                                <!-- If contract amount is already defined, make it readonly -->
+                                <div class="input-group mb-2">
+                                    <input type="text" name="contract_amount" id="contract_amount" 
+                                           class="form-control currency-input currency-input-enhanced" 
+                                           value="{{ subproject.contract_amount|floatformat:0 }}" 
+                                           placeholder="مقدار به ریال"
+                                           data-currency-field="true"
+                                           dir="ltr"
+                                           style="text-align: left;"
+                                           onchange="calculateFinalAmount()">
+                                    <span class="input-group-text bg-light text-muted">ریال</span>
+                                </div>
+                                {% else %}
+                                <!-- If contract amount is not defined, allow it to be set -->
+                                <div class="input-group mb-2">
+                                    <input type="text" name="contract_amount" id="contract_amount" 
+                                           class="form-control currency-input currency-input-enhanced"
+                                           value="" 
+                                           placeholder="مقدار به ریال"
+                                           autocomplete="off"
+                                           data-currency-field="true"
+                                           dir="ltr"
+                                           style="text-align: left;"
+                                           onchange="calculateFinalAmount()">
+                                    <span class="input-group-text bg-light text-muted">ریال</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="final_contract_amount" class="form-label">مبلغ نهایی قرارداد</label>
+                                <div class="input-group mb-2">
+                                    <input type="text" id="final_contract_amount" 
+                                           class="form-control currency-input currency-input-enhanced" 
+                                           readonly disabled
+                                           data-currency-field="true"
+                                           dir="ltr"
+                                           style="text-align: left;">
+                                    <span class="input-group-text bg-light text-muted">ریال</span>
+                                </div>
+                                <small class="form-text text-muted">مبلغ نهایی قرارداد = مبلغ قرارداد × (1 + درصد افزایش مبلغ قرارداد ÷ 100)</small>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="contract_type" class="form-label">نوع قرارداد</label>
+                                <select name="contract_type" id="contract_type" class="form-select">
+                                    <option value="">انتخاب کنید</option>
+                                    <option value="سرجمع" {% if subproject.contract_type == 'سرجمع' %}selected{% endif %}>سرجمع</option>
+                                    <option value="فرست بها" {% if subproject.contract_type == 'فرست بها' %}selected{% endif %}>فرست بها</option>
+                                    <option value="پیمان مدیریت" {% if subproject.contract_type == 'پیمان مدیریت' %}selected{% endif %}>پیمان مدیریت</option>
+                                    <option value="مشارکت در ساخت" {% if subproject.contract_type == 'مشارکت در ساخت' %}selected{% endif %}>مشارکت در ساخت</option>
+                                    <option value="خیر ساز" {% if subproject.contract_type == 'خیر ساز' %}selected{% endif %}>خیر ساز</option>
+                                    <option value="BOT" {% if subproject.contract_type == 'BOT' %}selected{% endif %}>BOT</option>
+                                    <option value="EPC" {% if subproject.contract_type == 'EPC' %}selected{% endif %}>EPC</option>
+                                    <option value="EC" {% if subproject.contract_type == 'EC' %}selected{% endif %}>EC</option>
+                                    <option value="امانی" {% if subproject.contract_type == 'امانی' %}selected{% endif %}>امانی</option>
+                                    <option value="فاقد قرارداد" {% if subproject.contract_type == 'فاقد قرارداد' %}selected{% endif %}>فاقد قرارداد</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="execution_method" class="form-label">روش اجرا</label>
+                                <select name="execution_method" id="execution_method" class="form-select">
+                                    <option value="">انتخاب کنید</option>
+                                    <option value="مناقصه عمومی" {% if subproject.execution_method == 'مناقصه عمومی' %}selected{% endif %}>مناقصه عمومی</option>
+                                    <option value="مناقصه محدود" {% if subproject.execution_method == 'مناقصه محدود' %}selected{% endif %}>مناقصه محدود</option>
+                                    <option value="ترک تشریفات" {% if subproject.execution_method == 'ترک تشریفات' %}selected{% endif %}>ترک تشریفات</option>
+                                    <option value="مشارکت در ساخت" {% if subproject.execution_method == 'مشارکت در ساخت' %}selected{% endif %}>مشارکت در ساخت</option>
+                                    <option value="استعلام بها" {% if subproject.execution_method == 'استعلام بها' %}selected{% endif %}>استعلام بها</option>
+                                    <option value="استعلام بها نظارت دفترفنی استان" {% if subproject.execution_method == 'استعلام بها نظارت دفترفنی استان' %}selected{% endif %}>استعلام بها نظارت دفترفنی استان</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="contractor_name" class="form-label">نام پیمانکار</label>
+                                <input type="text" name="contractor_name" id="contractor_name" class="form-control text-field-only" 
+                                       data-exclude-currency="true"
+                                       value="{{ subproject.contractor_name|default:'' }}" placeholder="نام پیمانکار">
+                                <script>
+                                (function() {
+                                    const field = document.getElementById('contractor_name');
+                                    if (field) {
+                                        field.classList.remove('currency-input', 'currency-input-enhanced', 'currency-input-fixed');
+                                        field.classList.add('text-field-only');
+                                        field.setAttribute('data-exclude-currency', 'true');
+                                        field.placeholder = 'نام پیمانکار';
+                                        field.style.setProperty('padding', '0.375rem 0.75rem', 'important');
+                                        if (field.value && field.value.includes('ریال')) {
+                                            field.value = field.value.replace(/ریال/g, '').trim();
+                                        }
+                                    }
+                                })();
+                                </script>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="contractor_id" class="form-label">شناسه پیمانکار</label>
+                                <input type="text" name="contractor_id" id="contractor_id" class="form-control text-field-only" 
+                                       data-exclude-currency="true"
+                                       value="{{ subproject.contractor_id|default:'' }}" placeholder="شناسه پیمانکار">
+                            </div>
+                            
+                            <!-- Consultant fields -->
+                            <div class="col-md-12 mb-4">
+                                <div class="consultant-section" style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 1.25rem;">
+                                    <div class="consultant-header" style="border-bottom: 1px solid #dee2e6; padding-bottom: 0.75rem; margin-bottom: 1rem;">
+                                        <h6 class="form-label form-label-enhanced mb-0" style="color: #0d6efd; font-weight: 600;">
+                                            <i class="bi bi-person-badge me-2"></i>اطلاعات مشاور
+                                        </h6>
+                                    </div>
+                                    
+                                    <div class="consultant-toggle mb-3">
+                                        <label class="form-label form-label-enhanced mb-2">وضعیت مشاور:</label>
+                                        <div class="btn-group" role="group" aria-label="Consultant status" style="width: auto;">
+                                            <input type="radio" class="btn-check" name="has_consultant" id="has_consultant_yes" 
+                                                   value="دارد" {% if subproject.has_consultant == "دارد" %}checked{% endif %} onchange="toggleConsultantFields()">
+                                            <label class="btn btn-outline-success btn-sm" for="has_consultant_yes">
+                                                <i class="bi bi-check-circle me-1"></i>دارد
+                                            </label>
+                                            
+                                            <input type="radio" class="btn-check" name="has_consultant" id="has_consultant_no" 
+                                                   value="ندارد" {% if subproject.has_consultant != "دارد" %}checked{% endif %} onchange="toggleConsultantFields()">
+                                            <label class="btn btn-outline-secondary btn-sm" for="has_consultant_no">
+                                                <i class="bi bi-x-circle me-1"></i>ندارد
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="consultant_fields" class="consultant-details" style="{% if subproject.has_consultant != 'دارد' %}display: none;{% endif %}">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="consultant_name" class="form-label form-label-enhanced">
+                                                    <i class="bi bi-person me-1"></i>نام مشاور
+                                                </label>
+                                                <input type="text" name="consultant_name" id="consultant_name" class="form-control form-control-enhanced text-field-only" 
+                                                       data-exclude-currency="true"
+                                                       value="{{ subproject.consultant_name|default:'' }}"
+                                                       placeholder="نام کامل مشاور را وارد کنید">
+                                            </div>
+                                            
+                                            <div class="col-md-6 mb-3">
+                                                <label for="consultant_national_id" class="form-label form-label-enhanced">
+                                                    <i class="bi bi-card-text me-1"></i>شناسه ملی مشاور
+                                                </label>
+                                                <input type="text" name="consultant_national_id" id="consultant_national_id" class="form-control form-control-enhanced text-field-only" 
+                                                       data-exclude-currency="true"
+                                                       value="{{ subproject.consultant_national_id|default:'' }}"
+                                                       placeholder="کد ملی یا شناسه مشاور">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                
+                        <!-- Adjustment fields - only show for contracts -->
+                        <div id="adjustment_fields" class="contract-adjustment-fields" 
+                             {% if not subproject.contract_amount and not subproject.contract_start_date and not subproject.contract_end_date and not subproject.contract_type and not subproject.execution_method %}style="display:none;"{% endif %}>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="has_adjustment" class="form-label">افزایش مبلغ قرارداد</label>
+                                    <select name="has_adjustment" id="has_adjustment" class="form-select" onchange="toggleAdjustmentCoefficient()">
+                                        <option value="دارد" {% if subproject.has_adjustment == 'دارد' %}selected{% endif %}>دارد</option>
+                                        <option value="ندارد" {% if subproject.has_adjustment == 'ندارد' %}selected{% endif %}>ندارد</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3" id="adjustment_coefficient_container" {% if subproject.has_adjustment != 'دارد' %}style="display: none;"{% endif %}>
+                                    <label for="adjustment_coefficient" class="form-label">درصد افزایش قرارداد (%)</label>
+                                    <input type="number" name="adjustment_coefficient" id="adjustment_coefficient" 
+                                           class="form-control" 
+                                           step="1" min="0" max="25" 
+                                           value="{{ subproject.adjustment_coefficient|default:0 }}" 
+                                           data-exclude-currency="true"
+                                           data-number-only="true"
+                                           onchange="calculateFinalAmount()">
+                                    <small class="form-text text-muted">درصد افزایش را وارد کنید (مثلاً 25 برای 25% - حداکثر 25 درصد مجاز است)</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Predicted Adjustment Amount -->
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label for="predicted_adjustment_amount" class="form-label">مجموع مبلغ پیشبینی شده ی تعدیل های تا انتهای پروژه</label>
+                                    <div class="input-group mb-2">
+                                        <input type="text" name="predicted_adjustment_amount" id="predicted_adjustment_amount" 
+                                               class="form-control currency-input currency-input-enhanced" 
+                                               value="{% if subproject.predicted_adjustment_amount %}{{ subproject.predicted_adjustment_amount|floatformat:0 }}{% else %}0{% endif %}"
+                                               placeholder="0"
+                                               autocomplete="off"
+                                               data-currency-field="true"
+                                               dir="ltr"
+                                               style="text-align: left;">
+                                        <span class="input-group-text bg-light text-muted">ریال</span>
+                                    </div>
+                                    <small class="form-text text-muted">مبلغ پیشبینی شده برای تعدیلات تا انتهای پروژه (ریال)</small>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- No-contract fields (imagenary values) -->
+                <div class="row mb-4" id="nocontract_fields" 
+                     {% if subproject.contract_amount or subproject.contract_start_date or subproject.contract_end_date or subproject.contract_type or subproject.execution_method %}style="display:none;"{% endif %}>
+                    <div class="col-md-12">
+                        <h6 class="text-primary mb-3">اطلاعات تخمینی</h6>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="imagenary_duration" class="form-label">مدت تخمینی (روز)</label>
+                        <input type="number" name="imagenary_duration" id="imagenary_duration" class="form-control" 
+                               min="1" value="{% if subproject.imagenary_duration %}{{ subproject.imagenary_duration }}{% else %}180{% endif %}">
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="imagenrary_cost" class="form-label">هزینه تخمینی (ریال)</label>
+                        <div class="input-group mb-2">
+                            <input type="text" name="imagenrary_cost" id="imagenrary_cost" 
+                                   class="form-control currency-input currency-input-enhanced" 
+                                   value="{% if subproject.imagenrary_cost %}{{ subproject.imagenrary_cost|floatformat:0 }}{% else %}0{% endif %}"
+                                   placeholder="0"
+                                   data-currency-field="true"
+                                   dir="ltr"
+                                   style="text-align: left;">
+                            <span class="input-group-text bg-light text-muted">ریال</span>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-12 mb-3">
+                        <label for="cost_calculation_method" class="form-label">روش محاسبه هزینه تقریبی</label>
+                        <textarea name="cost_calculation_method" id="cost_calculation_method" class="form-control" rows="3">{% if subproject.cost_calculation_method %}{{ subproject.cost_calculation_method }}{% endif %}</textarea>
+                    </div>
+
+                    <div class="col-md-12">
+                        <h6 class="text-primary mb-3">ارتباط زیر پروژه</h6>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label for="related_subproject" class="form-label">ارتباط با زیر پروژه</label>
+                        <select name="related_subproject" id="related_subproject" class="form-select">
+                            <option value="">بدون ارتباط</option>
+                            <option value="floating" {% if subproject.relationship_type == "شناور" %}selected{% endif %}>شناور</option>
+                            {% for other_subproject in subproject.project.subprojects.all %}
+                                {% if other_subproject.id != subproject.id %}
+                                    <option value="{{ other_subproject.id }}" {% if subproject.related_subproject and subproject.related_subproject.id == other_subproject.id %}selected{% endif %}>
+                                        {{ other_subproject.sub_project_type }} - {% if other_subproject.name %}{{ other_subproject.name }}{% endif %} (#{{ other_subproject.sub_project_number }})
+                                    </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label for="relationship_type" class="form-label">نوع ارتباط</label>
+                        <select name="relationship_type" id="relationship_type" class="form-select">
+                            <option value="">انتخاب کنید</option>
+                            <option value="شروع با" {% if subproject.relationship_type == "شروع با" %}selected{% endif %}>شروع با</option>
+                            <option value="پایان با" {% if subproject.relationship_type == "پایان با" %}selected{% endif %}>پایان با</option>
+                            <option value="بعد از" {% if subproject.relationship_type == "بعد از" %}selected{% endif %}>بعد از</option>
+                            <option value="قبل از" {% if subproject.relationship_type == "قبل از" %}selected{% endif %}>قبل از</option>
+                            <option value="شناور" {% if subproject.relationship_type == "شناور" %}selected{% endif %}>شناور</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label for="relationship_delay" class="form-label">تعجیل وتاخیر ارتباط زیر پروژه (روز)</label>
+                        <input type="number" name="relationship_delay" id="relationship_delay" class="form-control" 
+                               value="{{ subproject.relationship_delay|default:0 }}">
+                    </div>
+                </div>
+                
+                <!-- Submit Actions -->
+                <div class="action-buttons">
+                    <div class="d-flex justify-content-between align-items-center gap-3">
+                        <a href="{% url 'creator_subproject:subproject_detail' subproject.id %}" class="btn btn-secondary-enhanced btn-enhanced">
+                            <i class="bi bi-arrow-right me-2"></i>بازگشت به زیرپروژه
+                        </a>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary" onclick="window.location.reload();">
+                                <i class="bi bi-arrow-clockwise me-2"></i>بازنشانی فرم
+                            </button>
+                            <button type="submit" class="btn btn-primary btn-lg" style="pointer-events: auto; z-index: 999;">
+                                <i class="bi bi-check-circle me-2"></i>بروزرسانی زیرپروژه
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Persian Datepicker -->
+<script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+
+<script>
+// Initialize date pickers when the document loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - initializing form...');
+    
+    // Initialize persian date pickers for all date fields
+    initializeDatePickers();
+    
+    // Set up initial contract toggle
+    setupContractToggle();
+    
+    // Calculate final contract amount initially
+    calculateFinalAmount();
+    
+    // Initialize consultant fields
+    toggleConsultantFields();
+    
+    // Initialize adjustment coefficient fields
+    toggleAdjustmentCoefficient();
+    
+    // Add debug info for submit button
+    const submitButtons = document.querySelectorAll('button[type="submit"]');
+    console.log('Found', submitButtons.length, 'submit buttons');
+    
+    submitButtons.forEach((button, index) => {
+        console.log(`Submit button ${index}:`, button);
+        const buttonText = button.textContent.trim();
+        console.log(`Button ${index} text:`, buttonText);
+        
+        button.addEventListener('click', function(e) {
+            console.log(`Submit button ${index} clicked!`, buttonText);
+            
+            // If this is the main update button, ensure it submits
+            if (buttonText.includes('بروزرسانی زیر پروژه') || buttonText.includes('بروزرسانی زیرپروژه')) {
+                console.log('Main update button clicked - forcing form submission');
+                e.preventDefault();
+                const form = button.closest('form');
+                if (form) {
+                    form.submit();
+                } else {
+                    console.error('No form found for main button');
+                }
+            }
+        });
+    });
+    
+    console.log('Form initialization complete.');
+});
+
+// Initialize date pickers
+function initializeDatePickers() {
+    // Initialize all persian date picker fields
+    const dateFields = document.querySelectorAll('.persian-date');
+    dateFields.forEach(function(field) {
+        $(field).persianDatepicker({
+            format: 'YYYY/MM/DD',
+            autoClose: true,
+            initialValue: field.value ? true : false,
+            initialValueType: 'persian',
+            persianDigit: true,
+            observer: true,
+            viewMode: 'year',
+            minDate: new persianDate().subtract('year', 10).valueOf(),
+            maxDate: new persianDate().add('year', 10).valueOf(),
+            navigator: {
+                enabled: true,
+                scroll: {
+                    enabled: true
+                },
+                text: {
+                    btnNextText: 'بعدی >',
+                    btnPrevText: '< قبلی'
+                }
+            },
+            timePicker: {
+                enabled: false
+            },
+            toolbox: {
+                calendarSwitch: {
+                    enabled: false
+                }
+            },
+            calendar: {
+                persian: {
+                    locale: 'fa'
+                }
+            },
+            onSelect: function(unix) {
+                const hiddenField = document.getElementById(field.id);
+                if (hiddenField) {
+                    hiddenField.value = new persianDate(unix).format('YYYY/MM/DD');
+                    
+                    // If this is a contract date field, update the project dates
+                    if (field.id === 'contract_start_date') {
+                        document.getElementById('start_date').value = new persianDate(unix).format('YYYY/MM/DD');
+                    } else if (field.id === 'contract_end_date') {
+                        document.getElementById('end_date').value = new persianDate(unix).format('YYYY/MM/DD');
+                    }
+                }
+            }
+        });
+    });
+    
+    // Set up date picker icon click handlers
+    const calendarIcons = document.querySelectorAll('.calendar-icon');
+    calendarIcons.forEach(function(icon) {
+        icon.addEventListener('click', function() {
+            const inputId = icon.getAttribute('data-input');
+            const inputField = document.getElementById(inputId);
+            if (inputField) {
+                // Trigger the date picker
+                $(inputField).persianDatepicker('show');
+            }
+        });
+    });
+}
+
+// Set up contract toggle functionality
+function setupContractToggle() {
+    const hasContractToggle = document.getElementById('has_contract_toggle');
+    const hasContractField = document.getElementById('has_contract');
+    const contractFields = document.getElementById('contract_fields');
+    const noContractFields = document.getElementById('nocontract_fields');
+    const adjustmentFields = document.getElementById('adjustment_fields');
+    
+    console.log('Setting up contract toggle...', {
+        hasContractToggle: !!hasContractToggle,
+        hasContractField: !!hasContractField,
+        contractFields: !!contractFields,
+        noContractFields: !!noContractFields,
+        adjustmentFields: !!adjustmentFields
+    });
+    
+    if (hasContractToggle && hasContractField && contractFields && noContractFields) {
+        // Initial state based on form value
+        const hasContract = hasContractField.value === 'true';
+        console.log('Initial contract state:', hasContract);
+        
+        hasContractToggle.checked = hasContract;
+        contractFields.style.display = hasContract ? 'block' : 'none';
+        noContractFields.style.display = hasContract ? 'none' : 'block';
+        
+        // Also handle adjustment fields visibility
+        if (adjustmentFields) {
+            adjustmentFields.style.display = hasContract ? 'block' : 'none';
+            console.log('Adjustment fields display set to:', hasContract ? 'block' : 'none');
+        }
+            
+        // Toggle handler
+        hasContractToggle.addEventListener('change', function() {
+            const isChecked = this.checked;
+            console.log('Contract toggle changed to:', isChecked);
+            
+            hasContractField.value = isChecked ? 'true' : 'false';
+            contractFields.style.display = isChecked ? 'block' : 'none';
+            noContractFields.style.display = isChecked ? 'none' : 'block';
+            
+            // Also toggle adjustment fields
+            if (adjustmentFields) {
+                adjustmentFields.style.display = isChecked ? 'block' : 'none';
+                console.log('Adjustment fields toggled to:', isChecked ? 'block' : 'none');
+            }
+        });
+        
+        console.log('Contract toggle setup complete - no form submission handlers added');
+    } else {
+        console.error('Missing required elements for contract toggle setup');
+    }
+}
+
+// Function to clear all contract-related fields
+function clearContractFields() {
+    const contractFieldsIds = [
+        'contract_start_date', 'contract_end_date', 'contract_amount',
+        'contract_type', 'execution_method', 'contractor_name', 'contractor_id',
+        'has_adjustment', 'adjustment_coefficient', 'predicted_adjustment_amount',
+        'consultant_name', 'consultant_national_id'
+    ];
+    
+    contractFieldsIds.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            if (field.tagName === 'SELECT') {
+                field.selectedIndex = 0;
+            } else if (field.type === 'checkbox' || field.type === 'radio') {
+                field.checked = false;
+            } else if (field.type === 'number') {
+                field.value = '0';
+    } else {
+                field.value = '';
+    }
+        }
+    });
+    
+    // Reset consultant fields
+    document.getElementById('has_consultant_no').checked = true;
+    document.getElementById('has_consultant_yes').checked = false;
+    
+    // Make sure adjustment coefficient is hidden
+    const adjustmentCoefficient = document.getElementById('adjustment_coefficient_container');
+    if (adjustmentCoefficient) {
+        adjustmentCoefficient.style.display = 'none';
+    }
+    
+    // Hide consultant fields
+    const consultantFields = document.getElementById('consultant_fields');
+    if (consultantFields) {
+        consultantFields.style.display = 'none';
+        }
+        
+    // Update calculated fields
+    calculateFinalAmount();
+}
+
+// Function to clear all no-contract fields
+function clearNoContractFields() {
+    const noContractFieldsIds = [
+        'imagenary_duration', 'imagenrary_cost', 'cost_calculation_method',
+        'related_subproject', 'relationship_type', 'relationship_delay'
+    ];
+    
+    noContractFieldsIds.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            if (field.tagName === 'SELECT') {
+                field.selectedIndex = 0;
+            } else if (field.type === 'checkbox' || field.type === 'radio') {
+                field.checked = false;
+            } else if (field.type === 'number') {
+                field.value = '0';
+            } else if (field.tagName === 'TEXTAREA') {
+                field.value = '';
+            } else {
+                field.value = '';
+            }
+        }
+    });
+    }
+    
+// Toggle consultant fields visibility
+function toggleConsultantFields() {
+    const hasConsultantYes = document.getElementById('has_consultant_yes');
+    const consultantFields = document.getElementById('consultant_fields');
+    
+    if (hasConsultantYes && consultantFields) {
+        consultantFields.style.display = hasConsultantYes.checked ? 'block' : 'none';
+    }
+}
+
+// Toggle adjustment coefficient fields visibility
+function toggleAdjustmentCoefficient() {
+    const hasAdjustment = document.getElementById('has_adjustment');
+    const adjustmentCoefficient = document.getElementById('adjustment_coefficient_container');
+    
+    if (hasAdjustment && adjustmentCoefficient) {
+        adjustmentCoefficient.style.display = hasAdjustment.value === 'دارد' ? 'block' : 'none';
+        
+        // Recalculate final amount
+    calculateFinalAmount();
+    }
+}
+
+// Calculate final contract amount based on adjustment coefficient
+function calculateFinalAmount() {
+    const contractAmountElement = document.getElementById('contract_amount');
+    const adjustmentCoefficientElement = document.getElementById('adjustment_coefficient');
+    const finalContractAmountElement = document.getElementById('final_contract_amount');
+    
+    if (contractAmountElement && adjustmentCoefficientElement && finalContractAmountElement) {
+        // Get contract amount, removing commas
+        let contractAmount = contractAmountElement.value.replace(/,/g, '');
+        contractAmount = contractAmount ? parseFloat(contractAmount) : 0;
+        
+        // Get adjustment coefficient
+        const hasAdjustment = document.getElementById('has_adjustment');
+        const adjustmentCoefficient = hasAdjustment && hasAdjustment.value === 'دارد' ? 
+            parseFloat(adjustmentCoefficientElement.value || 0) : 0;
+        
+        // Calculate final amount
+        const finalAmount = contractAmount * (1 + adjustmentCoefficient / 100);
+    
+        // Format and display final amount
+        finalContractAmountElement.value = finalAmount.toLocaleString();
+    }
+}
+
+// Handle relationship changes
+let relationshipChanged = false;
+
+['related_subproject', 'relationship_type', 'relationship_delay', 'imagenary_duration'].forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (field) {
+        field.addEventListener('change', function() {
+            relationshipChanged = true;
+            console.log(`Relationship field ${fieldId} changed to: ${this.value}`);
+        });
+    }
+});
+
+// Override form submission to trigger Gantt chart refresh
+const form = document.querySelector('form');
+if (form) {
+    form.addEventListener('submit', function(e) {
+        // Allow normal form submission
+        if (relationshipChanged) {
+            console.log('Relationship changed, will trigger Gantt chart refresh after save');
+            // Store in sessionStorage to trigger refresh after redirect
+            sessionStorage.setItem('triggerGanttRefresh', 'true');
+            sessionStorage.setItem('projectId', '{{ subproject.project.id }}');
+        }
+    });
+}
+</script>
+{% endblock %} 

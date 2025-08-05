@@ -1,0 +1,47 @@
+{% load static %}
+
+<div class="input-group">
+    <input type="text"
+           id="{{ field_id }}"
+           name="{{ field_name }}"
+           class="form-control currency-input currency-input-enhanced {% if errors %}is-invalid{% endif %}"
+           value="{{ value|default:'' }}"
+           {% if required %}required{% endif %}
+           {% if disabled %}disabled{% endif %}
+           {% if readonly %}readonly{% endif %}
+           placeholder="0"
+           autocomplete="off"
+           data-currency-field="true"
+           dir="ltr"
+           style="text-align: left;">
+    
+    <span class="input-group-text bg-light text-muted" style="border-left: 0;">ریال</span>
+    
+    {% if errors %}
+    <div class="invalid-feedback">
+        {% for error in errors %}
+            {{ error }}
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    {% if help_text %}
+    <small class="form-text text-muted">{{ help_text }}</small>
+    {% endif %}
+</div>
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/currency-input.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/currency-formatter.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const currencyInput = document.getElementById('{{ field_id }}');
+    if (currencyInput && window.CurrencyFormatter) {
+        window.CurrencyFormatter.setupEnhancedCurrencyField(currencyInput);
+    }
+});
+</script>
+{% endblock %} 

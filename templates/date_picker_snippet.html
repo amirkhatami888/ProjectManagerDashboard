@@ -1,0 +1,123 @@
+{% load static %}
+
+{# Include this in your template's head section #}
+{% block datepicker_css %}
+<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+<style>
+    .datepicker-plot-area {
+        font-family: 'IRANSans', 'Tahoma', sans-serif;
+        z-index: 9999 !important;
+    }
+    
+    .date-input-container {
+        position: relative;
+    }
+    
+    .input-group .calendar-icon-container {
+        cursor: pointer;
+        background: transparent;
+        border-left: 0;
+    }
+    
+    .input-group .calendar-icon-container img {
+        width: 20px;
+        height: 20px;
+    }
+</style>
+{% endblock %}
+
+{# Use this macro to create a date input field #}
+{% block date_input_field %}
+{# Parameters: field_id, field_name, field_label, field_value, is_required #}
+<div class="form-group mb-3">
+    <label for="{{ field_id }}" class="form-label">{{ field_label }}{% if not is_required %} <small class="text-muted">(اختیاری)</small>{% endif %}</label>
+    <div class="input-group">
+        <input type="text" id="{{ field_id }}" name="{{ field_name }}" class="form-control persian-date" 
+               placeholder="انتخاب تاریخ{% if not is_required %} (اختیاری){% endif %}" 
+               value="{{ field_value }}" {% if is_required %}required{% endif %}>
+        <span class="input-group-text calendar-icon-container" data-input="{{ field_id }}">
+            <img src="/staticfiles/admin/img/icon-calendar.svg" alt="calendar">
+        </span>
+    </div>
+</div>
+{% endblock %}
+
+{# Include this in your template's js section #}
+{% block datepicker_js %}
+<script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+<script>
+    function initializePersianDatepickers() {
+        $('.persian-date').each(function() {
+            var $input = $(this);
+            var $container = $input.closest('.input-group');
+            var $icon = $container.find('.calendar-icon-container');
+            var datepickerInstance = null;
+            var isOpen = false;
+
+            // Initialize datepicker
+            $input.persianDatepicker({
+                format: 'YYYY/MM/DD',
+                autoClose: true,
+                initialValueType: 'persian',
+                persianDigit: true,
+                observer: true,
+                calendar: {
+                    persian: {
+                        locale: 'fa'
+                    }
+                },
+                onSelect: function() {
+                    isOpen = false;
+                },
+                onHide: function() {
+                    isOpen = false;
+                },
+                onShow: function() {
+                    isOpen = true;
+                }
+            });
+            
+            // Store datepicker instance for later use
+            datepickerInstance = $input.data('datepicker');
+
+            // Toggle datepicker on input click
+            $input.on('click', function(e) {
+                if (!isOpen) {
+                    datepickerInstance.show();
+                    isOpen = true;
+                }
+            });
+
+            // Toggle datepicker on icon click
+            $icon.on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (isOpen) {
+                    datepickerInstance.hide();
+                    isOpen = false;
+                } else {
+                    datepickerInstance.show();
+                    isOpen = true;
+                }
+            });
+
+            // Close datepicker when clicking outside
+            $(document).on('click', function(e) {
+                if (isOpen && 
+                    !$(e.target).closest('.datepicker-plot-area').length && 
+                    !$(e.target).closest('.input-group').is($container)) {
+                    datepickerInstance.hide();
+                    isOpen = false;
+                }
+            });
+        });
+    }
+
+    // Initialize when document is ready
+    $(document).ready(function() {
+        initializePersianDatepickers();
+    });
+</script>
+{% endblock %} 

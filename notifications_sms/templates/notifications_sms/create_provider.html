@@ -1,0 +1,924 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+    --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    --info-gradient: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+    --card-shadow: 0 15px 35px rgba(0,0,0,0.08);
+    --card-hover-shadow: 0 20px 40px rgba(0,0,0,0.12);
+}
+
+body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+}
+
+.page-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 30px 0;
+    margin-bottom: 30px;
+    border-radius: 0 0 25px 25px;
+    box-shadow: var(--card-shadow);
+}
+
+.page-header h1 {
+    margin: 0;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.wizard-container {
+    background: white;
+    border-radius: 25px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    position: relative;
+}
+
+.wizard-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: var(--primary-gradient);
+}
+
+.wizard-step {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 0 20px;
+}
+
+.step-item {
+    display: flex;
+    align-items: center;
+    margin: 0 15px;
+    position: relative;
+}
+
+.step-number {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.step-number.active {
+    background: var(--primary-gradient);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.step-number.completed {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.step-label {
+    margin-right: 10px;
+    font-weight: 600;
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.step-item.active .step-label {
+    color: #667eea;
+}
+
+.step-item.completed .step-label {
+    color: #28a745;
+}
+
+.dashboard-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: var(--card-shadow);
+    border: none;
+    margin-bottom: 25px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--card-hover-shadow);
+}
+
+.dashboard-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary-gradient);
+}
+
+.card-header-gradient {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 25px;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-header-gradient::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+    transform: rotate(45deg);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
+}
+
+.card-header-gradient h5 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.form-group-modern {
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.form-label-modern {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    font-size: 0.95rem;
+}
+
+.form-label-modern i {
+    margin-right: 8px;
+    width: 20px;
+    text-align: center;
+}
+
+.form-control-modern {
+    border-radius: 12px;
+    border: 2px solid #e9ecef;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: #fafbfc;
+}
+
+.form-control-modern:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+    background: white;
+    transform: translateY(-1px);
+}
+
+.btn-modern {
+    border-radius: 50px;
+    padding: 12px 30px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-modern::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+}
+
+.btn-modern:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-primary.btn-modern {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.btn-primary.btn-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+}
+
+.btn-success.btn-modern {
+    background: var(--success-gradient);
+    color: white;
+}
+
+.btn-warning.btn-modern {
+    background: var(--warning-gradient);
+    color: white;
+}
+
+.btn-info.btn-modern {
+    background: var(--info-gradient);
+    color: white;
+}
+
+.btn-secondary.btn-modern {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    color: white;
+}
+
+.loading-spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.test-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 25px;
+    border-radius: 20px;
+    margin-top: 25px;
+    border: 2px dashed #dee2e6;
+    position: relative;
+}
+
+.test-section::before {
+    content: '🧪';
+    position: absolute;
+    top: -15px;
+    left: 20px;
+    background: white;
+    padding: 0 10px;
+    font-size: 1.5rem;
+}
+
+.ippanel-info {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    padding: 30px;
+    border-radius: 20px;
+    margin-bottom: 25px;
+    border-left: 6px solid #2196F3;
+    position: relative;
+    overflow: hidden;
+}
+
+.ippanel-info::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: rotate(45deg);
+    animation: sparkle 4s infinite;
+}
+
+@keyframes sparkle {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
+}
+
+.code-example {
+    background: #2d3748;
+    color: #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-size: 13px;
+    margin: 15px 0;
+    white-space: pre-wrap;
+    overflow-x: auto;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+.code-example::before {
+    content: 'Python';
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: rgba(255,255,255,0.1);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    color: #a0aec0;
+}
+
+.alert-modern {
+    border-radius: 15px;
+    border: none;
+    padding: 20px;
+    margin-bottom: 25px;
+    position: relative;
+    overflow: hidden;
+}
+
+.alert-warning.alert-modern {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border-left: 5px solid #ffc107;
+}
+
+.alert-success.alert-modern {
+    background: linear-gradient(135deg, #d4edda 0%, #a7e0a7 100%);
+    border-left: 5px solid #28a745;
+}
+
+.alert-danger.alert-modern {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5a7ac 100%);
+    border-left: 5px solid #dc3545;
+}
+
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    margin-right: 10px;
+    position: relative;
+}
+
+.status-indicator.success {
+    background-color: #28a745;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+}
+
+.status-indicator.success::before {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    animation: pulse-dot 2s infinite;
+}
+
+.status-indicator.error {
+    background-color: #dc3545;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+}
+
+@keyframes pulse-dot {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(0.8); opacity: 0.7; }
+}
+
+.feature-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+    transition: all 0.3s ease;
+    border-left: 5px solid;
+}
+
+.feature-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+}
+
+.feature-card.primary {
+    border-left-color: #667eea;
+}
+
+.feature-card.success {
+    border-left-color: #28a745;
+}
+
+.feature-card.warning {
+    border-left-color: #ffc107;
+}
+
+.navigation-tabs {
+    background: white;
+    border-radius: 50px;
+    padding: 5px;
+    margin-bottom: 30px;
+    box-shadow: var(--card-shadow);
+    display: inline-flex;
+}
+
+.nav-tab {
+    padding: 12px 25px;
+    border-radius: 50px;
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.nav-tab.active,
+.nav-tab:hover {
+    background: var(--primary-gradient);
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .wizard-step {
+        flex-direction: column;
+    }
+    
+    .step-item {
+        margin: 10px 0;
+    }
+    
+    .btn-modern {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+    }
+    
+    .code-example {
+        font-size: 12px;
+        padding: 15px;
+    }
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --card-bg: #2d3748;
+        --text-primary: #e2e8f0;
+        --text-secondary: #a0aec0;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h1 class="mb-2">
+                        <i class="fas fa-plus-circle mr-3"></i>
+                        {{ title }}
+                    </h1>
+                    <p class="mb-0 opacity-75">ایجاد و پیکربندی سرویس دهنده پیامک IPPanel جدید</p>
+                </div>
+                <div class="text-right">
+                    <div class="navigation-tabs">
+                        <a href="{% url 'sms_settings' %}" class="nav-tab">
+                            <i class="fas fa-home mr-2"></i>داشبورد
+                        </a>
+                        <a href="{% url 'create_sms_provider' %}" class="nav-tab active">
+                            <i class="fas fa-plus mr-2"></i>افزودن سرویس
+                        </a>
+                        <a href="{% url 'edit_sms_settings' %}" class="nav-tab">
+                            <i class="fas fa-edit mr-2"></i>تنظیمات
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if not ippanel_available %}
+    <div class="alert alert-warning alert-modern alert-dismissible fade show" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle fa-2x text-warning mr-3"></i>
+            <div>
+                <h5 class="alert-heading mb-2">نیاز به نصب کتابخانه IPPanel</h5>
+                <p class="mb-1">برای استفاده کامل از قابلیت‌های پیامک، کتابخانه IPPanel باید نصب شود:</p>
+                <code class="bg-dark text-light p-2 rounded">pip install ippanel</code>
+            </div>
+        </div>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    {% endif %}
+
+    <!-- Progress Wizard -->
+    <div class="wizard-container mb-4">
+        <div class="p-4">
+            <div class="wizard-step">
+                <div class="step-item completed">
+                    <div class="step-number">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="step-label">آماده‌سازی</div>
+                </div>
+                <div class="step-item active">
+                    <div class="step-number">2</div>
+                    <div class="step-label">پیکربندی</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-label">تست اتصال</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <div class="step-label">تکمیل</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Information Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-4">
+            <div class="feature-card primary">
+                <h6><i class="fas fa-key mr-2"></i>کلید API</h6>
+                <p class="mb-0">کلید API را از پنل IPPanel خود دریافت کنید و در فرم وارد نمایید.</p>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="feature-card success">
+                <h6><i class="fas fa-phone mr-2"></i>شماره ارسال</h6>
+                <p class="mb-0">شماره مجاز برای ارسال پیامک که از IPPanel دریافت کرده‌اید.</p>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="feature-card warning">
+                <h6><i class="fas fa-credit-card mr-2"></i>اعتبار کافی</h6>
+                <p class="mb-0">اطمینان حاصل کنید که حساب شما دارای اعتبار کافی برای ارسال پیامک است.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- IPPanel Information -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="ippanel-info">
+                <h5><i class="fas fa-code mr-2"></i>نمونه کد کاربردی شما</h5>
+                <p class="mb-3">این کد با همین تنظیمات شما کار می‌کند و پیامک ارسال می‌نماید:</p>
+                
+                <div class="code-example">from ippanel import Client
+from ippanel import HTTPError, Error, ResponseCode
+
+# Your working API key
+api_key = "OWYxNGMzZjQtNjI4NC00ZjE5LThlYWQtMzU0ZThmMDI2YWMwOTZjMGE0M2NmYWQ5OTU0YzRhZTU3NTYwMGRhZjAwZDY="
+
+# Create client instance
+sms = Client(api_key)
+
+# Check credit
+try:
+    credit = sms.get_credit()
+    print(f"Current credit: {credit}")
+except Error as e:
+    print(f"Credit check error: {e.message}")
+
+# Send SMS
+try:
+    message_id = sms.send(
+        originator="+985000404223",
+        recipients=["989120604872"], 
+        message="🚀 سلام! این یک پیام تست از IPPanel است",
+        bodyId=None
+    )
+    print(f"Message sent successfully! ID: {message_id}")
+except Error as e:
+    print(f"Send error => code: {e.code}, message: {e.message}")
+    if e.code == ResponseCode.ErrUnprocessableEntity.value:
+        for field in e.message:
+            print(f"Field: {field} , Errors: {e.message[field]}")
+except HTTPError as e: # http error like network error, not found, ...
+    print(f"Error handled => code: {e}")</div>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Provider Configuration Form -->
+        <div class="col-lg-8">
+            <div class="dashboard-card">
+                <div class="card-header-gradient">
+                    <h5><i class="fas fa-server mr-2"></i>پیکربندی سرویس دهنده IPPanel</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" id="provider-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="create">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">
+                                        <i class="fas fa-tag text-primary"></i>
+                                        نام سرویس دهنده
+                                    </label>
+                                    <input type="text" name="{{ form.name.name }}" value="{{ form.name.value|default:'' }}" class="form-control form-control-modern" id="{{ form.name.id_for_label }}" required>
+                                    {% if form.name.errors %}
+                                        <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="text-muted">نام دلخواه برای شناسایی این سرویس</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">
+                                        <i class="fas fa-cogs text-info"></i>
+                                        نوع سرویس دهنده
+                                    </label>
+                                    <select name="{{ form.provider_type.name }}" class="form-control form-control-modern" id="{{ form.provider_type.id_for_label }}" required>
+                                        {% for choice in form.provider_type %}
+                                            {{ choice.tag }}
+                                        {% endfor %}
+                                    </select>
+                                    {% if form.provider_type.errors %}
+                                        <div class="text-danger small mt-1">{{ form.provider_type.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="text-muted">IPPanel به عنوان سرویس اصلی</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label class="form-label-modern">
+                                <i class="fas fa-key text-warning"></i>
+                                کلید API
+                            </label>
+                            <input type="text" name="{{ form.api_key.name }}" value="{{ form.api_key.value|default:'' }}" class="form-control form-control-modern" id="{{ form.api_key.id_for_label }}" required>
+                            {% if form.api_key.errors %}
+                                <div class="text-danger small mt-1">{{ form.api_key.errors.0 }}</div>
+                            {% endif %}
+                            <div class="mt-3 p-3 rounded" style="background: linear-gradient(135deg, #d4edda 0%, #a7e0a7 100%); border-left: 4px solid #28a745;">
+                                <small class="text-success d-flex align-items-center">
+                                    <i class="fas fa-check-circle mr-2"></i>
+                                    <strong>کلید API تست شده شما پیش‌فرض شده است</strong>
+                                </small>
+                                <small class="text-muted d-block mt-1">این کلید قبلاً تست شده و کار می‌کند</small>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">
+                                        <i class="fas fa-phone text-success"></i>
+                                        شماره ارسال‌کننده
+                                    </label>
+                                    <input type="text" name="{{ form.sender_number.name }}" value="{{ form.sender_number.value|default:'' }}" class="form-control form-control-modern" id="{{ form.sender_number.id_for_label }}">
+                                    {% if form.sender_number.errors %}
+                                        <div class="text-danger small mt-1">{{ form.sender_number.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="mt-2 p-2 rounded bg-light">
+                                        <small class="text-success">
+                                            <i class="fas fa-check-circle mr-1"></i>
+                                            شماره تست شده: +985000404223
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">
+                                        <i class="fas fa-link text-info"></i>
+                                        آدرس پایه API
+                                    </label>
+                                    <input type="url" name="{{ form.base_url.name }}" value="{{ form.base_url.value|default:'' }}" class="form-control form-control-modern" id="{{ form.base_url.id_for_label }}" required>
+                                    {% if form.base_url.errors %}
+                                        <div class="text-danger small mt-1">{{ form.base_url.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="text-muted">آدرس رسمی API سرویس IPPanel</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group-modern">
+                            <div class="p-4 rounded" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 2px dashed #dee2e6;">
+                                <div class="form-check d-flex align-items-center">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label mr-3" for="{{ form.is_active.id_for_label }}">
+                                        <i class="fas fa-power-off text-success mr-2"></i>
+                                        <strong>فعال کردن فوری این سرویس دهنده</strong>
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    با فعال کردن این گزینه، سرویس بلافاصله آماده ارسال پیامک خواهد بود
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <button type="button" class="btn btn-info btn-modern" onclick="testConnection()" {% if not ippanel_available %}disabled{% endif %}>
+                                <div class="loading-spinner d-none"></div>
+                                <i class="fas fa-vial mr-2"></i>
+                                تست اتصال API
+                            </button>
+                            
+                            <button type="submit" class="btn btn-success btn-modern">
+                                <i class="fas fa-save mr-2"></i>
+                                ایجاد سرویس دهنده
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status and Info Panel -->
+        <div class="col-lg-4">
+            <!-- Connection Status -->
+            <div class="card provider-card">
+                <div class="card-header-custom">
+                    <h5><i class="fas fa-heartbeat mr-2"></i>وضعیت اتصال</h5>
+                </div>
+                <div class="card-body text-center" id="connection-status">
+                    <div class="mb-3">
+                        <i class="fas fa-question-circle fa-3x text-muted"></i>
+                    </div>
+                    <h6 class="text-muted">تست نشده</h6>
+                    <p class="text-muted small">برای بررسی وضعیت اتصال، روی "تست اتصال" کلیک کنید</p>
+                </div>
+            </div>
+
+            <!-- Quick Guide -->
+            <div class="card provider-card">
+                <div class="card-header-custom">
+                    <h5><i class="fas fa-graduation-cap mr-2"></i>راهنمای سریع</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6><i class="fas fa-step-forward text-primary mr-2"></i>مراحل تنظیم:</h6>
+                        <ol class="small">
+                            <li>کلید API خود را از پنل IPPanel دریافت کنید</li>
+                            <li>شماره ارسال مجاز را وارد کنید</li>
+                            <li>روی "تست اتصال" کلیک کنید</li>
+                            <li>در صورت موفقیت، سرویس دهنده را ایجاد کنید</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-exclamation-triangle text-warning mr-2"></i>نکات مهم:</h6>
+                        <ul class="small">
+                            <li>اطمینان حاصل کنید که حساب دارای اعتبار کافی است</li>
+                            <li>شماره ارسال باید در پنل IPPanel فعال باشد</li>
+                            <li>کلید API را محرمانه نگه دارید</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function testConnection() {
+    const button = event.target;
+    const spinner = button.querySelector('.loading-spinner');
+    const icon = button.querySelector('i.fas');
+    const statusDiv = document.getElementById('connection-status');
+    
+    const apiKey = document.querySelector('input[name="api_key"]').value.trim();
+    
+    if (!apiKey) {
+        showStatus('error', 'خطا', 'لطفاً ابتدا کلید API را وارد کنید');
+        return;
+    }
+    
+    // Show loading
+    spinner.classList.remove('d-none');
+    icon.classList.add('d-none');
+    button.disabled = true;
+    
+    showStatus('loading', 'در حال تست...', 'اتصال به سرویس IPPanel');
+    
+    fetch('{% url "create_sms_provider" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            'action': 'test_connection',
+            'api_key': apiKey
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'OK') {
+            showStatus('success', 'اتصال موفق', `اعتبار: ${data.credit} تومان`);
+        } else {
+            showStatus('error', 'اتصال ناموفق', data.message);
+        }
+    })
+    .catch(error => {
+        showStatus('error', 'خطا', 'خطا در اتصال به سرور');
+        console.error('Error:', error);
+    })
+    .finally(() => {
+        // Hide loading
+        spinner.classList.add('d-none');
+        icon.classList.remove('d-none');
+        button.disabled = false;
+    });
+}
+
+function showStatus(type, title, message) {
+    const statusDiv = document.getElementById('connection-status');
+    let iconClass, iconColor, statusColor;
+    
+    switch(type) {
+        case 'success':
+            iconClass = 'fas fa-check-circle';
+            iconColor = 'text-success';
+            statusColor = 'text-success';
+            break;
+        case 'error':
+            iconClass = 'fas fa-times-circle';
+            iconColor = 'text-danger';
+            statusColor = 'text-danger';
+            break;
+        case 'loading':
+            iconClass = 'fas fa-spinner fa-spin';
+            iconColor = 'text-primary';
+            statusColor = 'text-primary';
+            break;
+        default:
+            iconClass = 'fas fa-question-circle';
+            iconColor = 'text-muted';
+            statusColor = 'text-muted';
+    }
+    
+    statusDiv.innerHTML = `
+        <div class="mb-3">
+            <i class="${iconClass} fa-3x ${iconColor}"></i>
+        </div>
+        <h6 class="${statusColor}">${title}</h6>
+        <p class="${statusColor} small">${message}</p>
+    `;
+}
+
+// Test connection on API key change
+document.addEventListener('DOMContentLoaded', function() {
+    const apiKeyField = document.querySelector('input[name="api_key"]');
+    if (apiKeyField) {
+        apiKeyField.addEventListener('blur', function() {
+            if (this.value.trim() && {% if ippanel_available %}true{% else %}false{% endif %}) {
+                // Auto-test connection when API key is entered
+                setTimeout(() => {
+                    const testButton = document.querySelector('button[onclick="testConnection()"]');
+                    if (testButton && !testButton.disabled) {
+                        testConnection();
+                    }
+                }, 500);
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 

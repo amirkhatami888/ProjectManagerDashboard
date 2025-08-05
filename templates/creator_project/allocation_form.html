@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+{% load static %}
+{% load jalali_tags %}
+
+{% block title %}ویرایش تخصیص مالی - {{ project.name }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+<link rel="stylesheet" href="{% static 'css/currency-input.css' %}">
+<style>
+.datepicker-plot-area {
+    font-family: 'Vazir', Tahoma, Arial, sans-serif;
+    z-index: 9999 !important;
+}
+
+/* Date input styling */
+.date-input-container {
+    position: relative;
+}
+
+.date-input-container .calendar-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #6c757d;
+    z-index: 100;
+    font-size: 18px;
+    background: transparent;
+    border: none;
+    outline: none;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.date-input-container .form-control {
+    padding-left: 35px;
+}
+
+/* Force visibility for date inputs */
+input[type="text"].persian-date::-webkit-calendar-picker-indicator {
+    opacity: 0;
+}
+
+/* Override any theme styles hiding the calendar icon */
+.calendar-icon {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+.form-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.currency-display {
+    font-weight: 600;
+    color: #2c5530;
+    font-family: 'Courier New', monospace;
+    direction: ltr;
+    font-size: 1.1em;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <div class="form-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>ویرایش تخصیص مالی</h1>
+                <p class="text-muted mb-0">پروژه: {{ project.name }}</p>
+            </div>
+            
+            <div class="d-flex gap-2">
+                <a href="{% url 'creator_project:allocation_list' project.id %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-return-left"></i> بازگشت به فهرست
+                </a>
+            </div>
+        </div>
+        
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-pencil-square me-2"></i>
+                    اطلاعات تخصیص مالی
+                </h5>
+        </div>
+        <div class="card-body">
+                <form method="post" id="allocationForm">
+                {% csrf_token %}
+                
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.allocation_type.id_for_label }}" class="form-label">نوع تخصیص <span class="text-danger">*</span></label>
+                            {{ form.allocation_type }}
+                            {% if form.allocation_type.errors %}
+                                <div class="text-danger small">{{ form.allocation_type.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.amount.id_for_label }}" class="form-label">مبلغ تخصیص (ریال) <span class="text-danger">*</span></label>
+                            <div class="input-group mb-2">
+                                {{ form.amount }}
+                                <span class="input-group-text bg-light text-muted">ریال</span>
+                            </div>
+                            {% if form.amount.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.amount.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.letter_number.id_for_label }}" class="form-label">شماره نامه <span class="text-danger">*</span></label>
+                            {{ form.letter_number }}
+                            {% if form.letter_number.errors %}
+                                <div class="text-danger small">{{ form.letter_number.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="form-group">
+                                <label for="id_allocation_date" class="form-label">تاریخ تخصیص <span class="text-danger">*</span></label>
+                                <div class="date-input-container">
+                                    <input type="text" name="allocation_date" id="id_allocation_date" class="form-control persian-date" 
+                                           value="{% if form.allocation_date.value %}{{ form.allocation_date.value }}{% endif %}">
+                                    <i class="bi bi-calendar3 calendar-icon" data-input="id_allocation_date"></i>
+                                </div>
+                                <div class="form-text text-muted">فرمت تاریخ: سال/ماه/روز</div>
+                                {% if form.allocation_date.errors %}
+                                    <div class="text-danger small">{{ form.allocation_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">توضیحات</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-danger small">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'creator_project:allocation_list' project.id %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> انصراف
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> ذخیره تغییرات
+                        </button>
+                    </div>
+                </form>
+                    </div>
+                </div>
+
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery (required for Persian Datepicker) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Persian Date -->
+<script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<!-- Persian Datepicker -->
+<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+<script src="{% static 'js/currency-formatter.js' %}"></script>
+
+<script>
+$(document).ready(function() {
+    console.log("Document ready - starting datepicker initialization");
+    
+    // Initialize Persian Datepicker for date fields
+    $(".persian-date").each(function() {
+        var inputId = this.id;
+        var $input = $(this);
+        
+        // Set default date to today if field is empty
+        if (!$input.val()) {
+            var today = new persianDate();
+            $input.val(today.format('YYYY/MM/DD'));
+            console.log("Set default date to today:", today.format('YYYY/MM/DD'));
+        }
+        
+        // Initialize Persian datepicker and store instance
+        var datepickerInstance = $input.persianDatepicker({
+            format: 'YYYY/MM/DD',
+            autoClose: true,
+            initialValueType: 'persian',
+            persianDigit: true,
+            observer: true,
+            calendar: {
+                persian: {
+                    locale: 'fa'
+                }
+            },
+            onSelect: function(unix) {
+                console.log('Date selected for', inputId);
+                // Make sure the input value is updated when a date is selected
+                var pd = new persianDate(unix);
+                var formattedDate = pd.format('YYYY/MM/DD');
+                $('#' + inputId).val(formattedDate);
+            },
+            onShow: function() {
+                console.log('Datepicker shown for', inputId);
+            },
+            onHide: function() {
+                console.log('Datepicker hidden for', inputId);
+                $input.trigger('blur');
+            }
+        }).data('datepicker');
+        
+        // Store datepicker instance in data attribute
+        $input.data('datepicker', datepickerInstance);
+        
+        // Disable default click behavior on input to prevent auto-opening
+        $input.on('click', function(e) {
+            if($(e.target).hasClass('persian-date')) {
+                e.stopPropagation();
+            }
+        });
+    });
+    
+    // Handle calendar icon clicks separately
+    $(document).on('click', '.calendar-icon', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        var inputId = $(this).data('input');
+        var $input = $('#' + inputId);
+        
+        if ($input.length) {
+            // Force close any open datepickers first
+            $('.datepicker-container, .datepicker-plot-area').hide();
+            
+            // Get the datepicker instance
+            var datepicker = $input.data('datepicker');
+            
+            // Show the datepicker
+            if (datepicker && typeof datepicker.show === 'function') {
+                setTimeout(function() {
+                    datepicker.show();
+                }, 50);
+            }
+        }
+    });
+    
+    // Close datepicker when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.date-input-container, .datepicker-plot-area, .calendar-icon').length) {
+            $('.datepicker-container').hide();
+            $('.datepicker-plot-area').hide();
+        }
+    });
+    
+    // Handle form submission - clean the amount field and handle date conversion
+    $('#allocationForm').on('submit', function(e) {
+        console.log("Form submitting...");
+        
+        // Ensure the numeric value of amount field is set correctly
+        var amountField = $('#{{ form.amount.id_for_label }}');
+        var amountValue = amountField.val().replace(/,/g, '');
+        amountField.val(amountValue);
+        
+        // Ensure the date is in the correct format before submitting
+        var date = $('#id_allocation_date').val();
+        if (date) {
+            if (!date.match(/^\d{4}\/\d{2}\/\d{2}$/)) {
+                // Try to clean up the date format if it doesn't match YYYY/MM/DD
+                var parts = date.split('/');
+                if (parts.length === 3) {
+                    // Ensure each part has correct formatting (add leading zeros)
+                    parts[0] = parts[0].padStart(4, '0');
+                    parts[1] = parts[1].padStart(2, '0');
+                    parts[2] = parts[2].padStart(2, '0');
+                    $('#id_allocation_date').val(parts.join('/'));
+                }
+            }
+        }
+        
+        console.log("Form submitting with date:", $('#id_allocation_date').val());
+        console.log("Form submitting with amount:", amountField.val());
+    });
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.provider-card {
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    border: none;
+    overflow: hidden;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.form-control {
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.btn-modern {
+    border-radius: 25px;
+    padding: 12px 30px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary.btn-modern {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.btn-primary.btn-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.info-box {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.credential-section {
+    background: #f8f9fc;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-left: 4px solid #667eea;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-satellite-dish text-primary mr-2"></i>
+            {{ title }}
+        </h1>
+    </div>
+    
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Info Box for FarazSMS -->
+            <div class="info-box">
+                <h5><i class="fas fa-info-circle mr-2"></i>راهنمای تنظیم سرویس فرازاس‌ام‌اس</h5>
+                <p class="mb-2">
+                    <strong>سایت:</strong> <a href="https://sms.farazsms.com/" target="_blank" class="text-white">https://sms.farazsms.com/</a>
+                </p>
+                <p class="mb-2">
+                    <strong>مستندات:</strong> <a href="https://docs.ippanel.com/" target="_blank" class="text-white">https://docs.ippanel.com/</a>
+                </p>
+                <p class="mb-0">
+                    <strong>کتابخانه Python:</strong> <a href="https://github.com/ippanelcom/Edge-Document" target="_blank" class="text-white">GitHub Repository</a>
+                </p>
+            </div>
+            
+            <div class="card provider-card">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-cogs mr-2"></i>
+                        تنظیمات سرویس دهنده پیامک
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    <i class="fas fa-tag text-primary mr-2"></i>
+                                    نام سرویس دهنده *
+                                </label>
+                                {{ form.name }}
+                                <small class="form-text text-muted">مثال: فرازاس‌ام‌اس</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    <i class="fas fa-link text-info mr-2"></i>
+                                    آدرس پایه API *
+                                </label>
+                                {{ form.base_url }}
+                                <small class="form-text text-muted">مثال: https://sms.farazsms.com/</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Credentials Section -->
+                        <div class="credential-section">
+                            <h6 class="mb-3">
+                                <i class="fas fa-key text-warning mr-2"></i>
+                                اطلاعات احراز هویت
+                            </h6>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-user text-success mr-2"></i>
+                                        نام کاربری
+                                    </label>
+                                    {{ form.username }}
+                                    <small class="form-text text-muted">مثال: FREE09999807596</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-lock text-danger mr-2"></i>
+                                        رمز عبور
+                                    </label>
+                                    {{ form.password }}
+                                    <small class="form-text text-muted">رمز عبور پنل پیامک</small>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-code text-info mr-2"></i>
+                                        کلید API *
+                                    </label>
+                                    {{ form.api_key }}
+                                    <small class="form-text text-muted">
+                                        کلید API که از پنل کاربری دریافت کرده‌اید. این کلید به صورت Base64 کدگذاری شده است.
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-phone text-primary mr-2"></i>
+                                        شماره ارسال
+                                    </label>
+                                    {{ form.sender_number }}
+                                    <small class="form-text text-muted">شماره ارسال کننده پیامک (اختیاری)</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-toggle-on text-success mr-2"></i>
+                                        وضعیت
+                                    </label>
+                                    <div class="form-check">
+                                        {{ form.is_active }}
+                                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                            فعال کردن این سرویس
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        در صورت فعال کردن، سایر سرویس‌ها غیرفعال خواهند شد.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Sample Configuration -->
+                        <div class="alert alert-info" role="alert">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-lightbulb mr-2"></i>
+                                نمونه تنظیمات ارائه شده
+                            </h6>
+                            <hr>
+                            <p class="mb-2"><strong>نام کاربری:</strong> FREE09999807596</p>
+                            <p class="mb-2"><strong>رمز عبور:</strong> 0020100809@Faraz</p>
+                            <p class="mb-2"><strong>کلید API:</strong> OWVlNWZlOWEtOTVhOC00YmM3LTliYWMtNTk0Y2Y1ZTg4MGI3NjU1NWNjMTgzMThmNWVkYmY3OWFjZWJjNzczNzI3N2I=</p>
+                            <p class="mb-0"><strong>نام نمایشی:</strong> hellal_DPM</p>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="text-center">
+                                    <button type="submit" class="btn btn-primary btn-modern mr-3">
+                                        <i class="fas fa-save mr-2"></i>
+                                        {% if provider %}ویرایش سرویس{% else %}ایجاد سرویس{% endif %}
+                                    </button>
+                                    <a href="{% url 'edit_sms_settings' %}" class="btn btn-secondary btn-modern">
+                                        <i class="fas fa-arrow-left mr-2"></i>بازگشت
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Auto-fill demo data button
+    $('#auto-fill-demo').on('click', function() {
+        $('input[name="name"]').val('فرازاس‌ام‌اس');
+        $('input[name="base_url"]').val('https://sms.farazsms.com/');
+        $('input[name="username"]').val('FREE09999807596');
+        $('input[name="password"]').val('0020100809@Faraz');
+        $('textarea[name="api_key"]').val('OWVlNWZlOWEtOTVhOC00YmM3LTliYWMtNTk0Y2Y1ZTg4MGI3NjU1NWNjMTgzMThmNWVkYmY3OWFjZWJjNzczNzI3N2I=');
+        $('input[name="sender_number"]').val('+9850002040');
+    });
+    
+    // Form validation
+    $('form').on('submit', function(e) {
+        let isValid = true;
+        
+        // Check required fields
+        $('input[required]').each(function() {
+            if (!$(this).val()) {
+                isValid = false;
+                $(this).addClass('is-invalid');
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('لطفاً تمام فیلدهای اجباری را پر کنید.');
+        }
+    });
+    
+    // Real-time validation
+    $('input').on('change blur', function() {
+        if ($(this).attr('required') && !$(this).val()) {
+            $(this).addClass('is-invalid');
+        } else {
+            $(this).removeClass('is-invalid');
+        }
+    });
+});
+</script>
+{% endblock %} 

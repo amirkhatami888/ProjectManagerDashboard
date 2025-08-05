@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load static %}
+{% load jalali_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/jalali-datepicker.css' %}">
+{# It's good practice to also include the base persian-datepicker CSS if your custom one doesn't cover everything #}
+<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+<style>
+    /* Keep any other specific styles for this form if needed, but datepicker styles should be general */
+    .date-input-container .form-control {
+        padding-left: 35px; /* Ensure space for icon if not already covered by general CSS */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">{{ title }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.document_type.id_for_label }}">{{ form.document_type.label }} <span class="text-danger">*</span></label>
+                                    {{ form.document_type }}
+                                    {% if form.document_type.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.document_type.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div id="related_document_container" class="col-md-6" style="display: none;">
+                                <div class="form-group">
+                                    <label for="{{ form.related_document.id_for_label }}">{{ form.related_document.label }} <span class="text-danger">*</span></label>
+                                    {{ form.related_document }}
+                                    {% if form.related_document.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.related_document.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.contractor_amount.id_for_label }}">{{ form.contractor_amount.label }} <span class="text-danger">*</span></label>
+                                    {{ form.contractor_amount }}
+                                    {% if form.contractor_amount.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.contractor_amount.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.approved_amount.id_for_label }}">{{ form.approved_amount.label }} <span class="text-danger">*</span></label>
+                                    {{ form.approved_amount }}
+                                    {% if form.approved_amount.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.approved_amount.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="jalali_contractor_date">{{ form.jalali_contractor_date.label }} <span class="text-danger">*</span></label>
+                                    {# This field is "تاریخ ارسال سند مالی پیمان کار" #}
+                                    {% include 'field_templates/date_picker.html' with field_id=form.jalali_contractor_date.id_for_label field_name=form.jalali_contractor_date.name initial_value=form.jalali_contractor_date.value|to_jalali:'%Y/%m/%d' required=True %}
+                                    {% if form.jalali_contractor_date.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.jalali_contractor_date.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="jalali_approval_date">{{ form.jalali_approval_date.label }}</label>
+                                    {% include 'field_templates/date_picker.html' with field_id=form.jalali_approval_date.id_for_label field_name=form.jalali_approval_date.name initial_value=form.jalali_approval_date.value|to_jalali:'%Y/%m/%d' required=False %}
+                                     {% if form.jalali_approval_date.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.jalali_approval_date.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.description.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-12 mt-3">
+                                <div class="form-group">
+                                    <label for="{{ form.files.id_for_label }}">{{ form.files.label }}</label>
+                                    {{ form.files }}
+                                    <small class="form-text text-muted">می‌توانید چند فایل را انتخاب کنید (PDF، تصویر، اکسل، ورد)</small>
+                                    {% if form.files.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.files.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            {% if document_files %}
+                            <div class="col-md-12 mt-3">
+                                <h5>فایل‌های موجود</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>نام فایل</th>
+                                                <th>عملیات</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for file in document_files %}
+                                            <tr>
+                                                <td>{{ file.filename }}</td>
+                                                <td>
+                                                    <a href="{{ file.file.url }}" class="btn btn-sm btn-info" target="_blank">
+                                                        <i class="bi bi-eye"></i> مشاهده
+                                                    </a>
+                                                    <a href="{% url 'creator_subproject:delete_document_file' pk=file.pk %}" class="btn btn-sm btn-danger">
+                                                        <i class="bi bi-trash"></i> حذف
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'creator_subproject:subproject_detail' pk=subproject.id %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> بازگشت
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-1"></i> ذخیره اطلاعات
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Ensure jQuery is loaded first -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Then Persian Date library -->
+<script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<!-- Then Persian Datepicker plugin -->
+<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+
+<!-- Your global JalaliDatePicker script -->
+<script src="{% static 'js/jalali-datepicker.js' %}"></script>
+
+<script>
+    //DOMContentLoaded ensures the main DOM is ready. 
+    //The JalaliDatePicker class itself initializes on DOMContentLoaded.
+    //So, no need to call new JalaliDatePicker() here explicitly again.
+
+    // Keep any OTHER form-specific JavaScript here.
+    // For example, the document type change handler:
+    $(document).ready(function() {
+        const documentTypeSelect = $('#id_document_type');
+        const relatedDocumentContainer = $('#related_document_container');
+        const relatedDocumentSelect = $('#id_related_document');
+
+        function handleDocumentTypeChange() {
+            if (documentTypeSelect.val() === 'adjustment_report') {
+                relatedDocumentContainer.show();
+                relatedDocumentSelect.prop('required', true);
+            } else {
+                relatedDocumentContainer.hide();
+                relatedDocumentSelect.prop('required', false);
+                relatedDocumentSelect.val('');
+            }
+        }
+
+        // Set initial state and add change listener
+        if (documentTypeSelect.length) {
+            handleDocumentTypeChange();
+            documentTypeSelect.on('change', handleDocumentTypeChange);
+        }
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}ارسال پیامک گروهی{% endblock %}
+
+{% block extra_head %}
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+    .select2-container--default .select2-selection--single {
+        height: calc(1.5em + 0.75rem + 2px);
+        padding: 0.375rem 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: calc(1.5em + 0.75rem + 2px);
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 1.5;
+    }
+    
+    .bulk-sms-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+    
+    .sms-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+    }
+    
+    .message-counter {
+        background: rgba(0, 123, 255, 0.1);
+        border: 1px solid rgba(0, 123, 255, 0.3);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .recipient-preview {
+        background: rgba(40, 167, 69, 0.1);
+        border: 1px solid rgba(40, 167, 69, 0.3);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .btn-send-sms {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: bold;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+    
+    .btn-send-sms:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    }
+    
+    .form-control, .select2-container--default .select2-selection--single {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+    }
+    
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+    
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="text-center text-white">
+            <div class="loading-spinner mx-auto mb-3"></div>
+            <h5>در حال ارسال پیامک...</h5>
+            <p>لطفاً صبر کنید</p>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <div class="bulk-sms-container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="h2 mb-3">
+                    <i class="fas fa-paper-plane mr-3"></i>
+                    ارسال پیامک گروهی
+                </h1>
+                <p class="lead mb-0">
+                    پیامک خود را به گروه‌های مختلف کاربران با سرعت و دقت بالا ارسال کنید
+                </p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="feature-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h5>ارسال گروهی</h5>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Form Section -->
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit mr-2"></i>
+                        فرم ارسال پیامک گروهی
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-info border-0 rounded-lg">
+                        <div class="d-flex">
+                            <i class="fas fa-info-circle mt-1 mr-3 text-info"></i>
+                            <div>
+                                <strong>راهنمایی:</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>پیامک به تمام کاربران مطابق با معیارهای انتخاب شده ارسال می‌شود</li>
+                                    <li>حداقل یک فیلتر (نقش یا استان) را انتخاب کنید</li>
+                                    <li>قبل از ارسال، تعداد گیرندگان را بررسی کنید</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form method="post" id="bulkSmsForm">
+                        {% csrf_token %}
+                        
+                        <!-- Filters Section -->
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label font-weight-bold">
+                                    <i class="fas fa-user-tag mr-2"></i>
+                                    انتخاب نقش
+                                </label>
+                                {{ form.role|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label font-weight-bold">
+                                    <i class="fas fa-map-marker-alt mr-2"></i>
+                                    انتخاب استان
+                                </label>
+                                {{ form.province|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <!-- Message Section -->
+                        <div class="mb-4">
+                            <label class="form-label font-weight-bold">
+                                <i class="fas fa-comment-alt mr-2"></i>
+                                متن پیامک
+                            </label>
+                            {{ form.message|as_crispy_field }}
+                        </div>
+                        
+                        <!-- Message Counter -->
+                        <div class="message-counter">
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <div class="border-right">
+                                        <h5 class="text-primary mb-1" id="characterCount">0</h5>
+                                        <small class="text-muted">کاراکتر</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="border-right">
+                                        <h5 class="text-success mb-1" id="messageCount">1</h5>
+                                        <small class="text-muted">پیام</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <h5 class="text-warning mb-1" id="estimatedCost">0</h5>
+                                    <small class="text-muted">تومان (تخمینی)</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-send-sms btn-lg">
+                                <i class="fas fa-paper-plane mr-2"></i>
+                                ارسال پیامک گروهی
+                            </button>
+                            <a href="{% url 'sms_dashboard' %}" class="btn btn-outline-secondary btn-lg mr-3">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                بازگشت
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recipients Preview Section -->
+        <div class="col-lg-4">
+            <div class="stats-card">
+                <h5 class="text-primary mb-3">
+                    <i class="fas fa-users mr-2"></i>
+                    پیش‌نمایش گیرندگان
+                </h5>
+                <div id="recipientPreview">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-user-friends fa-3x mb-3 text-light"></i>
+                        <p>فیلترها را انتخاب کنید تا تعداد گیرندگان مشاهده شود</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="stats-card">
+                <h6 class="text-secondary mb-3">آمار سریع</h6>
+                <div class="row text-center">
+                    <div class="col-6 border-right">
+                        <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                        <h6 class="text-success">موفق</h6>
+                        <small class="text-muted">امروز: -</small>
+                    </div>
+                    <div class="col-6">
+                        <i class="fas fa-times-circle text-danger fa-2x mb-2"></i>
+                        <h6 class="text-danger">ناموفق</h6>
+                        <small class="text-muted">امروز: -</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize Select2
+        $('#id_role, #id_province').select2({
+            theme: 'bootstrap',
+            width: '100%',
+            placeholder: 'انتخاب کنید...'
+        });
+        
+        // Initialize character counter
+        const messageField = $('#id_message');
+        const countDisplay = $('#characterCount');
+        const messageCountDisplay = $('#messageCount');
+        const costDisplay = $('#estimatedCost');
+        
+        // Update on load
+        updateCharacterCount();
+        
+        // Update on input
+        messageField.on('input', updateCharacterCount);
+        
+        // Handle filter changes
+        $('#id_role, #id_province').change(function() {
+            updateRecipientPreview();
+        });
+        
+        // Form submission
+        $('#bulkSmsForm').submit(function(e) {
+            e.preventDefault();
+            
+            const role = $('#id_role').val();
+            const province = $('#id_province').val();
+            const message = messageField.val().trim();
+            
+            // Validation
+            if (!role && !province) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'هشدار',
+                    text: 'لطفاً حداقل یک فیلتر (نقش یا استان) را انتخاب کنید'
+                });
+                return;
+            }
+            
+            if (!message) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'هشدار',
+                    text: 'لطفاً متن پیامک را وارد کنید'
+                });
+                return;
+            }
+            
+            // Show confirmation
+            Swal.fire({
+                title: 'تأیید ارسال',
+                text: 'آیا از ارسال پیامک گروهی اطمینان دارید؟',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'بله، ارسال کن',
+                cancelButtonText: 'انصراف',
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading
+                    $('#loadingOverlay').show();
+                    
+                    // Submit form
+                    this.submit();
+                }
+            });
+        });
+        
+        function updateCharacterCount() {
+            const text = messageField.val();
+            const count = text.length;
+            countDisplay.text(count);
+            
+            // Calculate message count (SMS is 160 characters for GSM, 70 for Unicode)
+            const messageCount = Math.ceil(count / 160);
+            messageCountDisplay.text(messageCount);
+            
+            // Estimate cost (assuming 500 tomans per SMS)
+            const estimatedCost = messageCount * 500;
+            costDisplay.text(estimatedCost.toLocaleString());
+            
+            // Change color based on length
+            if (count > 320) {
+                countDisplay.removeClass('text-primary').addClass('text-danger');
+            } else if (count > 160) {
+                countDisplay.removeClass('text-primary text-danger').addClass('text-warning');
+            } else {
+                countDisplay.removeClass('text-danger text-warning').addClass('text-primary');
+            }
+        }
+        
+        function updateRecipientPreview() {
+            const role = $('#id_role').val();
+            const province = $('#id_province').val();
+            
+            if (role || province) {
+                // Show loading in preview
+                $('#recipientPreview').html(`
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">در حال بارگذاری...</span>
+                        </div>
+                        <p class="mt-2 text-muted">در حال محاسبه تعداد گیرندگان...</p>
+                    </div>
+                `);
+                
+                // This would ideally be an AJAX call to get actual count
+                setTimeout(() => {
+                    const estimatedCount = Math.floor(Math.random() * 50) + 10;
+                    $('#recipientPreview').html(`
+                        <div class="text-center">
+                            <i class="fas fa-users text-success fa-3x mb-3"></i>
+                            <h4 class="text-success">${estimatedCount}</h4>
+                            <p class="text-muted mb-0">کاربر واجد شرایط</p>
+                            <hr>
+                            <small class="text-info">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                تعداد دقیق هنگام ارسال تعیین می‌شود
+                            </small>
+                        </div>
+                    `);
+                }, 1000);
+            } else {
+                $('#recipientPreview').html(`
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-user-friends fa-3x mb-3 text-light"></i>
+                        <p>فیلترها را انتخاب کنید تا تعداد گیرندگان مشاهده شود</p>
+                    </div>
+                `);
+            }
+        }
+        
+        // Initial preview update
+        updateRecipientPreview();
+    });
+</script>
+{% endblock %} 

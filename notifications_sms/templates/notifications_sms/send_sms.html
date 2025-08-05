@@ -1,0 +1,615 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}ارسال پیامک{% endblock %}
+
+{% block extra_head %}
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .sms-send-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .form-card {
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border: none;
+        overflow: hidden;
+    }
+    
+    .card-header-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 20px;
+    }
+    
+    .form-group-enhanced {
+        margin-bottom: 25px;
+        position: relative;
+    }
+    
+    .form-label-enhanced {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-control-enhanced {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+    }
+    
+    .form-control-enhanced:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        background: white;
+    }
+    
+    .select2-container--default .select2-selection--single {
+        height: 48px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+    
+    .select2-container--default.select2-container--focus .select2-selection--single {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        background: white;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 44px;
+        padding-left: 16px;
+        color: #495057;
+        font-size: 14px;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 44px;
+        right: 16px;
+    }
+    
+    .message-textarea {
+        min-height: 120px;
+        resize: vertical;
+        font-family: 'Tahoma', 'Arial', sans-serif;
+        line-height: 1.6;
+    }
+    
+    .character-counter {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 10px 15px;
+        margin-top: 10px;
+        font-size: 13px;
+    }
+    
+    .counter-good { color: #28a745; }
+    .counter-warning { color: #ffc107; }
+    .counter-danger { color: #dc3545; }
+    
+    .sms-preview-card {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 15px;
+        font-family: 'Tahoma', sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        min-height: 80px;
+        position: relative;
+    }
+    
+    .phone-mockup {
+        background: #333;
+        border-radius: 20px;
+        padding: 20px;
+        color: white;
+        margin-top: 20px;
+        max-width: 300px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .phone-screen {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        color: #333;
+        min-height: 100px;
+        font-family: 'Tahoma', sans-serif;
+        font-size: 13px;
+        line-height: 1.4;
+    }
+    
+    .btn-send {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-send:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+    
+    .btn-send:disabled {
+        opacity: 0.7;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    }
+    
+    .btn-danger:hover {
+        background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+        color: white;
+    }
+    
+    .btn-secondary-enhanced {
+        border: 2px solid #6c757d;
+        background: transparent;
+        color: #6c757d;
+        padding: 10px 25px;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary-enhanced:hover {
+        background: #6c757d;
+        color: white;
+        transform: translateY(-1px);
+    }
+    
+    .template-preview {
+        background: #e3f2fd;
+        border: 1px solid #90caf9;
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 10px;
+        font-size: 12px;
+        color: #1565c0;
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        margin: 20px 0;
+    }
+    
+    .success-animation {
+        animation: pulse 0.5s ease-in-out;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .form-section {
+        margin-bottom: 30px;
+    }
+    
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .recipient-info {
+        background: #e8f4fd;
+        border: 1px solid #bee5eb;
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 10px;
+        font-size: 13px;
+        display: none;
+    }
+    
+    .alert-custom {
+        border-radius: 10px;
+        border: none;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="sms-send-container">
+        <div class="text-center mb-4">
+            <h1 class="h2 text-gray-800 mb-2">
+                <i class="fas fa-paper-plane text-primary mr-3"></i>ارسال پیامک
+            </h1>
+            <p class="text-muted">ارسال پیام پیامکی به کاربران سیستم</p>
+        </div>
+        
+        <div class="card form-card">
+            <div class="card-header card-header-gradient text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-mobile-alt mr-2"></i>فرم ارسال پیامک
+                </h4>
+                <small class="d-block mt-2 opacity-75">پیام خود را تایپ کنید و گیرنده را انتخاب نمایید</small>
+            </div>
+            
+            <div class="card-body p-4">
+                <form method="post" id="smsForm">
+                    {% csrf_token %}
+                    
+                    <!-- Recipient Section -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-user text-primary mr-2"></i>انتخاب گیرنده
+                        </div>
+                        
+                        <div class="form-group-enhanced">
+                            <label class="form-label-enhanced" for="id_recipient">گیرنده پیام</label>
+                            <select name="recipient" id="id_recipient" class="form-control form-control-enhanced select2" required>
+                                <option value="">-- انتخاب کاربر --</option>
+                                {% for user in form.recipient.field.queryset %}
+                                    <option value="{{ user.id }}" 
+                                            data-phone="{{ user.phone_number|default:'' }}" 
+                                            data-name="{{ user.get_full_name|default:user.username }}"
+                                            data-has-phone="{% if user.phone_number %}true{% else %}false{% endif %}">
+                                        {{ user.get_full_name|default:user.username }} 
+                                        {% if user.phone_number %}
+                                            ({{ user.phone_number }})
+                                        {% else %}
+                                            (بدون شماره تماس)
+                                        {% endif %}
+                                        {% if user.role %} - {{ user.get_role_display }}{% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="recipient-info" id="recipientInfo">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                <span id="recipientDetails"></span>
+                            </div>
+                            <div class="alert alert-warning" id="noPhoneWarning" style="display: none; margin-top: 10px;">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <strong>توجه:</strong> این کاربر شماره تماس ندارد. لطفاً ابتدا شماره تماس را در پروفایل کاربر اضافه کنید.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Message Section -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-comment text-primary mr-2"></i>متن پیام
+                        </div>
+                        
+                        <div class="form-group-enhanced">
+                            <label class="form-label-enhanced" for="id_message">محتوای پیام</label>
+                            <textarea name="message" id="id_message" class="form-control form-control-enhanced message-textarea" 
+                                    rows="5" maxlength="1000" required placeholder="متن پیام خود را در اینجا بنویسید..."></textarea>
+                            
+                            <div class="character-counter">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <span id="charCount" class="counter-good">0</span> / 1000 کاراکتر
+                                    </div>
+                                    <div class="col-md-6 text-right">
+                                        <span id="messageCount" class="counter-good">1</span> پیام SMS
+                                    </div>
+                                </div>
+                                <div class="mt-1">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        هر پیام SMS معمولاً 160 کاراکتر است
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Preview Section -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-eye text-primary mr-2"></i>پیش‌نمایش پیام
+                        </div>
+                        
+                        <div class="phone-mockup">
+                            <div class="text-center mb-2">
+                                <i class="fas fa-mobile-alt mr-1"></i>
+                                پیش‌نمایش در موبایل
+                            </div>
+                            <div class="phone-screen">
+                                <div id="messagePreview" class="text-muted">
+                                    متن پیام در اینجا نمایش داده می‌شود...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Section -->
+                    <div class="text-center mt-4">
+                        <div class="loading-spinner" id="loadingSpinner">
+                            <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                            <div class="mt-2">در حال ارسال پیام...</div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-send btn-lg mr-3" id="submitBtn">
+                            <i class="fas fa-paper-plane mr-2"></i>ارسال پیامک
+                        </button>
+                        
+                        <a href="{% url 'sms_dashboard' %}" class="btn btn-secondary-enhanced btn-lg">
+                            <i class="fas fa-arrow-left mr-2"></i>بازگشت
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Initialize Select2
+    $('.select2').select2({
+        theme: 'bootstrap',
+        width: '100%',
+        placeholder: function() {
+            return $(this).data('placeholder');
+        }
+    });
+    
+    // Message field references
+    const messageField = $('#id_message');
+    const charCountDisplay = $('#charCount');
+    const messageCountDisplay = $('#messageCount');
+    const messagePreview = $('#messagePreview');
+    const recipientSelect = $('#id_recipient');
+    const recipientInfo = $('#recipientInfo');
+    const recipientDetails = $('#recipientDetails');
+    const submitBtn = $('#submitBtn');
+    const loadingSpinner = $('#loadingSpinner');
+    
+    // Initialize character counter
+    updateCharacterCount();
+    updateMessagePreview();
+    
+    // Handle message input
+    messageField.on('input', function() {
+        updateCharacterCount();
+        updateMessagePreview();
+        validateForm();
+    });
+    
+    // Handle recipient selection
+    recipientSelect.on('change', function() {
+        const selectedOption = $(this).find('option:selected');
+        const phone = selectedOption.data('phone');
+        const name = selectedOption.data('name');
+        const hasPhone = selectedOption.data('has-phone');
+        const noPhoneWarning = $('#noPhoneWarning');
+        
+        if (name) {
+            if (hasPhone && phone) {
+                recipientDetails.html(`
+                    <strong>${name}</strong><br>
+                    <i class="fas fa-phone mr-1 text-success"></i> ${phone}
+                    <span class="badge badge-success ml-2">قابل ارسال پیامک</span>
+                `);
+                recipientInfo.slideDown();
+                noPhoneWarning.slideUp();
+            } else {
+                recipientDetails.html(`
+                    <strong>${name}</strong><br>
+                    <i class="fas fa-phone-slash mr-1 text-danger"></i> بدون شماره تماس
+                    <span class="badge badge-danger ml-2">غیرقابل ارسال</span>
+                `);
+                recipientInfo.slideDown();
+                noPhoneWarning.slideDown();
+            }
+        } else {
+            recipientInfo.slideUp();
+            noPhoneWarning.slideUp();
+        }
+        validateForm();
+    });
+    
+    // Form submission
+    $('#smsForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        if (!validateForm()) {
+            showErrorMessage('لطفاً تمام فیلدهای مورد نیاز را پر کنید.');
+            return;
+        }
+        
+        // Show loading
+        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin ml-2"></i>در حال ارسال...');
+        loadingSpinner.show();
+        
+        // Show temporary sending message
+        showInfoMessage('در حال ارسال پیامک... لطفا صبر کنید.');
+        
+        // Submit form
+        const formData = new FormData(this);
+        
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('SMS Response:', data);  // Debug log
+            if (data.success) {
+                showSuccessMessage(`✅ پیامک با موفقیت ارسال شد!<br><strong>گیرنده:</strong> ${data.recipient}<br><strong>شماره:</strong> ${data.phone}`);
+                
+                // Reset form
+                $('#smsForm')[0].reset();
+                $('.select2').val(null).trigger('change');
+                recipientInfo.slideUp();
+                updateCharacterCount();
+                updateMessagePreview();
+                
+                // Redirect after success with longer delay
+                setTimeout(() => {
+                    if (confirm('آیا می‌خواهید به صفحه گزارش پیامک‌ها بروید؟')) {
+                        window.location.href = '{% url "sms_logs" %}';
+                    }
+                }, 5000);
+            } else {
+                showErrorMessage(data.error || 'خطا در ارسال پیامک');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showErrorMessage('خطا در ارتباط با سرور');
+        })
+        .finally(() => {
+            submitBtn.prop('disabled', false).html('<i class="fas fa-paper-plane ml-2"></i>ارسال پیامک');
+            loadingSpinner.hide();
+            // Remove info messages
+            $('.alert-info').fadeOut();
+        });
+    });
+    
+    function updateCharacterCount() {
+        const text = messageField.val();
+        const count = text.length;
+        const messageCount = Math.ceil(count / 160) || 1;
+        
+        charCountDisplay.text(count);
+        messageCountDisplay.text(messageCount);
+        
+        // Update colors
+        const charCounter = charCountDisplay.parent().parent();
+        charCounter.removeClass('counter-good counter-warning counter-danger');
+        
+        if (count > 800) {
+            charCounter.addClass('counter-danger');
+        } else if (count > 500) {
+            charCounter.addClass('counter-warning');
+        } else {
+            charCounter.addClass('counter-good');
+        }
+    }
+    
+    function updateMessagePreview() {
+        const text = messageField.val();
+        if (text.trim()) {
+            messagePreview.text(text).removeClass('text-muted');
+        } else {
+            messagePreview.text('متن پیام در اینجا نمایش داده می‌شود...').addClass('text-muted');
+        }
+    }
+    
+    function validateForm() {
+        const message = messageField.val().trim();
+        const recipient = recipientSelect.val();
+        const selectedOption = recipientSelect.find('option:selected');
+        const hasPhone = selectedOption.data('has-phone');
+        
+        const isValid = message.length > 0 && recipient && hasPhone;
+        
+        submitBtn.prop('disabled', !isValid);
+        
+        // Update submit button text and style based on validation
+        if (recipient && !hasPhone) {
+            submitBtn.html('<i class="fas fa-ban mr-2"></i>کاربر شماره تماس ندارد');
+            submitBtn.removeClass('btn-send').addClass('btn-danger');
+        } else if (!isValid) {
+            submitBtn.html('<i class="fas fa-paper-plane mr-2"></i>ارسال پیامک');
+            submitBtn.removeClass('btn-danger').addClass('btn-send');
+        } else {
+            submitBtn.html('<i class="fas fa-paper-plane mr-2"></i>ارسال پیامک');
+            submitBtn.removeClass('btn-danger').addClass('btn-send');
+        }
+        
+        return isValid;
+    }
+    
+    function showSuccessMessage(message) {
+        const alertHtml = `
+            <div class="alert alert-success alert-custom alert-dismissible fade show" role="alert" style="background: linear-gradient(135deg, #d4edda, #c3e6cb); border: 2px solid #28a745; font-size: 1.1rem; padding: 20px;">
+                <i class="fas fa-check-circle ml-2" style="font-size: 1.5rem; color: #28a745;"></i>${message}
+                <button type="button" class="close" data-dismiss="alert" style="font-size: 1.5rem;">
+                    <span>&times;</span>
+                </button>
+            </div>
+        `;
+        $('.sms-send-container').prepend(alertHtml);
+        $('.alert-success').addClass('success-animation');
+        
+        // Scroll to top to show the message
+        $('html, body').animate({scrollTop: 0}, 500);
+    }
+    
+    function showInfoMessage(message) {
+        const alertHtml = `
+            <div class="alert alert-info alert-custom alert-dismissible fade show" role="alert">
+                <i class="fas fa-info-circle ml-2"></i>${message}
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            </div>
+        `;
+        $('.sms-send-container').prepend(alertHtml);
+    }
+    
+    function showErrorMessage(message) {
+        const alertHtml = `
+            <div class="alert alert-danger alert-custom alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle ml-2"></i>${message}
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            </div>
+        `;
+        $('.sms-send-container').prepend(alertHtml);
+        
+        // Auto hide after 5 seconds
+        setTimeout(() => {
+            $('.alert-danger').fadeOut();
+        }, 5000);
+    }
+    
+    // Initial validation
+    validateForm();
+});
+</script>
+{% endblock %} 

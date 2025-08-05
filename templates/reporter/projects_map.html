@@ -1,0 +1,380 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}نقشه پیشرفت طرح‌ها{% endblock %}
+
+{% block extra_head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<style>
+    #map {
+        height: 75vh;
+        width: 100%;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .progress-marker {
+        width: 40px;
+        height: 60px;
+        transform: translate(-20px, -60px);
+        cursor: pointer;
+    }
+    .progress-marker svg {
+        width: 100%;
+        height: 100%;
+    }
+    .progress-marker .progress-circle {
+        fill: transparent;
+        stroke: none;
+    }
+    .progress-marker .progress-fill {
+        fill: transparent;
+        stroke: none;
+        transition: all 0.3s ease;
+    }
+    .progress-marker .progress-text {
+        fill: white;
+        font-weight: bold;
+        font-size: 14px;
+        text-anchor: middle;
+        dominant-baseline: middle;
+    }
+    .leaflet-popup-content {
+        direction: rtl;
+        text-align: right;
+    }
+    .project-info h5 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        font-weight: bold;
+    }
+    .project-info p {
+        margin-bottom: 5px;
+    }
+    .progress-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-weight: bold;
+        color: white;
+    }
+    .filter-container {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1>نقشه پیشرفت طرح‌ها</h1>
+            </div>
+            
+            <!-- Filters -->
+            <div class="filter-container mb-4">
+                <form method="get" class="row">
+                    <div class="col-md-4 mb-2">
+                        <label for="province" class="form-label">استان</label>
+                        <select name="province" id="province" class="form-select">
+                            <option value="">همه استان‌ها</option>
+                            {% for code, name in provinces %}
+                            <option value="{{ code }}" {% if selected_province == code %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <label for="program_type" class="form-label">نوع طرح</label>
+                        <select name="program_type" id="program_type" class="form-select">
+                            <option value="">همه انواع</option>
+                            {% for code, name in program_types %}
+                            <option value="{{ code }}" {% if selected_type == code %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end mb-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-filter"></i> اعمال فیلتر
+                        </button>
+                        <a href="{% url 'reporter:projects_map' %}" class="btn btn-outline-secondary ms-2">
+                            <i class="bi bi-x-circle"></i> حذف فیلتر
+                        </a>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Map Container -->
+            <div id="map"></div>
+            
+            <!-- No programs message -->
+            <div id="no-programs-message" class="alert alert-info mt-3" style="display: none;">
+                <i class="bi bi-info-circle"></i>
+                هیچ طرحی با مختصات جغرافیایی برای نمایش در نقشه یافت نشد. لطفاً فیلترها را بررسی کنید یا مطمئن شوید که طرح‌ها دارای طول و عرض جغرافیایی هستند.
+            </div>
+            
+            <!-- Legend -->
+            <div class="mt-3 p-3 bg-light rounded">
+                <h5>راهنما</h5>
+                <div class="d-flex flex-wrap">
+                    <div class="me-4 mb-2">
+                        <span class="badge bg-danger">0-25%</span>
+                        <span class="ms-1">پیشرفت کم</span>
+                    </div>
+                    <div class="me-4 mb-2">
+                        <span class="badge bg-warning">26-50%</span>
+                        <span class="ms-1">پیشرفت متوسط</span>
+                    </div>
+                    <div class="me-4 mb-2">
+                        <span class="badge bg-info">51-75%</span>
+                        <span class="ms-1">پیشرفت خوب</span>
+                    </div>
+                    <div class="me-4 mb-2">
+                        <span class="badge bg-success">76-100%</span>
+                        <span class="ms-1">پیشرفت عالی</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- project data provided via projects_json context variable -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the map centered on Iran
+        var map = L.map('map').setView([32.4279, 53.6880], 5);
+        
+        // Add the tile layer (map background)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Program data from backend
+        var programs = JSON.parse('{{ programs_json|escapejs }}');
+        console.log('Programs data:', programs);
+        console.log('Number of programs:', programs.length);
+        
+        // Show message if no programs found
+        if (programs.length === 0) {
+            document.getElementById('no-programs-message').style.display = 'block';
+            return; // Exit early if no programs
+        }
+        
+        // Province boundaries layer
+        var provinceBoundaries = null;
+        var selectedProvinceLayer = null;
+        
+        // Load province boundaries GeoJSON
+        fetch('{% static "mapfiles/province_boundaries.json" %}')
+            .then(response => response.json())
+            .then(data => {
+                // Store GeoJSON data
+                provinceBoundaries = data;
+                
+                // Debug: Log the first feature to see its structure
+                if (data.features && data.features.length > 0) {
+                    console.log("Sample province feature:", data.features[0]);
+                }
+                
+                // Check if a province filter is active
+                var selectedProvince = '{{ selected_province }}';
+                if (selectedProvince) {
+                    zoomToProvince(selectedProvince);
+                }
+            })
+            .catch(error => console.error('Error loading province boundaries:', error));
+        
+        // Function to zoom to a specific province
+        function zoomToProvince(provinceName) {
+            if (!provinceBoundaries) return;
+            
+            // Clear previous selection
+            if (selectedProvinceLayer) {
+                map.removeLayer(selectedProvinceLayer);
+            }
+            
+            // Find the province feature - try different property names that might exist in the GeoJSON
+            var provinceFeature = provinceBoundaries.features.find(feature => {
+                const props = feature.properties;
+                // Check various possible province name property keys
+                return (
+                    (props.NAME_1 && props.NAME_1 === provinceName) || 
+                    (props.name && props.name === provinceName) ||
+                    (props.PROVINCE && props.PROVINCE === provinceName) ||
+                    (props.province && props.province === provinceName) ||
+                    (props.Name && props.Name === provinceName) ||
+                    (props.NAME && props.NAME === provinceName)
+                );
+            });
+            
+            // If exact match fails, try to find province by any property containing the name
+            if (!provinceFeature) {
+                provinceFeature = provinceBoundaries.features.find(feature => {
+                    const props = feature.properties;
+                    // Check all string properties for a match
+                    for (const key in props) {
+                        if (typeof props[key] === 'string' && 
+                            (props[key] === provinceName || 
+                             props[key].includes(provinceName) || 
+                             provinceName.includes(props[key]))) {
+                            console.log("Found province match using property:", key);
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+            }
+            
+            if (provinceFeature) {
+                // Create a GeoJSON layer for the province
+                selectedProvinceLayer = L.geoJSON(provinceFeature, {
+                    style: {
+                        fillColor: '#3388ff',
+                        weight: 2,
+                        opacity: 1,
+                        color: '#3388ff',
+                        fillOpacity: 0.2
+                    }
+                }).addTo(map);
+                
+                // Zoom to the province bounds
+                map.fitBounds(selectedProvinceLayer.getBounds());
+            } else {
+                console.warn('Province not found in GeoJSON data:', provinceName);
+            }
+        }
+        
+        // Add event listener to province filter
+        document.getElementById('province').addEventListener('change', function() {
+            var selectedProvince = this.value;
+            if (selectedProvince) {
+                zoomToProvince(selectedProvince);
+            } else {
+                // Reset to show all of Iran
+                map.setView([32.4279, 53.6880], 5);
+                
+                // Remove selected province layer
+                if (selectedProvinceLayer) {
+                    map.removeLayer(selectedProvinceLayer);
+                    selectedProvinceLayer = null;
+                }
+            }
+        });
+        
+        // Custom marker icon function
+        function createMarkerIcon(progress) {
+            // Determine color based on progress
+            var color;
+            if (progress < 25) {
+                color = '#e74c3c'; // Red
+            } else if (progress < 50) {
+                color = '#f39c12'; // Orange
+            } else if (progress < 75) {
+                color = '#3498db'; // Blue
+            } else {
+                color = '#2ecc71'; // Green
+            }
+            
+            // Create SVG marker
+            var svgIcon = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 60">
+                    <path class="progress-marker-base" d="M20 0 C8.954 0 0 8.954 0 20 C0 31.046 20 60 20 60 C20 60 40 31.046 40 20 C40 8.954 31.046 0 20 0 Z" fill="${color}"/>
+                    <circle class="progress-circle" cx="20" cy="20" r="15" fill="${color}" opacity="0.7"/>
+                    <path class="progress-fill" d="M20 5 A15 15 0 1 1 20 5" fill="${color}" opacity="0.85"/>
+                    <text class="progress-text" x="20" y="20" font-size="12">${Math.round(progress)}%</text>
+                </svg>
+            `;
+            
+            // Create a custom divIcon with the SVG
+            return L.divIcon({
+                className: 'progress-marker',
+                html: svgIcon,
+                iconSize: [40, 60],
+                iconAnchor: [20, 60]
+            });
+        }
+        
+        // Create circular progress indicator
+        function createProgressPath(progress) {
+            if (progress <= 0) return "M20 5 A15 15 0 0 0 20 5";
+            if (progress >= 100) return "M20 5 A15 15 0 1 0 20 5";
+            
+            var angle = (progress / 100) * 360;
+            var radians = (angle - 90) * (Math.PI / 180);
+            var x = 20 + 15 * Math.cos(radians);
+            var y = 20 + 15 * Math.sin(radians);
+            var largeArc = angle > 180 ? 1 : 0;
+            
+            return `M20 5 A15 15 0 ${largeArc} 1 ${x} ${y}`;
+        }
+        
+        // Add markers to the map
+        programs.forEach(function(program) {
+            // Create marker with custom icon
+            var icon = createMarkerIcon(program.progress);
+            var marker = L.marker([program.latitude, program.longitude], {
+                icon: icon
+            }).addTo(map);
+            
+            // Format popup content
+            var popupContent = `
+                <div class="project-info">
+                    <h5>${program.name}</h5>
+                    <p><strong>استان:</strong> ${program.province}</p>
+                    <p><strong>شهر:</strong> ${program.city}</p>
+                    <p><strong>نوع طرح:</strong> ${program.type}</p>
+                    <p><strong>پیشرفت فیزیکی:</strong> 
+                        <span class="progress-badge" style="background-color: ${
+                            program.progress < 25 ? '#e74c3c' : 
+                            program.progress < 50 ? '#f39c12' : 
+                            program.progress < 75 ? '#3498db' : '#2ecc71'
+                        }">
+                            ${program.progress.toFixed(1)}%
+                        </span>
+                    </p>
+                    <a href="${program.url}" class="btn btn-sm btn-primary mt-2">مشاهده جزئیات</a>
+                </div>
+            `;
+            
+            // Bind popup to marker
+            marker.bindPopup(popupContent);
+            
+            // Update progress indicator on popup open
+            marker.on('popupopen', function() {
+                // Find the progress-fill element in the marker icon
+                var markerElement = marker.getElement();
+                var progressFill = markerElement.querySelector('.progress-fill');
+                if (progressFill) {
+                    progressFill.setAttribute('d', createProgressPath(program.progress));
+                }
+            });
+        });
+        
+        // Fit map to markers if there are any
+        if (programs.length > 0) {
+            var bounds = [];
+            programs.forEach(function(program) {
+                bounds.push([program.latitude, program.longitude]);
+            });
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+        
+        // Update all progress paths
+        setTimeout(function() {
+            document.querySelectorAll('.progress-fill').forEach(function(element) {
+                var marker = element.closest('.progress-marker');
+                var progress = parseFloat(marker.querySelector('.progress-text').textContent);
+                element.setAttribute('d', createProgressPath(progress));
+            });
+        }, 100);
+    });
+</script>
+{% endblock %} 

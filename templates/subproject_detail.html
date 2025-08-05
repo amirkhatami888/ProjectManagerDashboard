@@ -1,0 +1,12 @@
+                        <tr>
+                            <th>پروژه اصلی:</th>
+                            <td>{{ subproject.project.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>جمع مبلغ قرار دادها:</th>
+                            <td>{{ subproject.project.get_total_contract_amount|floatformat:0|intcomma }} ریال</td>
+                        </tr>
+                        <tr>
+                            <th>نوع زیرپروژه:</th>
+                            <td>{{ subproject.get_sub_project_type_display }}</td>
+                        </tr> 

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load jalali_tags %}
+
+{% block title %}لیست پرداختی ها{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/jalali-datepicker.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">لیست پرداختی ها</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="">
+                {% csrf_token %}
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="payment_date">تاریخ پرداختی:</label>
+                        {% include 'field_templates/date_picker.html' with field_id='payment_date' field_name='payment_date' required=True %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="amount">مبلغ پرداختی (ریال):</label>
+                        <input type="number" id="amount" name="amount" class="form-control" required>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">ثبت پرداختی</button>
+                        <a href="{% url 'subproject_detail' subproject.id %}" class="btn btn-secondary">انصراف</a>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="mt-4">
+                <h6>لیست پرداختی های قبلی</h6>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>تاریخ</th>
+                            <th>مبلغ (ریال)</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td>{{ payment.payment_date|to_jalali:'%Y/%m/%d' }}</td>
+                            <td>{{ payment.amount }}</td>
+                            <td>
+                                <a href="{% url 'delete_payment' payment.id %}" class="btn btn-danger btn-sm">حذف</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/jalali-datepicker.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    new JalaliDatePicker();
+});
+</script>
+{% endblock %} 

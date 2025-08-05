@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}رد پروژه{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-danger text-white">
+            <h4 class="mb-0">رد پروژه: {{ project.name }}</h4>
+        </div>
+        
+        <div class="card-body">
+            <p class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                توجه: با رد این پروژه، وضعیت آن به حالت پیش‌نویس برگردانده خواهد شد و مدیر استان باید اصلاحات لازم را انجام دهد.
+            </p>
+            
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="{{ form.comment.id_for_label }}" class="form-label">توضیحات</label>
+                    {{ form.comment }}
+                    <div class="form-text">لطفا دلایل رد پروژه و اصلاحات مورد نیاز را به صورت دقیق بنویسید.</div>
+                    {% if form.comment.errors %}
+                    <div class="text-danger">{{ form.comment.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'creator_project:project_detail' project.id %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        انصراف
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-x-circle me-1"></i>
+                        رد پروژه
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

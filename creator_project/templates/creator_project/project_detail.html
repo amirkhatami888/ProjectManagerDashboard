@@ -1,0 +1,51 @@
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <strong>جمع مبلغ قرار دادها:</strong> {{ project.get_total_contract_amount|floatformat:0|intcomma }} ریال
+                            <small class="text-muted">(مجموع مبلغ نهایی قرارداد زیرپروژه‌ها)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <strong>مجموع مبالغ پرداختی:</strong> {{ project.get_total_latest_payments|floatformat:0|intcomma }} ریال
+                            <small class="text-muted">(مجموع مبلغ پرداختی آخرین صورت وضعیت زیرپروژه ها)</small>
+                            <small class="text-muted mt-2 d-block">محاسبه بر اساس مجموع مبلغ پرداختی آخرین صورت وضعیت تقسیم بر مجموع مبلغ نهایی قرارداد زیرپروژه‌ها</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <strong>تاریخ پایان پروژه:</strong> {% if project.estimated_opening_time %}{{ project.estimated_opening_time|to_jalali:'%Y/%m/%d' }}{% else %}-{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Financial Information Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">اطلاعات مالی</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <strong>مجموع مبالغ پرداختی:</strong> {{ project.get_total_latest_payments|floatformat:0|intcomma }} ریال
+                            <small class="text-muted">(مجموع مبلغ پرداختی آخرین صورت وضعیت زیرپروژه ها)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <strong>مجموع دیون:</strong> {{ project.get_total_debt|floatformat:0|intcomma }} ریال
+                            <small class="text-muted">(مجموع دیونهای زیرپروژه‌ها)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <strong>جمع مبلغ قرار دادها:</strong> {{ project.get_total_contract_amount|floatformat:0|intcomma }} ریال
+                            <small class="text-muted">(مجموع مبلغ نهایی قرارداد زیرپروژه‌ها)</small>
+                        </div>
+                    </div>
+                </div>
+            </div> 

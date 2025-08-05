@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}افزودن صورت وضعیت{% endblock %}
+
+{% block extra_head %}
+<!-- Add Persian Datepicker -->
+<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">افزودن صورت وضعیت برای زیرپروژه</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>اطلاعات زیرپروژه</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>زیرپروژه:</strong> {{ subproject }}</p>
+                                <p><strong>پروژه اصلی:</strong> {{ subproject.project.name }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>نوع زیرپروژه:</strong> {{ subproject.sub_project_type }}</p>
+                                <p><strong>وضعیت:</strong> {{ subproject.state }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <h5 class="mb-3">اطلاعات صورت وضعیت</h5>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.amount.id_for_label }}">مبلغ یشنهادی پیمان کار (ریال)</label>
+                            {{ form.amount }}
+                            {% if form.amount.errors %}
+                            <div class="text-danger">{{ form.amount.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.payment_amount_field.id_for_label }}">مبلغ پرداختی (ریال)</label>
+                            {{ form.payment_amount_field }}
+                            {% if form.payment_amount_field.errors %}
+                            <div class="text-danger">{{ form.payment_amount_field.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label>شماره صورت وضعیت:</label>
+                            {{ form.report_number }}
+                            <input type="text" class="form-control" value="خودکار" readonly>
+                            <small class="text-muted">شماره صورت وضعیت به صورت خودکار تعیین می‌شود</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.allocation_type.label_tag }}
+                            {{ form.allocation_type }}
+                            {% if form.allocation_type.errors %}
+                            <div class="text-danger">{{ form.allocation_type.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_allocation_date">تاریخ صورت وضعیت:</label>
+                            <input type="text" name="allocation_date" id="id_allocation_date" class="form-control persian-date" 
+                                   placeholder="انتخاب تاریخ" value="{{ form.allocation_date.value|default:'' }}">
+                            {% if form.allocation_date.errors %}
+                            <div class="text-danger">{{ form.allocation_date.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">تاریخ شمسی (مثال: ۱۴۰۳/۱۱/۲۰)</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.description.label_tag }}
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="text-danger">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'creator_subproject:subproject_detail' subproject.id %}" class="btn btn-secondary">انصراف</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-1"></i>
+                                ثبت صورت وضعیت
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Persian Datepicker -->
+<script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+
+<script>
+    // Initialize Persian Datepicker for date fields
+    $(document).ready(function() {
+        // Initialize datepickers
+        $(".persian-date").persianDatepicker({
+            format: 'YYYY/MM/DD',
+            autoClose: true,
+            initialValueType: 'persian',
+            persianDigit: true,
+            observer: true,
+            calendar: {
+                persian: {
+                    locale: 'fa'
+                }
+            }
+        });
+        
+        // Format numbers with commas
+        function formatWithCommas(input) {
+            $(input).on('input', function() {
+                // Remove any non-digit characters
+                let value = $(this).val().replace(/\D/g, '');
+                // Format with commas
+                if (value) {
+                    value = parseInt(value, 10).toLocaleString('en-US');
+                    $(this).val(value);
+                }
+            });
+        }
+        
+        // Apply formatting to amount and payment fields
+        formatWithCommas('#id_amount');
+        formatWithCommas('#id_payment_amount_field');
+    });
+</script>
+{% endblock %} 

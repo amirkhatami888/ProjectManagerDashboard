@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}گالری تصاویر زیرپروژه {{ subproject.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h2>گالری تصاویر زیرپروژه: {{ subproject.name }}</h2>
+        </div>
+        <div class="card-body">
+            {% if not images %}
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-image"></i>
+                    هیچ تصویری در گالری این زیرپروژه وجود ندارد.
+                </div>
+            {% else %}
+                <div class="row">
+                    {% for image in images %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                {% if image.base64_image %}
+                                    <img 
+                                        src="data:{{ image.mime_type }};base64,{{ image.base64_image }}" 
+                                        class="card-img-top" 
+                                        alt="{{ image.title }}"
+                                        onerror="this.onerror=null; this.src='{% static 'image/default_profile.png' %}';"
+                                    >
+                                {% else %}
+                                    <div class="card-img-top bg-light d-flex justify-content-center align-items-center" style="height: 200px;">
+                                        <i class="bi bi-image-alt text-muted" style="font-size: 3rem;"></i>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        {{ image.title|default:'تصویر بدون عنوان' }}
+                                    </h5>
+                                    {% if image.description %}
+                                        <p class="card-text text-muted">
+                                            {{ image.description }}
+                                        </p>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer text-muted small">
+                                    <div class="d-flex justify-content-between">
+                                        <span>شناسه: {{ image.id }}</span>
+                                        <a href="#" class="text-danger" data-bs-toggle="modal" data-bs-target="#deleteImageModal{{ image.id }}">
+                                            <i class="bi bi-trash"></i> حذف
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="card-footer">
+            <a href="{% url 'creator_subproject:upload_gallery_image' subproject.id %}" class="btn btn-primary">
+                <i class="bi bi-cloud-upload"></i> آپلود تصویر جدید
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Optional: Add client-side image validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const images = document.querySelectorAll('.card-img-top');
+        images.forEach(img => {
+            img.addEventListener('error', function() {
+                this.src = '{% static 'image/default_profile.png' %}';
+                this.alt = 'تصویر قابل نمایش نیست';
+            });
+        });
+    });
+</script>
+{% endblock %} 

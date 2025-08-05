@@ -1,0 +1,249 @@
+/**
+ * Jalali Datepicker Styles
+ * Custom styling for Persian date picker implementation
+ */
+
+/* Date picker container */
+.datepicker-plot-area {
+    font-family: 'IRANSans', 'Tahoma', sans-serif;
+    z-index: 9999 !important;
+    direction: rtl;
+}
+
+/* Input group container for date fields */
+.input-group .calendar-icon-container {
+    cursor: pointer;
+    background: transparent;
+    border-left: 0;
+}
+
+.input-group .calendar-icon-container img {
+    width: 20px;
+    height: 20px;
+}
+
+/* Make sure Persian digits are displayed correctly */
+.datepicker-plot-area .datepicker-day-view .table-days td span {
+    font-size: 14px;
+    padding: 5px;
+    display: block;
+    text-align: center;
+}
+
+/* Header month/year selection */
+.datepicker-plot-area .datepicker-header .btn-next,
+.datepicker-plot-area .datepicker-header .btn-prev,
+.datepicker-plot-area .datepicker-header .btn-switch {
+    font-size: 14px;
+    color: #007bff;
+}
+
+.datepicker-plot-area .datepicker-header .btn-switch:hover {
+    color: #0056b3;
+}
+
+/* Highlight current day */
+.datepicker-plot-area .datepicker-day-view .table-days td span.today {
+    background-color: #e7f3ff;
+    color: #0069d9;
+    border-radius: 4px;
+}
+
+/* Highlight selected day */
+.datepicker-plot-area .datepicker-day-view .table-days td span.selected {
+    background-color: #007bff;
+    color: #fff;
+    border-radius: 4px;
+}
+
+/* Hover effect */
+.datepicker-plot-area .datepicker-day-view .table-days td span:not(.disabled):not(.empty):hover {
+    background-color: #f0f0f0;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+/* Ensure RTL layout for the datepicker */
+.datepicker-plot-area[data-direction="rtl"] {
+    direction: rtl;
+}
+
+.date-input-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.date-input {
+    width: 100%;
+    padding: 8px 12px 8px 40px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 14px;
+    direction: rtl;
+    box-sizing: border-box;
+}
+
+/* Styles for the Bootstrap icon if you want to customize it beyond bi-calendar3 defaults */
+.calendar-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    z-index: 100;
+    color: #495057;
+    font-size: 1.2rem;
+}
+
+.datepicker-container {
+    position: absolute;
+    z-index: 1000;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    display: none;
+}
+
+.datepicker-container.active {
+    display: block;
+}
+
+/* Style for disabled dates */
+.disabled-date {
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+/* Hover effect for selectable dates */
+.selectable-date:hover {
+    background-color: #f0f0f0;
+    cursor: pointer;
+}
+
+/* Selected date style */
+.selected-date {
+    background-color: #007bff;
+    color: white;
+}
+
+.jalali-datepicker {
+    position: absolute;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+    direction: rtl;
+    font-family: 'Vazir', 'Tahoma', Arial, sans-serif;
+    width: 280px;
+}
+
+.jalali-datepicker .header {
+    background: #007bff;
+    color: white;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.jalali-datepicker .nav-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 5px 10px;
+    border-radius: 3px;
+}
+
+.jalali-datepicker .nav-btn:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.jalali-datepicker .month-year {
+    font-weight: bold;
+}
+
+.jalali-datepicker .calendar {
+    padding: 10px;
+}
+
+.jalali-datepicker .weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 5px;
+}
+
+.jalali-datepicker .weekday {
+    text-align: center;
+    font-weight: bold;
+    padding: 8px 4px;
+    color: #666;
+    font-size: 12px;
+}
+
+.jalali-datepicker .days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.jalali-datepicker .day {
+    text-align: center;
+    padding: 8px 4px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+.jalali-datepicker .day:hover {
+    background: #e3f2fd;
+}
+
+.jalali-datepicker .day.selected {
+    background: #007bff;
+    color: white;
+}
+
+.jalali-datepicker .day.today {
+    background: #28a745;
+    color: white;
+}
+
+.jalali-datepicker .day.other-month {
+    color: #ccc;
+}
+
+.jalali-datepicker .day.disabled {
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+.jalali-datepicker .day.disabled:hover {
+    background: transparent;
+}
+
+.date-input-container {
+    position: relative;
+}
+
+.calendar-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    z-index: 2;
+    color: #6c757d;
+}
+
+.date-input {
+    direction: rtl;
+    text-align: right;
+    padding-left: 35px !important;
+} 

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}آرشیو کردن اعتبارات{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card">
+        <div class="card-header bg-warning text-dark">
+            <h2>آرشیو کردن اعتبارات</h2>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <h4 class="alert-heading">اخطار!</h4>
+                <p>شما در حال آرشیو کردن <strong>{{ archive_count }}</strong> درخواست اعتبار هستید.</p>
+                <p>تمام درخواست‌های اعتبار تایید شده از جدول اعتبارات به تاریخچه منتقل خواهند شد.</p>
+                <p>آیا از انجام این کار اطمینان دارید؟</p>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="mt-4 d-flex justify-content-between">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-archive"></i> بله، آرشیو کن
+                    </button>
+                    <a href="{% url 'creator_project:funding_table' %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> انصراف
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

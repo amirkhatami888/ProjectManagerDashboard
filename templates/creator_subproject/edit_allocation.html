@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}ویرایش صورت وضعیت{% endblock %}
+
+{% block extra_head %}
+<!-- Persian Datepicker CSS -->
+<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between mb-4">
+        <h2>ویرایش صورت وضعیت برای زیرپروژه: {{ subproject.title }}</h2>
+        <div>
+            <a href="{% url 'allocations' subproject.id %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i>
+                بازگشت به لیست صورت وضعیت‌ها
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">فرم ویرایش صورت وضعیت</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" id="allocationForm">
+                {% csrf_token %}
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.amount.id_for_label }}" class="form-label">مبلغ پیشنهادی پیمانکار (ریال) <span class="text-danger">*</span></label>
+                            {{ form.amount }}
+                            {% if form.amount.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.amount.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.payment_amount_field.id_for_label }}" class="form-label">مبلغ پرداختی (ریال) <span class="text-danger">*</span></label>
+                            {{ form.payment_amount_field }}
+                            {% if form.payment_amount_field.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.payment_amount_field.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.letter_number.id_for_label }}" class="form-label">شماره نامه <span class="text-danger">*</span></label>
+                            {{ form.letter_number }}
+                            {% if form.letter_number.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.letter_number.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.allocation_type.id_for_label }}" class="form-label">نوع تخصیص <span class="text-danger">*</span></label>
+                            {{ form.allocation_type }}
+                            {% if form.allocation_type.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.allocation_type.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="allocation_date_display" class="form-label">تاریخ تخصیص <span class="text-danger">*</span></label>
+                            <input type="text" id="allocation_date_display" class="form-control persian-date" 
+                                   value="{{ form.allocation_date.value|date:'Y/m/d'|default:'' }}">
+                            <input type="hidden" name="allocation_date" id="allocation_date">
+                            {% if form.allocation_date.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.allocation_date.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">توضیحات</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.description.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg me-1"></i>
+                        ویرایش صورت وضعیت
+                    </button>
+                    <a href="{% url 'allocations' subproject.id %}" class="btn btn-secondary me-2">
+                        <i class="bi bi-x-lg me-1"></i>
+                        انصراف
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery (required for Persian Datepicker) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Persian Date -->
+<script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<!-- Persian Datepicker -->
+<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Initialize Persian Datepicker
+        $(".persian-date").persianDatepicker({
+            format: 'YYYY/MM/DD',
+            autoClose: true,
+            initialValueType: 'persian',
+            persianDigit: true,
+            observer: true,
+            onSelect: function(unix) {
+                // Convert to Gregorian date format for the hidden input
+                var date = new persianDate(unix);
+                var gregorianDate = date.toCalendar('gregorian').format('YYYY-MM-DD');
+                document.getElementById('allocation_date').value = gregorianDate;
+                console.log("Date selected:", gregorianDate);
+            },
+            calendar: {
+                persian: {
+                    locale: 'fa'
+                }
+            }
+        });
+        
+        // Format numbers with commas
+        function formatWithCommas(input) {
+            $(input).on('input', function() {
+                // Remove any non-digit characters
+                let value = $(this).val().replace(/\D/g, '');
+                // Format with commas
+                if (value) {
+                    value = parseInt(value, 10).toLocaleString('en-US');
+                    $(this).val(value);
+                }
+            });
+        }
+        
+        // Apply formatting to amount and payment fields
+        formatWithCommas('#id_amount');
+        formatWithCommas('#id_payment_amount_field');
+        
+        // Pre-fill the hidden input with the current date value on page load
+        try {
+            var currentDate = "{{ form.allocation_date.value|date:'Y-m-d'|default:'' }}";
+            if (currentDate) {
+                $('#allocation_date').val(currentDate);
+                console.log("Initial date set from form value:", currentDate);
+            }
+        } catch (e) {
+            console.error('Error setting initial date:', e);
+        }
+        
+        // Handle form submission
+        $('#allocationForm').on('submit', function(e) {
+            // Ensure date is set by triggering date selection again
+            if ($('#allocation_date_display').val() && !$('#allocation_date').val()) {
+                e.preventDefault();
+                
+                try {
+                    var displayDate = $('#allocation_date_display').val();
+                    var dateParts = displayDate.split('/');
+                    if (dateParts.length === 3) {
+                        var persianDate = new persianDate([
+                            parseInt(dateParts[0]), 
+                            parseInt(dateParts[1]), 
+                            parseInt(dateParts[2])
+                        ]);
+                        var gregorianDate = persianDate.toCalendar('gregorian').format('YYYY-MM-DD');
+                        $('#allocation_date').val(gregorianDate);
+                        console.log("Date set on submit:", gregorianDate);
+                        
+                        // Now submit the form
+                        setTimeout(function() {
+                            $('#allocationForm').submit();
+                        }, 100);
+                    }
+                } catch (e) {
+                    console.error('Error converting date on submit:', e);
+                    // Allow form to submit normally if conversion fails
+                }
+            }
+        });
+    });
+</script>
+{% endblock %} 

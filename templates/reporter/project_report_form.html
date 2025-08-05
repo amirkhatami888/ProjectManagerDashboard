@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+{% if form.instance.id %}ویرایش گزارش پروژه{% else %}ایجاد گزارش پروژه جدید{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">{% if form.instance.id %}ویرایش گزارش پروژه{% else %}ایجاد گزارش پروژه جدید{% endif %}</h2>
+        </div>
+        <div class="card-body">
+            <form method="post" dir="rtl">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.project|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.report_type|as_crispy_field }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12">
+                        {{ form.title|as_crispy_field }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12">
+                        {{ form.content|as_crispy_field }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> ذخیره گزارش
+                        </button>
+                        {% if form.instance.id %}
+                        <a href="{% url 'project_report_detail' form.instance.id %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> انصراف
+                        </a>
+                        {% else %}
+                        <a href="{% url 'project_reports' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> انصراف
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

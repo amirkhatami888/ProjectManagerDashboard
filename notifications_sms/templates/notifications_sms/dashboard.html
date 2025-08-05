@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}داشبورد پیامک{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">داشبورد پیامک</h1>
+    
+    <!-- SMS Stats -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                مجموع پیامک‌های ارسالی
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_sent }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-paper-plane fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                پیامک‌های ناموفق
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_failed }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                قالب‌های پیامک
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ templates|length }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                سرویس پیامکی
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if settings.provider %}
+                                    {{ settings.provider.name }}
+                                {% else %}
+                                    تنظیم نشده
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-cog fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="row">
+        <div class="col-lg-12 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">عملیات سریع</h6>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'send_sms' %}" class="btn btn-primary mr-2 mb-2">
+                        <i class="fas fa-paper-plane mr-2"></i>ارسال پیامک
+                    </a>
+                    <a href="{% url 'send_bulk_sms' %}" class="btn btn-secondary mr-2 mb-2">
+                        <i class="fas fa-users mr-2"></i>ارسال پیامک گروهی
+                    </a>
+                    <a href="{% url 'manage_templates' %}" class="btn btn-success mr-2 mb-2">
+                        <i class="fas fa-file-alt mr-2"></i>مدیریت قالب‌ها
+                    </a>
+                    <a href="{% url 'sms_logs' %}" class="btn btn-info mr-2 mb-2">
+                        <i class="fas fa-history mr-2"></i>مشاهده گزارش‌ها
+                    </a>
+                    <a href="{% url 'edit_sms_settings' %}" class="btn btn-dark mr-2 mb-2">
+                        <i class="fas fa-cog mr-2"></i>تنظیمات
+                    </a>
+                    <a href="{% url 'alerts_dashboard' %}" class="btn btn-warning mr-2 mb-2">
+                        <i class="fas fa-bell mr-2"></i>ارسال هشدار
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Logs -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">گزارش‌های اخیر پیامک</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>زمان</th>
+                                    <th>گیرنده</th>
+                                    <th>پیام</th>
+                                    <th>وضعیت</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in recent_logs %}
+                                <tr>
+                                    <td>{{ log.sent_at|date:"Y-m-d H:i" }}</td>
+                                    <td>
+                                        {% if log.recipient_user %}
+                                            {{ log.recipient_user.get_full_name }}
+                                        {% else %}
+                                            {{ log.recipient_number }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ log.message|truncatechars:50 }}</td>
+                                    <td>
+                                        {% if log.status == 'SENT' %}
+                                            <span class="badge badge-success">ارسال شده</span>
+                                        {% elif log.status == 'FAILED' %}
+                                            <span class="badge badge-danger" title="{{ log.error_message }}">ناموفق</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">در انتظار</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">هیچ گزارش پیامکی یافت نشد.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <a href="{% url 'sms_logs' %}" class="btn btn-sm btn-primary">
+                            مشاهده همه گزارش‌ها
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load jalali_tags %}
+
+{% block title %}ویرایش صورت وضعیت تعدیل{% endblock %}
+
+{% block extra_head %}
+<!-- Add Persian Datepicker -->
+<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+<style>
+    .datepicker-plot-area {
+        font-family: 'Vazir', Tahoma, Arial, sans-serif;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">ویرایش صورت وضعیت تعدیل برای زیرپروژه {{ subproject.sub_project_type }}</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="">
+                {% csrf_token %}
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="allocation_date" class="form-label">تاریخ صورت وضعیت تعدیل</label>
+                        <input type="text" id="allocation_date" name="allocation_date" class="form-control" 
+                               value="{{ form.allocation_date.value|default:'' }}" placeholder="انتخاب تاریخ" readonly>
+                        {% if form.allocation_date.errors %}
+                        <div class="text-danger">
+                            {{ form.allocation_date.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                
+                    <div class="col-md-6">
+                        <label for="payment_amount_field" class="form-label">مبلغ پرداختی تعدیل (ریال)</label>
+                        {{ form.payment_amount_field }}
+                        {% if form.payment_amount_field.errors %}
+                        <div class="text-danger">
+                            {{ form.payment_amount_field.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="report_number" class="form-label">شماره صورت وضعیت تعدیل</label>
+                        <div class="input-group">
+                            <input type="number" name="report_number" id="report_number" class="form-control"
+                                   value="{{ form.report_number.value|default_if_none:'' }}" readonly>
+                            <span class="input-group-text">ثابت</span>
+                        </div>
+                        <small class="text-muted">شماره صورت وضعیت تعدیل قابل تغییر نیست.</small>
+                        {% if form.report_number.errors %}
+                        <div class="text-danger">
+                            {{ form.report_number.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="description" class="form-label">توضیحات</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <div class="text-danger">
+                        {{ form.description.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'creator_subproject:adjustment_allocations' subproject.id %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-right"></i> بازگشت
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> ذخیره
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Persian Datepicker -->
+<script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+
+<script>
+// Initialize Persian datepicker
+$(document).ready(function() {
+    $("#allocation_date").persianDatepicker({
+        format: 'YYYY/MM/DD',
+        initialValueType: 'persian',
+        autoClose: true,
+        observer: true,
+        altFormat: 'YYYY/MM/DD',
+        altField: '#allocation_date',
+        calendar: {
+            persian: {
+                locale: 'fa'
+            }
+        },
+        toolbox: {
+            calendarSwitch: {
+                enabled: false
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

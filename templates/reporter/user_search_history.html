@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تاریخچه جستجوهای شما{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">تاریخچه جستجوهای شما</h5>
+                    <a href="{% url 'reporter:search_history' %}" class="btn btn-outline-primary btn-sm">جستجوی جدید</a>
+                </div>
+                <div class="card-body">
+                    {% if searches %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>متن جستجو</th>
+                                        <th>فیلتر</th>
+                                        <th>نوع</th>
+                                        <th>از تاریخ</th>
+                                        <th>تا تاریخ</th>
+                                        <th>تعداد نتایج</th>
+                                        <th>زمان جستجو</th>
+                                        <th>عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for search in searches %}
+                                        <tr>
+                                            <td>{{ search.query_text|default:"--" }}</td>
+                                            <td>--</td>
+                                            <td>
+                                                {% if search.search_type == 'all' %}
+                                                    همه
+                                                {% elif search.search_type == 'project' %}
+                                                    پروژه
+                                                {% elif search.search_type == 'subproject' %}
+                                                    زیرپروژه
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ search.from_date|date:"Y-m-d"|default:"--" }}</td>
+                                            <td>{{ search.to_date|date:"Y-m-d"|default:"--" }}</td>
+                                            <td>{{ search.results_count }}</td>
+                                            <td>{{ search.timestamp|date:"Y-m-d H:i" }}</td>
+                                            <td>
+                                                <a href="{% url 'reporter:search_history' %}?query={{ search.query_text|urlencode }}&type_filter={{ search.search_type }}&from_date={{ search.from_date|date:'Y-m-d' }}&to_date={{ search.to_date|date:'Y-m-d' }}" 
+                                                   class="btn btn-sm btn-outline-secondary">
+                                                    تکرار جستجو
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            شما هنوز جستجویی انجام نداده‌اید.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

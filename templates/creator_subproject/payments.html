@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% load static %}
+{% load jalali_tags %}
+{% load humanize %}
+{% load custom_filters %}
+
+{% block title %}لیست پرداختی های زیرپروژه{% endblock %}
+
+{% block extra_head %}
+<style>
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e9ecef;
+    }
+    
+    .form-section-header {
+        border-bottom: 2px solid #0d6efd;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.25rem;
+        position: relative;
+    }
+    
+    .form-section-header h6 {
+        color: #0d6efd;
+        font-weight: 600;
+        margin: 0;
+        font-size: 1.1rem;
+    }
+    
+    .form-section-header::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 50px;
+        height: 2px;
+        background: linear-gradient(90deg, #0d6efd, #6610f2);
+    }
+    
+    .card-enhanced {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+    
+    .card-header-enhanced {
+        background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+        color: white;
+        padding: 1.5rem;
+        border: none;
+    }
+    
+    .card-header-enhanced h5 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.25rem;
+    }
+    
+    .btn-enhanced {
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-primary-enhanced {
+        background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+        border: none;
+        color: white;
+    }
+    
+    .btn-primary-enhanced:hover {
+        background: linear-gradient(135deg, #0b5ed7 0%, #520dc2 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+    }
+    
+    .table-enhanced {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+    
+    .table-enhanced thead th {
+        background-color: #f8f9fa;
+        color: #495057;
+        font-weight: 600;
+        border-top: none;
+        padding: 1rem;
+    }
+    
+    .table-enhanced tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+    
+    .modal-enhanced .modal-header {
+        background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+        color: white;
+        border: none;
+    }
+    
+    .modal-enhanced .modal-body {
+        padding: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <div class="card card-enhanced">
+        <div class="card-header card-header-enhanced">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-cash-coin me-2"></i>
+                    لیست پرداختی های زیرپروژه: {{ subproject.name|default:subproject.sub_project_type }}
+                </h5>
+                <div>
+                    <a href="{% url 'creator_subproject:add_payment' subproject.id %}" class="btn btn-enhanced btn-primary-enhanced">
+                        <i class="bi bi-plus-lg me-1"></i>
+                        افزودن پرداختی جدید
+                    </a>
+                    <a href="{% url 'creator_subproject:subproject_detail' subproject.id %}" class="btn btn-enhanced btn-secondary-enhanced ms-2">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        بازگشت به جزئیات زیرپروژه
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body" style="padding: 2rem;">
+            {% if payments %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered table-enhanced">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="text-center">ردیف</th>
+                                <th scope="col" class="text-center">سند مالی مرتبط</th>
+                                <th scope="col" class="text-center">مبلغ پرداخت شده</th>
+                                <th scope="col" class="text-center">تاریخ پرداختی</th>
+                                <th scope="col" class="text-center">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td class="text-center">{{ forloop.counter }}</td>
+                                <td class="text-center">
+                                    {% if payment.related_document %}
+                                        {{ payment.related_document.get_document_type_display }} شماره {{ payment.related_document.document_number }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">{{ payment.amount|intcomma }} ریال</td>
+                                <td class="text-center">{{ payment.payment_date|to_jalali:'%Y/%m/%d' }}</td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#paymentModal-{{ payment.id }}">
+                                            <i class="bi bi-eye"></i>
+                                            مشاهده
+                                        </button>
+                                        <a href="{% url 'creator_subproject:edit_payment' payment.id %}" class="btn btn-sm btn-warning ms-1">
+                                            <i class="bi bi-pencil-square"></i>
+                                            ویرایش
+                                        </a>
+                                        <a href="{% url 'creator_subproject:delete_payment' payment.id %}" class="btn btn-sm btn-danger ms-1" 
+                                           onclick="return confirm('آیا از حذف این پرداختی اطمینان دارید؟')">
+                                            <i class="bi bi-trash"></i>
+                                            حذف
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-secondary">
+                                <th colspan="2" class="text-center">مجموع</th>
+                                <th class="text-center">{{ total_payment_amount|intcomma }} ریال</th>
+                                <th colspan="2"></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle me-2"></i>
+                    هیچ پرداختی برای این زیرپروژه ثبت نشده است.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal Popups -->
+{% for payment in payments %}
+<div class="modal fade modal-enhanced" id="paymentModal-{{ payment.id }}" tabindex="-1" aria-labelledby="paymentModalLabel-{{ payment.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalLabel-{{ payment.id }}">
+                    <i class="bi bi-cash-coin me-2"></i>
+                    جزئیات پرداختی
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="card border-0">
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tbody>
+                                <tr>
+                                    <th style="width: 40%;">مبلغ پرداخت شده:</th>
+                                    <td class="text-start">{{ payment.amount|intcomma }} ریال</td>
+                                </tr>
+                                <tr>
+                                    <th>تاریخ پرداختی:</th>
+                                    <td class="text-start">{{ payment.payment_date|to_jalali:'%Y/%m/%d' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>سند مالی مرتبط:</th>
+                                    <td class="text-start">
+                                        {% if payment.related_document %}
+                                            {{ payment.related_document.get_document_type_display }} شماره {{ payment.related_document.document_number }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>توضیحات:</th>
+                                    <td class="text-start">{{ payment.description|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>تاریخ ثبت:</th>
+                                    <td class="text-start">{{ payment.created_at|to_jalali:'%Y/%m/%d %H:%M' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>ثبت کننده:</th>
+                                    <td class="text-start">{{ payment.created_by|default:"نامشخص" }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+                <a href="{% url 'creator_subproject:edit_payment' payment.id %}" class="btn btn-warning">
+                    <i class="bi bi-pencil-square me-1"></i>
+                    ویرایش
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %} 

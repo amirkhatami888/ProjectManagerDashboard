@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <h1 class="mb-4">Administrator Dashboard</h1>
+    
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">User Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card text-center mb-3">
+                                <div class="card-body">
+                                    <h3 class="card-title">{{ users_count.total }}</h3>
+                                    <p class="card-text">Total Users</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card text-center mb-3">
+                                <div class="card-body">
+                                    <h3 class="card-title">{{ users_count.active }}</h3>
+                                    <p class="card-text">Active Users</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h6 class="mt-3">Users by Role:</h6>
+                    <div class="list-group">
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            Administrators
+                            <span class="badge bg-primary rounded-pill">{{ users_count.admin }}</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            CEOs
+                            <span class="badge bg-primary rounded-pill">{{ users_count.ceo }}</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            Chief Executives
+                            <span class="badge bg-primary rounded-pill">{{ users_count.chief_executive }}</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            Vice Chief Executives
+                            <span class="badge bg-primary rounded-pill">{{ users_count.vice_chief_executive }}</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            Experts
+                            <span class="badge bg-primary rounded-pill">{{ users_count.expert }}</span>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            Province Managers
+                            <span class="badge bg-primary rounded-pill">{{ users_count.province_manager }}</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'admin:accounts_user_changelist' %}" class="btn btn-primary">Manage Users</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{% url 'admin:accounts_user_add' %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-person-plus fs-4 me-3"></i>
+                                <div>
+                                    <h6 class="mb-0">Add New User</h6>
+                                    <small class="text-muted">Create an account for a new user</small>
+                                </div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'admin:creator_project_project_changelist' %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-building fs-4 me-3"></i>
+                                <div>
+                                    <h6 class="mb-0">Manage Projects</h6>
+                                    <small class="text-muted">View and edit all projects</small>
+                                </div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'admin:creator_subproject_subproject_changelist' %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-layers fs-4 me-3"></i>
+                                <div>
+                                    <h6 class="mb-0">Manage Subprojects</h6>
+                                    <small class="text-muted">View and edit all subprojects</small>
+                                </div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'admin:index' %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-gear fs-4 me-3"></i>
+                                <div>
+                                    <h6 class="mb-0">Admin Panel</h6>
+                                    <small class="text-muted">Access the full admin interface</small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

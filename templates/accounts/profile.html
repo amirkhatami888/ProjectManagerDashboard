@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}پروفایل کاربری{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-control:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+  transition: all 0.3s ease-in-out;
+}
+.form-control {
+  transition: all 0.3s ease;
+}
+.profile-card {
+  transition: all 0.3s ease;
+}
+.profile-card:hover {
+  transform: translateY(-5px);
+}
+.profile-image-container {
+  position: relative;
+  overflow: hidden;
+}
+.profile-image-container img {
+  transition: all 0.3s ease;
+}
+.profile-image-container:hover img {
+  transform: scale(1.05);
+}
+.btn {
+  transition: all 0.3s ease;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.input-group-text {
+  background-color: #4e73df;
+  color: white;
+}
+@media (max-width: 576px) {
+  .card-body {
+    padding: 1rem !important;
+  }
+  .profile-image-container {
+    width: 150px !important;
+    height: 150px !important;
+  }
+  .profile-image-container img {
+    width: 150px !important;
+    height: 150px !important;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-lg border-0 rounded-3 profile-card">
+                <div class="card-header bg-gradient-primary text-white py-3">
+                    <h4 class="mb-0 fw-bold"><i class="fas fa-user-circle me-2"></i>پروفایل کاربری</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" id="profile-form">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-lg-4 text-center mb-4">
+                                <div class="profile-image-container mb-4 mx-auto" style="width: 180px; height: 180px; position: relative;">
+                                    {% if user.profile_picture %}
+                                        <img src="{{ user.profile_picture.url }}" alt="تصویر پروفایل" class="img-fluid rounded-circle shadow" style="width: 180px; height: 180px; object-fit: cover; border: 4px solid #fff;">
+                                    {% else %}
+                                        <img src="{% static 'image/default_profile.png' %}" alt="تصویر پروفایل پیش‌فرض" class="img-fluid rounded-circle shadow" style="width: 180px; height: 180px; object-fit: cover; border: 4px solid #fff;">
+                                    {% endif %}
+                                    <div class="position-absolute bottom-0 end-0 bg-primary rounded-circle p-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('{{ form.profile_picture.id_for_label }}').click();">
+                                        <i class="fas fa-camera text-white"></i>
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="{{ form.profile_picture.id_for_label }}" class="form-label fw-bold">تغییر تصویر پروفایل</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-image"></i></span>
+                                        {{ form.profile_picture }}
+                                    </div>
+                                    {% if form.profile_picture.errors %}
+                                        <div class="text-danger mt-2">
+                                            {{ form.profile_picture.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="bg-light p-3 rounded-3 text-center shadow-sm hover-card">
+                                    <h5 class="text-primary mb-3 fw-bold">اطلاعات نقش</h5>
+                                    <p class="mb-2"><span class="badge bg-primary">{{ user.get_role_display }}</span></p>
+                                    {% if user.province %}
+                                        <p class="mb-0"><strong>استان: </strong>{{ user.province }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-lg-8">
+                                <div class="p-1 mb-4 border-bottom border-2 border-primary">
+                                    <h5 class="text-primary mb-0 fw-bold">اطلاعات شخصی</h5>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.نام.id_for_label }}" class="form-label fw-bold">نام</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                            {{ form.نام }}
+                                        </div>
+                                        {% if form.نام.errors %}
+                                            <div class="text-danger">
+                                                {{ form.نام.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.نام_خانوادگی.id_for_label }}" class="form-label fw-bold">نام خانوادگی</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                            {{ form.نام_خانوادگی }}
+                                        </div>
+                                        {% if form.نام_خانوادگی.errors %}
+                                            <div class="text-danger">
+                                                {{ form.نام_خانوادگی.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.سمت.id_for_label }}" class="form-label fw-bold">سمت</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-briefcase"></i></span>
+                                        {{ form.سمت }}
+                                    </div>
+                                    {% if form.سمت.errors %}
+                                        <div class="text-danger">
+                                            {{ form.سمت.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="p-1 mb-4 border-bottom border-2 border-primary mt-4">
+                                    <h5 class="text-primary mb-0 fw-bold">اطلاعات حساب کاربری</h5>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.username.id_for_label }}" class="form-label fw-bold">نام کاربری</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-id-badge"></i></span>
+                                        {{ form.username }}
+                                    </div>
+                                    <div class="form-text text-muted">نام کاربری قابل تغییر نیست.</div>
+                                    {% if form.username.errors %}
+                                        <div class="text-danger">
+                                            {{ form.username.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label fw-bold">ایمیل</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                        {{ form.email }}
+                                    </div>
+                                    {% if form.email.errors %}
+                                        <div class="text-danger">
+                                            {{ form.email.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="{{ form.phone_number.id_for_label }}" class="form-label fw-bold">شماره تلفن</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                        {{ form.phone_number }}
+                                    </div>
+                                    {% if form.phone_number.errors %}
+                                        <div class="text-danger">
+                                            {{ form.phone_number.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="d-flex justify-content-between mt-5">
+                                    <button type="submit" class="btn btn-primary px-4 py-2"><i class="fas fa-save me-2"></i>ذخیره تغییرات</button>
+                                    <a href="{% url 'password_change' %}" class="btn btn-outline-secondary px-4 py-2"><i class="fas fa-key me-2"></i>تغییر رمز عبور</a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show file name when uploading profile picture
+    const fileInput = document.getElementById('{{ form.profile_picture.id_for_label }}');
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            const fileName = this.files[0]?.name || 'فایلی انتخاب نشده';
+            const fileLabel = this.nextElementSibling;
+            if (fileLabel) {
+                fileLabel.textContent = fileName;
+            }
+        });
+    }
+    
+    // Form submission feedback
+    const form = document.getElementById('profile-form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>در حال ذخیره...';
+                submitBtn.disabled = true;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+{% endblock %} 

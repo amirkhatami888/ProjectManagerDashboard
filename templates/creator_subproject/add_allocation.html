@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}افزودن صورت وضعیت جدید{% endblock %}
+
+{% block extra_head %}
+<!-- Persian Datepicker CSS -->
+<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>افزودن صورت وضعیت برای زیرپروژه: {{ subproject.title }}</h2>
+        <a href="{% url 'creator_subproject:allocations' subproject.id %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-1"></i>
+            بازگشت به لیست صورت وضعیت‌ها
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-plus-circle me-2"></i>
+                فرم افزودن صورت وضعیت
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="post" class="row g-3" id="allocationForm">
+                {% csrf_token %}
+
+                <div class="col-12">
+                    <h6 class="text-muted border-bottom pb-2 mb-3">اطلاعات اصلی</h6>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="{{ form.payment_amount_field.id_for_label }}" class="form-label">مبلغ پرداختی (ریال) <span class="text-danger">*</span></label>
+                    <input type="number" name="{{ form.payment_amount_field.name }}" id="{{ form.payment_amount_field.id_for_label }}" 
+                           class="form-control {% if form.payment_amount_field.errors %}is-invalid{% endif %}" 
+                           value="{{ form.payment_amount_field.value|default:'' }}" required>
+                    {% if form.payment_amount_field.errors %}
+                    <div class="invalid-feedback">{{ form.payment_amount_field.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="{{ form.allocation_type.id_for_label }}" class="form-label">نوع صورت وضعیت <span class="text-danger">*</span></label>
+                    <select name="{{ form.allocation_type.name }}" id="{{ form.allocation_type.id_for_label }}" 
+                            class="form-select {% if form.allocation_type.errors %}is-invalid{% endif %}" required>
+                        <option value="" selected disabled>انتخاب کنید</option>
+                        {% for value, text in form.allocation_type.field.choices %}
+                        <option value="{{ value }}" {% if form.allocation_type.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ text }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if form.allocation_type.errors %}
+                    <div class="invalid-feedback">{{ form.allocation_type.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="allocation_date_display" class="form-label">تاریخ صورت وضعیت <span class="text-danger">*</span></label>
+                    <input type="text" id="allocation_date_display" class="form-control persian-date" 
+                           placeholder="انتخاب تاریخ" value="{{ form.allocation_date.value|default:'' }}" required>
+                    <input type="hidden" name="allocation_date" id="allocation_date" value="{{ form.allocation_date.value|default:'' }}">
+                    {% if form.allocation_date.errors %}
+                    <div class="text-danger d-block">{{ form.allocation_date.errors.0 }}</div>
+                    {% endif %}
+                    <small class="form-text text-muted">تاریخ شمسی (مثال: ۱۴۰۳/۰۲/۰۸)</small>
+                </div>
+                
+                <div class="col-12">
+                    <label for="{{ form.description.id_for_label }}" class="form-label">توضیحات</label>
+                    <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" 
+                              class="form-control {% if form.description.errors %}is-invalid{% endif %}" 
+                              rows="3">{{ form.description.value|default:'' }}</textarea>
+                    {% if form.description.errors %}
+                    <div class="invalid-feedback">{{ form.description.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-12 mt-4">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg me-1"></i>
+                        ثبت صورت وضعیت
+                    </button>
+                    <a href="{% url 'creator_subproject:allocations' subproject.id %}" class="btn btn-secondary ms-2">
+                        <i class="bi bi-x-lg me-1"></i>
+                        انصراف
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery (required for Persian Datepicker) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Persian Date -->
+<script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<!-- Persian Datepicker -->
+<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Initialize Persian Datepicker
+        $(".persian-date").persianDatepicker({
+            format: 'YYYY/MM/DD',
+            autoClose: true,
+            initialValueType: 'persian',
+            persianDigit: true,
+            observer: true,
+            onSelect: function(unix) {
+                // Convert to Gregorian date format for the hidden input
+                var date = new persianDate(unix);
+                var gregorianDate = date.toCalendar('gregorian').format('YYYY-MM-DD');
+                document.getElementById('allocation_date').value = gregorianDate;
+                console.log("Date selected:", gregorianDate);
+            },
+            calendar: {
+                persian: {
+                    locale: 'fa'
+                }
+            }
+        });
+        
+        // Format numbers with commas
+        function formatWithCommas(input) {
+            $(input).on('input', function() {
+                // Remove any non-digit characters
+                let value = $(this).val().replace(/\D/g, '');
+                // Format with commas
+                if (value) {
+                    value = parseInt(value, 10).toLocaleString('en-US');
+                    $(this).val(value);
+                }
+            });
+        }
+        
+        // Apply formatting to payment field
+        formatWithCommas('#{{ form.payment_amount_field.id_for_label }}');
+        
+        // Set today's date if no date is selected
+        if (!$('#allocation_date_display').val()) {
+            var today = new persianDate();
+            var todayFormatted = today.format('YYYY/MM/DD');
+            $('#allocation_date_display').val(todayFormatted);
+            
+            // Also set the hidden Gregorian date field
+            var gregorianToday = today.toCalendar('gregorian').format('YYYY-MM-DD');
+            $('#allocation_date').val(gregorianToday);
+            console.log("Set today's date:", gregorianToday);
+        }
+        
+        // Pre-fill the hidden input if there's an initial value in the display field
+        var initialDisplayDate = $('#allocation_date_display').val();
+        var initialHiddenDate = $('#allocation_date').val(); // Get value from hidden field
+
+        if (initialDisplayDate && !initialHiddenDate) { // Convert only if hidden is empty
+            try {
+                var dateParts = initialDisplayDate.split('/');
+                if (dateParts.length === 3) {
+                    var persianDate = new persianDate([
+                        parseInt(dateParts[0]), 
+                        parseInt(dateParts[1]), 
+                        parseInt(dateParts[2])
+                    ]);
+                    var gregorianDate = persianDate.toCalendar('gregorian').format('YYYY-MM-DD');
+                    $('#allocation_date').val(gregorianDate);
+                    console.log("Initial hidden date set from display:", gregorianDate);
+                } else {
+                     console.warn("Initial display date format invalid:", initialDisplayDate);
+                }
+            } catch (e) {
+                console.error('Error converting initial display date:', e);
+            }
+        } else if (initialHiddenDate) {
+             // If hidden field has value, convert it to Persian for display
+             try {
+                var gregDateParts = initialHiddenDate.split('-');
+                if (gregDateParts.length === 3) {
+                    var pDate = new persianDate(new Date(initialHiddenDate)).format('YYYY/MM/DD');
+                    $('#allocation_date_display').val(pDate);
+                    console.log("Initial display date set from hidden:", pDate);
+                }
+             } catch (e) {
+                console.error('Error converting initial hidden date to display:', e);
+             }
+        }
+        
+        // Handle form submission - ensure hidden date is set
+        $('#allocationForm').on('submit', function(e) {
+            // Always prevent default submit first to handle date conversion
+                e.preventDefault();
+            
+            if ($('#allocation_date_display').val()) {
+                try {
+                    var displayDate = $('#allocation_date_display').val();
+                    var dateParts = displayDate.split('/');
+                    if (dateParts.length === 3) {
+                        var pd = new persianDate([
+                            parseInt(dateParts[0]), 
+                            parseInt(dateParts[1]), 
+                            parseInt(dateParts[2])
+                        ]);
+                        var gregorianDate = pd.toCalendar('gregorian').format('YYYY-MM-DD');
+                        $('#allocation_date').val(gregorianDate);
+                        console.log("Form submit - Date set:", gregorianDate);
+                    } else {
+                        console.error("Invalid date format on submit, using today");
+                        // Use today as fallback
+                        var today = new Date();
+                        var gregorianToday = today.getFullYear() + '-' + 
+                                       String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                                       String(today.getDate()).padStart(2, '0');
+                        $('#allocation_date').val(gregorianToday);
+                    }
+                } catch (error) {
+                    console.error('Error converting date on submit, using today:', error);
+                    // Use today as fallback
+                    var today = new Date();
+                    var gregorianToday = today.getFullYear() + '-' + 
+                                   String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                                   String(today.getDate()).padStart(2, '0');
+                    $('#allocation_date').val(gregorianToday);
+                }
+            }
+            
+            // Ensure the numeric value of payment_amount_field is set correctly
+            var paymentField = $('#{{ form.payment_amount_field.id_for_label }}');
+            var paymentValue = paymentField.val().replace(/,/g, '');
+            paymentField.val(paymentValue);
+            
+            console.log("Form submitting with date:", $('#allocation_date').val());
+            
+            // Now submit the form
+            this.submit();
+        });
+    });
+</script>
+{% endblock %} 

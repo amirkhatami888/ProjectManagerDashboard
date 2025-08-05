@@ -1,0 +1,778 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.db.models import Q, Avg, Count, Case, When, IntegerField, F
+from django.utils import timezone
+from datetime import datetime, timedelta
+from django.http import JsonResponse
+from decimal import Decimal
+
+from creator_project.models import Project, ProjectUpdateHistory
+from creator_subproject.models import SubProject, SubProjectUpdateHistory
+from creator_review.models import ProjectReview, SubProjectReview
+from .models import ProjectReport, SubProjectReport, GeneratedReport, SearchHistory, ProjectFinancialAllocation
+from .forms import ProjectReportForm, SubProjectReportForm
+
+@login_required
+def reporter_dashboard(request):
+    """Dashboard view for reports"""
+    # Check if the user is a province manager - restrict access
+    if request.user.is_province_manager:
+        messages.error(request, "شما دسترسی به بخش گزارش گیری را ندارید.")
+        return redirect('dashboard')
+        
+    user = request.user
+    project_reports = ProjectReport.objects.filter(created_by=user)
+    subproject_reports = SubProjectReport.objects.filter(created_by=user)
+    
+    context = {
+        'project_reports': project_reports,
+        'subproject_reports': subproject_reports,
+        'total_reports': project_reports.count() + subproject_reports.count()
+    }
+    return render(request, 'reporter/dashboard.html', context)
+
+class ProjectReportListView(LoginRequiredMixin, ListView):
+    model = ProjectReport
+    template_name = 'reporter/project_report_list.html'
+    context_object_name = 'reports'
+    paginate_by = 10
+    
+    def get_queryset(self):
+        return ProjectReport.objects.filter(created_by=self.request.user)
+
+class ProjectReportDetailView(LoginRequiredMixin, DetailView):
+    model = ProjectReport
+    template_name = 'reporter/project_report_detail.html'
+    context_object_name = 'report'
+
+class ProjectReportCreateView(LoginRequiredMixin, CreateView):
+    model = ProjectReport
+    form_class = ProjectReportForm
+    template_name = 'reporter/project_report_form.html'
+    
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        messages.success(self.request, "گزارش با موفقیت ایجاد شد.")
+        return super().form_valid(form)
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
+    def get_success_url(self):
+        return reverse('project_report_detail', kwargs={'pk': self.object.pk})
+
+class ProjectReportUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = ProjectReport
+    form_class = ProjectReportForm
+    template_name = 'reporter/project_report_form.html'
+    
+    def test_func(self):
+        report = self.get_object()
+        return self.request.user == report.created_by
+    
+    def form_valid(self, form):
+        messages.success(self.request, "گزارش با موفقیت به‌روزرسانی شد.")
+        return super().form_valid(form)
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
+    def get_success_url(self):
+        return reverse('project_report_detail', kwargs={'pk': self.object.pk})
+
+class ProjectReportDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = ProjectReport
+    template_name = 'reporter/project_report_confirm_delete.html'
+    
+    def test_func(self):
+        report = self.get_object()
+        return self.request.user == report.created_by
+    
+    def get_success_url(self):
+        messages.success(self.request, "گزارش با موفقیت حذف شد.")
+        return reverse('project_report_list')
+
+# SubProject Report Views
+class SubProjectReportListView(LoginRequiredMixin, ListView):
+    model = SubProjectReport
+    template_name = 'reporter/subproject_report_list.html'
+    context_object_name = 'reports'
+    paginate_by = 10
+    
+    def get_queryset(self):
+        return SubProjectReport.objects.filter(created_by=self.request.user)
+
+class SubProjectReportDetailView(LoginRequiredMixin, DetailView):
+    model = SubProjectReport
+    template_name = 'reporter/subproject_report_detail.html'
+    context_object_name = 'report'
+
+class SubProjectReportCreateView(LoginRequiredMixin, CreateView):
+    model = SubProjectReport
+    form_class = SubProjectReportForm
+    template_name = 'reporter/subproject_report_form.html'
+    
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        messages.success(self.request, "گزارش با موفقیت ایجاد شد.")
+        return super().form_valid(form)
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
+    def get_success_url(self):
+        return reverse('subproject_report_detail', kwargs={'pk': self.object.pk})
+
+class SubProjectReportUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = SubProjectReport
+    form_class = SubProjectReportForm
+    template_name = 'reporter/subproject_report_form.html'
+    
+    def test_func(self):
+        report = self.get_object()
+        return self.request.user == report.created_by
+    
+    def form_valid(self, form):
+        messages.success(self.request, "گزارش با موفقیت به‌روزرسانی شد.")
+        return super().form_valid(form)
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+    
+    def get_success_url(self):
+        return reverse('subproject_report_detail', kwargs={'pk': self.object.pk})
+
+class SubProjectReportDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = SubProjectReport
+    template_name = 'reporter/subproject_report_confirm_delete.html'
+    
+    def test_func(self):
+        report = self.get_object()
+        return self.request.user == report.created_by
+    
+    def get_success_url(self):
+        messages.success(self.request, "گزارش با موفقیت حذف شد.")
+        return reverse('subproject_report_list')
+
+@login_required
+def create_report_from_search(request):
+    """Create a new report based on search results"""
+    if request.method != 'POST':
+        messages.error(request, 'روش درخواست نامعتبر است.')
+        return redirect('search_history')
+    
+    # Get search parameters from form
+    query = request.POST.get('query', '')
+    from_date = request.POST.get('from_date', '')
+    to_date = request.POST.get('to_date', '')
+    type_filter = request.POST.get('type_filter', 'all')
+    field_filter = request.POST.get('field_filter', '')
+    
+    # Get report details
+    report_title = request.POST.get('report_title', '')
+    report_type = request.POST.get('report_type', 'summary')
+    report_content = request.POST.get('report_content', '')
+    
+    if not report_title or not report_content:
+        messages.error(request, 'لطفا عنوان و محتوای گزارش را وارد کنید.')
+        return redirect('search_history')
+    
+    # Generate content supplement based on search parameters
+    search_criteria = []
+    if query:
+        search_criteria.append(f"عبارت جستجو: {query}")
+    if from_date:
+        search_criteria.append(f"از تاریخ: {from_date}")
+    if to_date:
+        search_criteria.append(f"تا تاریخ: {to_date}")
+    if type_filter != 'all':
+        search_criteria.append(f"نوع: {'پروژه' if type_filter == 'project' else 'زیرپروژه'}")
+    if field_filter:
+        search_criteria.append(f"فیلد: {field_filter}")
+    
+    search_summary = "جستجو با معیارهای زیر انجام شد:\n- " + "\n- ".join(search_criteria) if search_criteria else ""
+    
+    # Get actual result counts from the session if available
+    total_project_results = request.session.get('total_project_results', 0)
+    total_subproject_results = request.session.get('total_subproject_results', 0)
+    
+    result_summary = f"\n\nنتایج جستجو: {total_project_results} پروژه و {total_subproject_results} زیرپروژه"
+    
+    # Combine user content with search parameters
+    full_content = f"{report_content}\n\n---\n{search_summary}{result_summary}"
+
+    # Create appropriate report based on type_filter
+    created_report = None
+    
+    try:
+        from_date_obj = datetime.strptime(from_date, '%Y-%m-%d').date() if from_date else None
+        to_date_obj = datetime.strptime(to_date, '%Y-%m-%d').date() if to_date else None
+    except ValueError:
+        from_date_obj = None
+        to_date_obj = None
+        
+    if type_filter == 'project':
+        # Try to get the first project from the results to associate with this report
+        try:
+            project_id = request.session.get('first_project_id')
+            if project_id:
+                project = Project.objects.get(id=project_id)
+                report = ProjectReport.objects.create(
+                    project=project,
+                    title=report_title,
+                    content=full_content,
+                    report_type=report_type,
+                    created_by=request.user
+                )
+                created_report = report
+                
+                # Create generated report record
+                search_filters = {
+                    'query': query,
+                    'from_date': from_date,
+                    'to_date': to_date,
+                    'type_filter': type_filter,
+                    'field_filter': field_filter,
+                    'report_type': report_type
+                }
+                
+                GeneratedReport.objects.create(
+                    project_report=report,
+                    query_text=query,
+                    from_date=from_date_obj,
+                    to_date=to_date_obj,
+                    search_filters=search_filters
+                )
+                
+                messages.success(request, 'گزارش پروژه با موفقیت ایجاد شد.')
+                return redirect('project_report_detail', pk=report.pk)
+        except (Project.DoesNotExist, ValueError):
+            messages.error(request, 'پروژه‌ای برای ایجاد گزارش یافت نشد.')
+            return redirect('search_history')
+            
+    elif type_filter == 'subproject':
+        # Try to get the first subproject from the results to associate with this report
+        try:
+            subproject_id = request.session.get('first_subproject_id')
+            if subproject_id:
+                subproject = SubProject.objects.get(id=subproject_id)
+                report = SubProjectReport.objects.create(
+                    subproject=subproject,
+                    title=report_title,
+                    content=full_content,
+                    report_type=report_type,
+                    created_by=request.user
+                )
+                created_report = report
+                
+                # Create generated report record
+                search_filters = {
+                    'query': query,
+                    'from_date': from_date,
+                    'to_date': to_date,
+                    'type_filter': type_filter,
+                    'field_filter': field_filter,
+                    'report_type': report_type
+                }
+                
+                GeneratedReport.objects.create(
+                    subproject_report=report,
+                    query_text=query,
+                    from_date=from_date_obj,
+                    to_date=to_date_obj,
+                    search_filters=search_filters
+                )
+                
+                messages.success(request, 'گزارش زیرپروژه با موفقیت ایجاد شد.')
+                return redirect('subproject_report_detail', pk=report.pk)
+        except (SubProject.DoesNotExist, ValueError):
+            messages.error(request, 'زیرپروژه‌ای برای ایجاد گزارش یافت نشد.')
+            return redirect('search_history')
+    
+    else:
+        # For 'all' type, try to create a project report first, then fall back to subproject
+        try:
+            project_id = request.session.get('first_project_id')
+            if project_id:
+                project = Project.objects.get(id=project_id)
+                report = ProjectReport.objects.create(
+                    project=project,
+                    title=report_title,
+                    content=full_content,
+                    report_type=report_type,
+                    created_by=request.user
+                )
+                created_report = report
+                
+                # Create generated report record
+                GeneratedReport.objects.create(
+                    project_report=report,
+                    query_text=query,
+                    from_date=from_date_obj,
+                    to_date=to_date_obj,
+                    search_filters=search_filters
+                )
+                
+                messages.success(request, 'گزارش پروژه با موفقیت ایجاد شد.')
+                return redirect('project_report_detail', pk=report.pk)
+            
+            subproject_id = request.session.get('first_subproject_id')
+            if subproject_id:
+                subproject = SubProject.objects.get(id=subproject_id)
+                report = SubProjectReport.objects.create(
+                    subproject=subproject,
+                    title=report_title,
+                    content=full_content,
+                    report_type=report_type,
+                    created_by=request.user
+                )
+                created_report = report
+                
+                # Create generated report record
+                GeneratedReport.objects.create(
+                    subproject_report=report,
+                    query_text=query,
+                    from_date=from_date_obj,
+                    to_date=to_date_obj
+                )
+
+
+                
+                messages.success(request, 'گزارش زیرپروژه با موفقیت ایجاد شد.')
+                return redirect('subproject_report_detail', pk=report.pk)
+                
+            # If we get here, we don't have either project or subproject
+            messages.error(request, 'پروژه یا زیرپروژه‌ای برای ایجاد گزارش یافت نشد.')
+            return redirect('search_history')
+            
+        except (Project.DoesNotExist, SubProject.DoesNotExist, ValueError):
+            messages.error(request, 'پروژه یا زیرپروژه‌ای برای ایجاد گزارش یافت نشد.')
+            return redirect('search_history')
+
+@login_required
+def search_history_view(request):
+    """View for searching history"""
+    # Check if the user is a province manager - restrict access
+    if request.user.is_province_manager:
+        messages.error(request, "شما دسترسی به بخش گزارش گیری را ندارید.")
+        return redirect('dashboard')
+        
+    query = request.GET.get('query', '')
+    from_date = request.GET.get('from_date', '')
+    to_date = request.GET.get('to_date', '')
+    type_filter = request.GET.get('type_filter', 'all')
+    field_filter = request.GET.get('field_filter', '')
+    category_filter = request.GET.get('category_filter', '')
+    
+    # Project-specific filters
+    project_types = request.GET.getlist('project_types')
+    project_statuses = request.GET.getlist('project_statuses')
+    project_provinces = request.GET.getlist('project_provinces')
+    approval_statuses = request.GET.getlist('approval_statuses')
+    
+    # Estimated opening time filter
+    opening_time_filter_enabled = request.GET.get('opening_time_filter_enabled', '')
+    opening_time_date = request.GET.get('opening_time_date', '')
+    
+    # Subproject-specific filters
+    subproject_type = request.GET.get('subproject_type', '')
+    subproject_states = request.GET.getlist('subproject_states')
+    start_date_from = request.GET.get('start_date_from', '')
+    start_date_to = request.GET.get('start_date_to', '')
+    start_date_filter_enabled = request.GET.get('start_date_filter_enabled')
+    contract_types = request.GET.getlist('contract_types')
+    execution_phases = request.GET.getlist('execution_phases')
+    
+    # Financial filters
+    min_budget = request.GET.get('min_budget', '')
+    max_budget = request.GET.get('max_budget', '')
+    min_spent = request.GET.get('min_spent', '')
+    max_spent = request.GET.get('max_spent', '')
+    budget_change = request.GET.get('budget_change', '')
+    
+    # Advanced financial allocation filters
+    cash_allocation_enabled = request.GET.get('cash_allocation_enabled', '')
+    min_cash_allocation = request.GET.get('min_cash_allocation', '')
+    max_cash_allocation = request.GET.get('max_cash_allocation', '')
+    
+    treasury_allocation_enabled = request.GET.get('treasury_allocation_enabled', '')
+    min_treasury_allocation = request.GET.get('min_treasury_allocation', '')
+    max_treasury_allocation = request.GET.get('max_treasury_allocation', '')
+    
+    total_allocation_enabled = request.GET.get('total_allocation_enabled', '')
+    min_total_allocation = request.GET.get('min_total_allocation', '')
+    max_total_allocation = request.GET.get('max_total_allocation', '')
+    
+    debt_enabled = request.GET.get('debt_enabled', '')
+    min_debt = request.GET.get('min_debt', '')
+    max_debt = request.GET.get('max_debt', '')
+    
+    # History filters
+    change_by = request.GET.get('change_by', '')
+    changes_count = request.GET.get('changes_count', '')
+    significant_changes = request.GET.get('significant_changes', '')
+    
+    # Base querysets
+    project_updates = ProjectUpdateHistory.objects.all().select_related('project', 'updated_by').order_by('-updated_at')
+    subproject_updates = SubProjectUpdateHistory.objects.all().select_related('subproject', 'updated_by').order_by('-updated_at')
+    
+    # Apply search query if provided
+    if query:
+        project_updates = project_updates.filter(
+            Q(project__name__icontains=query) |
+            Q(field_name__icontains=query) |
+            Q(old_value__icontains=query) |
+            Q(new_value__icontains=query)
+        )
+        subproject_updates = subproject_updates.filter(
+            Q(subproject__name__icontains=query) |
+            Q(field_name__icontains=query) |
+            Q(old_value__icontains=query) |
+            Q(new_value__icontains=query)
+        )
+    
+    # Apply date filters if provided
+    if from_date:
+        project_updates = project_updates.filter(updated_at__gte=from_date)
+        subproject_updates = subproject_updates.filter(updated_at__gte=from_date)
+    
+    if to_date:
+        # Add one day to include the end date
+        to_date_obj = datetime.strptime(to_date, '%Y-%m-%d').date()
+        to_date_obj = to_date_obj + timedelta(days=1)
+        to_date = to_date_obj.strftime('%Y-%m-%d')
+        
+        project_updates = project_updates.filter(updated_at__lt=to_date)
+        subproject_updates = subproject_updates.filter(updated_at__lt=to_date)
+    
+    # Apply type filter
+    if type_filter == 'project':
+        subproject_updates = SubProjectUpdateHistory.objects.none()
+        
+        # Apply project-specific filters
+        if project_types:
+            project_updates = project_updates.filter(project__project_type__in=project_types)
+            
+        if project_statuses:
+            project_updates = project_updates.filter(project__overall_status__in=project_statuses)
+            
+        if project_provinces:
+            project_updates = project_updates.filter(project__province__in=project_provinces)
+            
+        # Apply estimated opening time filter if enabled
+        if opening_time_filter_enabled == 'on' and opening_time_date:
+            try:
+                # Convert opening time date to a date object
+                opening_date_obj = datetime.strptime(opening_time_date, '%Y-%m-%d').date()
+                
+                # Filter projects with estimated opening time before the specified date
+                project_updates = project_updates.filter(project__estimated_opening_time__lte=opening_date_obj)
+            except ValueError:
+                # If there's a problem with the date format, ignore this filter
+                pass
+                
+        if approval_statuses:
+            # Map approval status names to actual field values
+            approval_mapping = {
+                'تایید شده': True,
+                'در انتظار تایید': None,
+                'رد شده': False
+            }
+            
+            # Create a query for each status
+            approval_query = Q()
+            for status in approval_statuses:
+                if status in approval_mapping:
+                    if approval_mapping[status] is None:
+                        # 'در انتظار تایید' - is_approved is null
+                        approval_query |= Q(project__is_approved__isnull=True)
+                    else:
+                        # تایید شده / رد شده
+                        approval_query |= Q(project__is_approved=approval_mapping[status])
+            
+            # Apply the combined query
+            if approval_query:
+                project_updates = project_updates.filter(approval_query)
+            
+    elif type_filter == 'subproject':
+        project_updates = ProjectUpdateHistory.objects.none()
+        
+        # Apply subproject-specific filters
+        selected_subproject_types = request.GET.getlist('subproject_types')
+        if selected_subproject_types:
+             subproject_updates = subproject_updates.filter(subproject__sub_project_type__in=selected_subproject_types)
+
+        if subproject_states:
+            subproject_updates = subproject_updates.filter(subproject__state__in=subproject_states)
+            
+        # Apply start date range filter if enabled
+        if start_date_filter_enabled == 'on':
+            if start_date_from:
+                subproject_updates = subproject_updates.filter(subproject__start_date__gte=start_date_from)
+            if start_date_to:
+                subproject_updates = subproject_updates.filter(subproject__start_date__lte=start_date_to)
+                
+        # Apply contract type filter
+        if contract_types:
+            subproject_updates = subproject_updates.filter(subproject__contract_type__in=contract_types)
+        
+        # Apply execution phase filter
+        if execution_phases:
+            subproject_updates = subproject_updates.filter(subproject__executive_stage__in=execution_phases)
+    
+    # Apply field filter if provided
+    if field_filter:
+        project_updates = project_updates.filter(field_name=field_filter)
+        subproject_updates = subproject_updates.filter(field_name=field_filter)
+    
+    # Apply category filter if provided
+    if category_filter:
+        if category_filter == 'financial':
+            financial_fields = ['budget', 'spent_amount', 'financial_progress']
+            project_updates = project_updates.filter(field_name__in=financial_fields)
+            subproject_updates = subproject_updates.filter(field_name__in=financial_fields)
+        elif category_filter == 'status':
+            status_fields = ['status', 'state', 'is_approved', 'is_submitted']
+            project_updates = project_updates.filter(field_name__in=status_fields)
+            subproject_updates = subproject_updates.filter(field_name__in=status_fields)
+        elif category_filter == 'progress':
+            progress_fields = ['physical_progress', 'progress', 'completion_status']
+            project_updates = project_updates.filter(field_name__in=progress_fields)
+            subproject_updates = subproject_updates.filter(field_name__in=progress_fields)
+    
+    # Apply financial filters if provided
+    if 'min_budget' in request.GET and request.GET['min_budget']:
+        min_budget_val = Decimal(request.GET['min_budget']) * 10 # Convert Toman to Rial
+        project_updates = project_updates.filter(project__budget__gte=min_budget_val)
+        subproject_updates = subproject_updates.filter(subproject__imagenrary_cost__gte=min_budget_val) # Assuming imagenrary_cost for subprojects
+
+    if 'max_budget' in request.GET and request.GET['max_budget']:
+        max_budget_val = Decimal(request.GET['max_budget']) * 10
+        project_updates = project_updates.filter(project__budget__lte=max_budget_val)
+        subproject_updates = subproject_updates.filter(subproject__imagenrary_cost__lte=max_budget_val)
+
+    if 'min_spent' in request.GET and request.GET['min_spent']:
+        min_spent_val = Decimal(request.GET['min_spent']) * 10
+        # Filtering based on spent amount might require calculating it from situation reports
+        # This needs adjustment based on how spent amount is tracked
+        pass 
+
+    if 'max_spent' in request.GET and request.GET['max_spent']:
+        max_spent_val = Decimal(request.GET['max_spent']) * 10
+        # Similar to min_spent, filtering needs logic based on situation reports
+        pass
+        
+    # Example for budget_change (assuming it's a checkbox/flag)
+    if request.GET.get('budget_change') == 'on':
+        project_updates = project_updates.filter(field_name='budget')
+        subproject_updates = subproject_updates.filter(field_name__in=['contract_amount', 'imagenrary_cost']) # Check relevant fields
+    
+    # Apply advanced financial allocation filters if enabled
+    if cash_allocation_enabled == 'on':
+        if min_cash_allocation:
+            project_updates = project_updates.filter(project__cash_allocation__gte=min_cash_allocation)
+            subproject_updates = subproject_updates.filter(subproject__cash_allocation__gte=min_cash_allocation)
+        if max_cash_allocation:
+            project_updates = project_updates.filter(project__cash_allocation__lte=max_cash_allocation)
+            subproject_updates = subproject_updates.filter(subproject__cash_allocation__lte=max_cash_allocation)
+    
+    if treasury_allocation_enabled == 'on':
+        if min_treasury_allocation:
+            project_updates = project_updates.filter(project__treasury_allocation__gte=min_treasury_allocation)
+            subproject_updates = subproject_updates.filter(subproject__treasury_allocation__gte=min_treasury_allocation)
+        if max_treasury_allocation:
+            project_updates = project_updates.filter(project__treasury_allocation__lte=max_treasury_allocation)
+            subproject_updates = subproject_updates.filter(subproject__treasury_allocation__lte=max_treasury_allocation)
+    
+    if total_allocation_enabled == 'on':
+        if min_total_allocation:
+            project_updates = project_updates.filter(project__total_allocation__gte=min_total_allocation)
+            subproject_updates = subproject_updates.filter(subproject__total_allocation__gte=min_total_allocation)
+        if max_total_allocation:
+            project_updates = project_updates.filter(project__total_allocation__lte=max_total_allocation)
+            subproject_updates = subproject_updates.filter(subproject__total_allocation__lte=max_total_allocation)
+    
+    if debt_enabled == 'on':
+        if min_debt:
+            project_updates = project_updates.filter(project__debt__gte=min_debt)
+            subproject_updates = subproject_updates.filter(subproject__debt__gte=min_debt)
+        if max_debt:
+            project_updates = project_updates.filter(project__debt__lte=max_debt)
+            subproject_updates = subproject_updates.filter(subproject__debt__lte=max_debt)
+    
+    # Apply history filters if provided
+    if change_by:
+        project_updates = project_updates.filter(
+            Q(updated_by__username__icontains=change_by) |
+            Q(updated_by__first_name__icontains=change_by) |
+            Q(updated_by__last_name__icontains=change_by)
+        )
+        subproject_updates = subproject_updates.filter(
+            Q(updated_by__username__icontains=change_by) |
+            Q(updated_by__first_name__icontains=change_by) |
+            Q(updated_by__last_name__icontains=change_by)
+        )
+    
+    if changes_count:
+        # This would require a more complex query to count changes per project/subproject
+        # For simplicity, we'll skip this for now
+        pass
+    
+    if significant_changes:
+        # Define what constitutes a "significant" change
+        # For example, changes to budget, status, or progress that exceed certain thresholds
+        significant_fields = ['budget', 'status', 'physical_progress']
+        project_updates = project_updates.filter(field_name__in=significant_fields)
+        subproject_updates = subproject_updates.filter(field_name__in=significant_fields)
+    
+    # Get project and subproject review data (for displaying review scores)
+    project_reviews = {}
+    # Get distinct project IDs before limiting results
+    distinct_project_ids = project_updates.values_list('project_id', flat=True).distinct()
+    for project_id in distinct_project_ids:
+        reviews = ProjectReview.objects.filter(project_id=project_id)
+        if reviews.exists():
+            avg_score = reviews.aggregate(avg=Avg('score'))['avg']
+            project_reviews[project_id] = {
+                'avg_score': avg_score,
+                'review_count': reviews.count(),
+            }
+    
+    subproject_reviews = {}
+    # Get distinct subproject IDs before limiting results
+    distinct_subproject_ids = subproject_updates.values_list('subproject_id', flat=True).distinct()
+    for subproject_id in distinct_subproject_ids:
+        reviews = SubProjectReview.objects.filter(subproject_id=subproject_id)
+        if reviews.exists():
+            avg_score = reviews.aggregate(avg=Avg('score'))['avg']
+            subproject_reviews[subproject_id] = {
+                'avg_score': avg_score,
+                'review_count': reviews.count(),
+            }
+    
+    # Limit to a manageable number per page (moved after getting distinct IDs)
+    project_updates = project_updates[:100]
+    subproject_updates = subproject_updates[:100]
+    
+    # Count total results
+    total_project_results = project_updates.count()
+    total_subproject_results = subproject_updates.count()
+    total_results = total_project_results + total_subproject_results
+    
+    # Get available fields for filtering
+    available_fields = set()
+    for field in ProjectUpdateHistory.objects.values_list('field_name', flat=True).distinct():
+        if field:
+            available_fields.add(field)
+    for field in SubProjectUpdateHistory.objects.values_list('field_name', flat=True).distinct():
+        if field:
+            available_fields.add(field)
+    
+    # Get recent searches for this user
+    recent_searches = SearchHistory.objects.filter(user=request.user).order_by('-timestamp')[:5]
+    
+    # Record this search if it's a legitimate search query
+    searched = bool(query or from_date or to_date or field_filter or category_filter or 
+                    type_filter != 'all' or project_types or project_statuses or project_provinces or
+                    subproject_type or subproject_states or approval_statuses or 
+                    (opening_time_filter_enabled == 'on' and opening_time_date) or
+                    (start_date_filter_enabled == 'on' and (start_date_from or start_date_to)) or
+                    contract_types or
+                    execution_phases)
+    
+    search_record = None
+    if searched and request.method == 'GET' and total_results > 0:
+        # Convert empty date strings to None before saving
+        from_date_value = from_date if from_date else None
+        to_date_value = to_date if to_date else None
+        
+        search_record = SearchHistory.objects.create(
+            user=request.user,
+            query_text=query,
+            from_date=from_date_value,
+            to_date=to_date_value,
+            field_filter=field_filter,
+            search_type=type_filter,
+            results_count=total_results,
+        )
+    
+    # Get choices for province, subproject types and states
+    from creator_project.models import Project
+    from creator_subproject.models import SubProject
+    
+    province_choices = Project.PROVINCE_CHOICES if hasattr(Project, 'PROVINCE_CHOICES') else []
+    # Get selected subproject types from request for pre-filling checkboxes
+    selected_subproject_types = request.GET.getlist('subproject_types')
+    # Define subproject_types to hold all choices for the context
+    subproject_types = SubProject.SUB_PROJECT_TYPE_CHOICES if hasattr(SubProject, 'SUB_PROJECT_TYPE_CHOICES') else []
+    subproject_states = SubProject.STATE_CHOICES if hasattr(SubProject, 'STATE_CHOICES') else []
+    contract_type_choices = SubProject.CONTRACT_TYPE_CHOICES if hasattr(SubProject, 'CONTRACT_TYPE_CHOICES') else []
+    execution_phase_choices = SubProject.EXECUTIVE_STAGE_CHOICES if hasattr(SubProject, 'EXECUTIVE_STAGE_CHOICES') else []
+    
+    context = {
+        'project_updates': project_updates,
+        'subproject_updates': subproject_updates,
+        'total_results': total_results,
+        'total_project_results': total_project_results,
+        'total_subproject_results': total_subproject_results,
+        'searched': searched,
+        'search_record': search_record,
+        'recent_searches': recent_searches,
+        'available_fields': sorted(available_fields),
+        'project_reviews': project_reviews,
+        'subproject_reviews': subproject_reviews,
+        'province_choices': province_choices,
+        'subproject_types': subproject_types,
+        'selected_subproject_types': selected_subproject_types,
+        'subproject_states': subproject_states,
+        'opening_time_filter_enabled': opening_time_filter_enabled,
+        'opening_time_date': opening_time_date,
+        'start_date_filter_enabled': start_date_filter_enabled,
+        'start_date_from': start_date_from,
+        'start_date_to': start_date_to,
+        'contract_type_choices': contract_type_choices,
+        'selected_contract_types': contract_types,
+        'execution_phase_choices': execution_phase_choices,
+        'selected_execution_phases': execution_phases,
+        # Advanced financial allocation filters
+        'cash_allocation_enabled': cash_allocation_enabled,
+        'min_cash_allocation': min_cash_allocation,
+        'max_cash_allocation': max_cash_allocation,
+        'treasury_allocation_enabled': treasury_allocation_enabled,
+        'min_treasury_allocation': min_treasury_allocation,
+        'max_treasury_allocation': max_treasury_allocation,
+        'total_allocation_enabled': total_allocation_enabled,
+        'min_total_allocation': min_total_allocation,
+        'max_total_allocation': max_total_allocation,
+        'debt_enabled': debt_enabled,
+        'min_debt': min_debt,
+        'max_debt': max_debt,
+    }
+    
+    return render(request, 'reporter/search_history.html', context)
+
+@login_required
+def user_search_history(request):
+    """View for displaying user's search history"""
+    searches = SearchHistory.objects.filter(user=request.user).order_by('-timestamp')
+    
+    context = {
+        'searches': searches,
+        'recent_project_reports': ProjectReport.objects.filter(created_by=request.user).order_by('-created_at')[:3],
+        'recent_subproject_reports': SubProjectReport.objects.filter(created_by=request.user).order_by('-created_at')[:3],
+    }
+    
+    return render(request, 'reporter/user_search_history.html', context)

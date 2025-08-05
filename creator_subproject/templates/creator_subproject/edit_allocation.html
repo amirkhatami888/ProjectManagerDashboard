@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}
+    ویرایش گزارش وضعیت
+{% endblock %}
+
+{% block extra_head %}
+<!-- Add Persian Datepicker -->
+<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+{% endblock %}
+
+{% block breadcrumb %}
+    <ol class="breadcrumb float-sm-left">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">خانه</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'creator_subproject:index' %}">زیرپروژه‌ها</a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'creator_subproject:detail' subproject.id %}">{{ subproject }}</a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'creator_subproject:situation_reports' subproject.id %}">گزارش وضعیت‌ها</a></li>
+        <li class="breadcrumb-item active">ویرایش گزارش وضعیت</li>
+    </ol>
+{% endblock %}
+
+{% block sidebar %}
+    {% include 'creator_subproject/includes/sidebar.html' with active='situation_reports' %}
+{% endblock %}
+
+{% block content %}
+    <div class="card card-info">
+        <div class="card-header">
+            <h3 class="card-title">ویرایش گزارش وضعیت</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.amount.id_for_label }}">مبلغ یشنهادی پیمان کار(ریال)</label>
+                            {{ form.amount }}
+                            {% if form.amount.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.amount.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>مبلغ پرداختی (محاسبه شده):</label>
+                            <input type="text" id="payment_amount" class="form-control bg-light" value="{{ situation_report.payment_amount|intcomma }} ریال" readonly>
+                            <small class="text-muted">این مقدار بر اساس ضرایب به صورت خودکار محاسبه می‌شود</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>شماره گزارش وضعیت:</label>
+                            {{ form.report_number }}
+                            <input type="text" class="form-control" value="{{ situation_report.report_number }}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.situation_report_type.id_for_label }}">{{ form.situation_report_type.label }}</label>
+                            {{ form.situation_report_type }}
+                            {% if form.situation_report_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.situation_report_type.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="id_situation_report_date">تاریخ گزارش وضعیت:</label>
+                            <input type="text" name="situation_report_date" id="id_situation_report_date" class="form-control persian-date" 
+                                   placeholder="انتخاب تاریخ" value="{{ situation_report.jalali_situation_report_date }}">
+                            {% if form.situation_report_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.situation_report_date.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.description.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h5 class="mb-3">ضرایب</h5>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.overhead_coefficient.id_for_label }}">{{ form.overhead_coefficient.label }}</label>
+                            {{ form.overhead_coefficient }}
+                            {% if form.overhead_coefficient.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.overhead_coefficient.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.contractor_coefficient.id_for_label }}">{{ form.contractor_coefficient.label }}</label>
+                            {{ form.contractor_coefficient }}
+                            {% if form.contractor_coefficient.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.contractor_coefficient.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.season_coefficient.id_for_label }}">{{ form.season_coefficient.label }}</label>
+                            {{ form.season_coefficient }}
+                            {% if form.season_coefficient.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.season_coefficient.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.regional_coefficient.id_for_label }}">{{ form.regional_coefficient.label }}</label>
+                            {{ form.regional_coefficient }}
+                            {% if form.regional_coefficient.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.regional_coefficient.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.height_coefficient.id_for_label }}">{{ form.height_coefficient.label }}</label>
+                            {{ form.height_coefficient }}
+                            {% if form.height_coefficient.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.height_coefficient.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.floors_coefficient.id_for_label }}">{{ form.floors_coefficient.label }}</label>
+                            {{ form.floors_coefficient }}
+                            {% if form.floors_coefficient.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.floors_coefficient.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.materials_coefficient.id_for_label }}">{{ form.materials_coefficient.label }}</label>
+                            {{ form.materials_coefficient }}
+                            {% if form.materials_coefficient.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.materials_coefficient.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.workshop_setup_coefficient.id_for_label }}">{{ form.workshop_setup_coefficient.label }}</label>
+                            {{ form.workshop_setup_coefficient }}
+                            {% if form.workshop_setup_coefficient.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.workshop_setup_coefficient.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.adjustment_coefficient.id_for_label }}">{{ form.adjustment_coefficient.label }}</label>
+                            {{ form.adjustment_coefficient }}
+                            {% if form.adjustment_coefficient.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.adjustment_coefficient.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.difficulty_coefficient.id_for_label }}">{{ form.difficulty_coefficient.label }}</label>
+                            {{ form.difficulty_coefficient }}
+                            {% if form.difficulty_coefficient.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.difficulty_coefficient.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-success">بروزرسانی گزارش وضعیت</button>
+                        <a href="{% url 'creator_subproject:situation_reports' subproject.id %}"
+                           class="btn btn-secondary">بازگشت</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Persian Datepicker -->
+<script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+
+<script>
+    // Initialize Persian Datepicker for date fields
+    $(document).ready(function() {
+        // Initialize datepickers
+        $(".persian-date").persianDatepicker({
+            format: 'YYYY/MM/DD',
+            autoClose: true,
+            initialValueType: 'persian',
+            persianDigit: true,
+            observer: true,
+            calendar: {
+                persian: {
+                    locale: 'fa'
+                }
+            }
+        });
+        
+        // Calculate payment amount when page loads
+        calculatePaymentAmount();
+        
+        // Recalculate when any input changes
+        $('#id_amount, [id^=id_][id$=_coefficient]').on('input', function() {
+            calculatePaymentAmount();
+        });
+        
+        function calculatePaymentAmount() {
+            // Get amount value
+            const amount = parseFloat($('#id_amount').val()) || 0;
+            
+            // Get all coefficients
+            const overheadCoeff = parseFloat($('#id_overhead_coefficient').val()) || 1;
+            const contractorCoeff = parseFloat($('#id_contractor_coefficient').val()) || 1;
+            const seasonCoeff = parseFloat($('#id_season_coefficient').val()) || 1;
+            const regionalCoeff = parseFloat($('#id_regional_coefficient').val()) || 1;
+            const heightCoeff = parseFloat($('#id_height_coefficient').val()) || 1;
+            const floorsCoeff = parseFloat($('#id_floors_coefficient').val()) || 1;
+            const materialsCoeff = parseFloat($('#id_materials_coefficient').val()) || 1;
+            const workshopCoeff = parseFloat($('#id_workshop_setup_coefficient').val()) || 1;
+            const adjustmentCoeff = parseFloat($('#id_adjustment_coefficient').val()) || 1;
+            const difficultyCoeff = parseFloat($('#id_difficulty_coefficient').val()) || 1;
+            
+            // Calculate total coefficient
+            const totalCoefficient = overheadCoeff * contractorCoeff * seasonCoeff * regionalCoeff * 
+                                     heightCoeff * floorsCoeff * materialsCoeff * workshopCoeff * 
+                                     adjustmentCoeff * difficultyCoeff;
+            
+            // Calculate payment amount
+            const paymentAmount = amount * totalCoefficient;
+            
+            // Format as number with commas
+            function formatNumber(num) {
+                return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+            
+            // Update payment amount field
+            $('#payment_amount').val(formatNumber(Math.round(paymentAmount)) + ' ریال');
+        }
+    });
+</script>
+{% endblock %} 

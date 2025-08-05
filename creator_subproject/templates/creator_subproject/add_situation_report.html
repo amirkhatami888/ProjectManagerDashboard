@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    افزودن صورت وضعیت کارکرد - {{ subproject }}
+{% endblock %}
+
+{% block breadcrumb %}
+    <ol class="breadcrumb float-sm-left">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">خانه</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'creator_subproject:index' %}">زیرپروژه‌ها</a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'creator_subproject:detail' subproject.id %}">{{ subproject }}</a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'creator_subproject:situation_reports' subproject.id %}">صورت وضعیت‌ها کارکرد</a></li>
+        <li class="breadcrumb-item active">افزودن صورت وضعیت کارکرد</li>
+    </ol>
+{% endblock %}
+
+{% block sidebar %}
+    {% include 'creator_subproject/includes/sidebar.html' with active='situation_reports' %}
+{% endblock %}
+
+{% block content %}
+    <div class="card card-info">
+        <div class="card-header">
+            <h3 class="card-title">افزودن صورت وضعیت کارکرد جدید</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.payment_amount_field.id_for_label }}">{{ form.payment_amount_field.label }}</label>
+                            {{ form.payment_amount_field }}
+                            {% if form.payment_amount_field.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.payment_amount_field.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ form.allocation_type.id_for_label }}">{{ form.allocation_type.label }}</label>
+                            {{ form.allocation_type }}
+                            {% if form.allocation_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.allocation_type.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.allocation_date.id_for_label }}">{{ form.allocation_date.label }}</label>
+                            {{ form.allocation_date }}
+                            {% if form.allocation_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.allocation_date.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.description.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-success">ثبت صورت وضعیت کارکرد</button>
+                        <a href="{% url 'creator_subproject:situation_reports' subproject.id %}"
+                           class="btn btn-secondary">بازگشت</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script>
+        $(document).ready(function () {
+            $('.jalali_date-date').persianDatepicker({
+                format: 'YYYY/MM/DD',
+                initialValue: false,
+                autoClose: true
+            });
+            
+            // Format numbers with commas
+            function formatWithCommas(input) {
+                $(input).on('input', function() {
+                    // Remove any non-digit characters
+                    let value = $(this).val().replace(/\D/g, '');
+                    // Format with commas
+                    if (value) {
+                        value = parseInt(value, 10).toLocaleString('en-US');
+                        $(this).val(value);
+                    }
+                });
+            }
+            
+            // Apply formatting to payment field
+            formatWithCommas('#id_payment_amount_field');
+        });
+    </script>
+{% endblock %} 

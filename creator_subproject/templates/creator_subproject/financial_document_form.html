@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_head %}
+<!-- Add Persian Datepicker -->
+<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h1 class="h3 mb-0">{{ title }}</h1>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.document_type|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6 related-document-field" style="display: none;">
+                        {{ form.related_document|as_crispy_field }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.contractor_amount|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.approved_amount|as_crispy_field }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.jalali_contractor_date|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.jalali_approval_date|as_crispy_field }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12">
+                        {{ form.description|as_crispy_field }}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <h4>فایل های پیوست</h4>
+                        <div class="form-group">
+                            <label for="id_file">افزودن فایل</label>
+                            <input type="file" name="file" multiple class="form-control" id="id_file">
+                            <small class="form-text text-muted">می‌توانید چندین فایل انتخاب کنید</small>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if document_files %}
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h5>فایل های موجود</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>نام فایل</th>
+                                        <th>تاریخ آپلود</th>
+                                        <th>عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for file in document_files %}
+                                    <tr>
+                                        <td><a href="{{ file.file.url }}" target="_blank">{{ file.filename }}</a></td>
+                                        <td>{{ file.uploaded_at|date:"Y/m/d H:i" }}</td>
+                                        <td>
+                                            <form action="{% url 'creator_subproject:delete_document_file' file.id %}" method="post" style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('آیا از حذف این فایل اطمینان دارید؟')">حذف</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-success">ذخیره</button>
+                        <a href="{% url 'creator_subproject:subproject_detail' subproject.id %}" class="btn btn-secondary">انصراف</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Add Persian Datepicker -->
+<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize Persian Datepicker
+        $(".persian-date").persianDatepicker({
+            format: 'YYYY/MM/DD',
+            autoClose: true
+        });
+        
+        // Show related document field only when document type is adjustment_report
+        $('#id_document_type').on('change', function() {
+            if ($(this).val() === 'adjustment_report') {
+                $('.related-document-field').show();
+            } else {
+                $('.related-document-field').hide();
+            }
+        });
+        
+        // Trigger change event to initialize visibility
+        $('#id_document_type').trigger('change');
+        
+        // When contractor date changes, sync with approval date if approval date is empty
+        $('#id_jalali_contractor_date').on('change', function() {
+            var approvalDate = $('#id_jalali_approval_date').val();
+            if (!approvalDate || approvalDate.trim() === '') {
+                $('#id_jalali_approval_date').val($(this).val());
+            }
+        });
+        
+        // Set default values for dates if empty
+        var contractorDate = $('#id_jalali_contractor_date').val();
+        var approvalDate = $('#id_jalali_approval_date').val();
+        
+        if (!contractorDate || contractorDate.trim() === '') {
+            // Get today's date in Persian format
+            var today = new persianDate().format('YYYY/MM/DD');
+            $('#id_jalali_contractor_date').val(today);
+        }
+        
+        if (!approvalDate || approvalDate.trim() === '') {
+            // Use the contractor date value
+            $('#id_jalali_approval_date').val($('#id_jalali_contractor_date').val());
+        }
+    });
+</script>
+{% endblock %} 

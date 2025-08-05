@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load jalali_tags %}
+{% load humanize %}
+
+{% block title %}حذف صورت وضعیت{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">حذف صورت وضعیت</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h5>آیا مطمئن هستید که می‌خواهید این صورت وضعیت را حذف کنید؟</h5>
+                        <p>این عملیات برگشت‌پذیر نیست.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>اطلاعات صورت وضعیت</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>زیرپروژه:</strong> {{ allocation.subproject }}</p>
+                                <p><strong>مبلغ یشنهادی پیمان کار:</strong> {{ allocation.amount|intcomma }} ریال</p>
+                                <p><strong>مبلغ پرداختی:</strong> {{ allocation.payment_amount|intcomma }} ریال</p>
+                                <p><strong>شماره صورت وضعیت:</strong> {{ allocation.report_number }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>نوع تخصیص:</strong> {{ allocation.get_allocation_type_display }}</p>
+                                <p><strong>تاریخ تخصیص:</strong> {{ allocation.allocation_date|to_jalali:'%Y/%m/%d' }}</p>
+                                {% if allocation.description %}
+                                <p><strong>توضیحات:</strong> {{ allocation.description }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'creator_subproject:subproject_detail' allocation.subproject.id %}" class="btn btn-secondary">انصراف</a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash me-1"></i>
+                                حذف صورت وضعیت
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

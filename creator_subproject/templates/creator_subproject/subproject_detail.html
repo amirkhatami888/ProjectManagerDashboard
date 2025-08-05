@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load jalali_tags %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2>اطلاعات زیرپروژه</h2>
+            <div>
+                {% if user.is_admin or subproject.created_by == user %}
+                <a href="{% url 'subproject_update' subproject.pk %}" class="btn btn-primary">ویرایش</a>
+                {% endif %}
+                <a href="{% url 'creator_project:project_detail' subproject.project.pk %}" class="btn btn-secondary">بازگشت به پروژه</a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h3>اطلاعات اصلی</h3>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>پروژه اصلی:</th>
+                            <td>{{ subproject.project.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>نوع زیرپروژه:</th>
+                            <td>{{ subproject.get_sub_project_type_display }}</td>
+                        </tr>
+                        <tr>
+                            <th>اولویت زیرپروژه:</th>
+                            <td>{{ subproject.sub_project_number }}</td>
+                        </tr>
+                        <tr>
+                            <th>تاریخ شروع زیر پروژه:</th>
+                            <td>{% if subproject.start_date %}{{ subproject.start_date }}{% else %}تعیین نشده{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <th>تاریخ پایان زیر پروژه:</th>
+                            <td>{% if subproject.end_date %}{{ subproject.end_date }}{% else %}تعیین نشده{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <th>وضعیت:</th>
+                            <td>{{ subproject.get_state_display }}</td>
+                        </tr>
+                        <tr>
+                            <th>پیشرفت فیزیکی:</th>
+                            <td>{{ subproject.physical_progress }}%</td>
+                        </tr>
+                        <tr>
+                            <th>نوع زیرپروژه:</th>
+                            <td>{{ subproject.sub_project_type }}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="col-md-6">
+                    <h3>اطلاعات تکمیلی</h3>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>کار باقیمانده:</th>
+                            <td>{{ subproject.remaining_work|default:"ندارد" }}</td>
+                        </tr>
+                        <tr>
+                            <th>توضیحات:</th>
+                            <td>{{ subproject.description|default:"ندارد" }}</td>
+                        </tr>
+                        <tr>
+                            <th>مشارکت خیرین:</th>
+                            <td>{{ subproject.get_is_suportting_charity_display }}</td>
+                        </tr>
+                        <tr>
+                            <th>تعدیل:</th>
+                            <td>{{ subproject.get_has_adjustment_display }}</td>
+                        </tr>
+                        {% if not subproject.contract_amount and subproject.related_subproject %}
+                        <tr>
+                            <th>ارتباط زیر پروژه:</th>
+                            <td>
+                                {{ subproject.get_relationship_type_display|default:"-" }} 
+                                {{ subproject.related_subproject.sub_project_type }} #{{ subproject.related_subproject.sub_project_number }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>تعجیل وتاخیر ارتباط زیر پروژه:</th>
+                            <td>{{ subproject.relationship_delay|default:"0" }} روز</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h3>اطلاعات قرارداد</h3>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>تاریخ شروع قرارداد:</th>
+                            <td>{% if subproject.contract_start_date %}{{ subproject.contract_start_date }}{% else %}تعیین نشده{% endif %}</td>
+                            <th>تاریخ پایان قرارداد:</th>
+                            <td>{% if subproject.contract_end_date %}{{ subproject.contract_end_date }}{% else %}تعیین نشده{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <th>مبلغ قرارداد (ریال):</th>
+                            <td>{% if subproject.contract_amount %}{{ subproject.contract_amount|intcomma }}{% else %}تعیین نشده{% endif %}</td>
+                            <th>نوع قرارداد:</th>
+                            <td>{{ subproject.get_contract_type_display|default:"تعیین نشده" }}</td>
+                        </tr>
+                        {% if subproject.has_adjustment == 'دارد' %}
+                        <tr>
+                            <th>ضریب تعدیل:</th>
+                            <td>{{ subproject.adjustment_coefficient }}</td>
+                            <th>مبلغ نهایی قرارداد (ریال):</th>
+                            <td>{% if subproject.final_contract_amount %}{{ subproject.final_contract_amount|intcomma }}{% else %}تعیین نشده{% endif %}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <th>مبلغ نهایی قرارداد (ریال):</th>
+                            <td colspan="3">{% if subproject.final_contract_amount %}{{ subproject.final_contract_amount|intcomma }}{% else %}تعیین نشده{% endif %}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <th>روش اجرا:</th>
+                            <td>{{ subproject.get_execution_method_display|default:"تعیین نشده" }}</td>
+                            <th>بدهی (ریال):</th>
+                            <td>
+                                {% if subproject.final_contract_amount %}
+                                    {{ subproject.debt|floatformat:2|intcomma }} ریال
+                                {% else %}
+                                    0 ریال
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if subproject.latest_situation_report %}
+                        <tr>
+                            <th>آخرین صورت وضعیت:</th>
+                            <td>{{ subproject.latest_situation_report.get_allocation_type_display }}</td>
+                            <td>
+                                ({{ subproject.latest_situation_report.payment_amount_field|intcomma }} ریال)
+                                <small class="text-muted">(شماره {{ subproject.latest_situation_report.report_number }})</small>
+                            </td>
+                            <td>
+                                {% if subproject.latest_situation_report %}
+                                    {{ subproject.latest_situation_report.payment_amount_field|intcomma }} ریال
+                                {% else %}
+                                    0 ریال
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% if subproject.latest_adjustment_report %}
+                        <tr>
+                            <th>آخرین صورت وضعیت تعدیل:</th>
+                            <td>{{ subproject.latest_adjustment_report.get_allocation_type_display|default:"-" }}</td>
+                            <td>
+                                <small class="text-muted">(شماره {{ subproject.latest_adjustment_report.report_number }})</small>
+                            </td>
+                            <td>
+                                {{ subproject.latest_adjustment_payment|intcomma }} ریال
+                            </td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <th>مبلغ پرداختی زیر پروژه:</th>
+                            <td colspan="3">
+                                {{ subproject.total_latest_payments_sum|intcomma }} ریال
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h3>صورت‌وضعیت‌ها</h3>
+                    {% if subproject.situation_reports.all %}
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>نوع</th>
+                                    <th>مبلغ (ریال)</th>
+                                    <th>شماره نامه</th>
+                                    <th>تاریخ</th>
+                                    <th>توضیحات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in subproject.situation_reports.all %}
+                                <tr>
+                                    <td>{{ report.get_allocation_type_display }}</td>
+                                    <td>{{ report.payment_amount_field|intcomma }}</td>
+                                    <td>{{ report.letter_number|default:"-" }}</td>
+                                    <td>{{ report.allocation_date }}</td>
+                                    <td>{{ report.description|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="alert alert-info">هیچ صورت‌وضعیتی برای این زیرپروژه ثبت نشده است.</div>
+                    {% endif %}
+                    
+                    {% if user.is_admin or user.is_expert or subproject.created_by == user %}
+                    <a href="{% url 'subproject_add_allocation' subproject.pk %}" class="btn btn-success mb-3">افزودن صورت‌وضعیت جدید</a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h3>متاداده</h3>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>ایجاد شده توسط:</th>
+                            <td>{{ subproject.created_by.get_full_name }}</td>
+                            <th>تاریخ ایجاد:</th>
+                            <td>{{ subproject.created_at|to_jalali:'%Y/%m/%d' }}</td>
+                        </tr>
+                        <tr>
+                            <th>آخرین بروزرسانی:</th>
+                            <td>{{ subproject.updated_at|to_jalali:'%Y/%m/%d' }}</td>
+                            <th>وضعیت تایید:</th>
+                            <td>{% if subproject.is_approved %}تایید شده{% else %}تایید نشده{% endif %}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="text-muted">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p>مبلغ پرداختی آخرین صورت وضعیت: {% if subproject.latest_situation_report %}{{ subproject.latest_situation_report.payment_amount_field|intcomma }}{% else %}0{% endif %} ریال</p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <p>مبلغ پرداخت شده: {{ subproject.latest_situation_report.payment_amount_field|intcomma }} ریال</p>
+                        {% with remaining=subproject.final_contract_amount|floatformat:"0"|sub:subproject.latest_situation_report.payment_amount_field %}
+                        {% if remaining < 0 %}
+                        <p class="text-danger fw-bold">
+                            مبلغ باقیمانده: {{ remaining|intcomma }} ریال (اضافه پرداخت)
+                        </p>
+                        {% else %}
+                        <p>مبلغ باقیمانده: {{ remaining|intcomma }} ریال</p>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

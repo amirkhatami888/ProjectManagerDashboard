@@ -1,0 +1,1029 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% comment %}
+Enhanced SMS Templates Management Page
+
+New Features Added:
+1. Inline Quick Edit: Click the edit icon to modify templates directly in the table
+2. Template Preview: Click on template content or preview icon to see full content
+3. Character Counter: Real-time character counting with color-coded warnings
+4. Visual Feedback: Hover effects, animations, and loading states
+5. Auto-save: AJAX-based saving without page refresh
+6. Better UX: Focus management, click-outside-to-close, and validation
+
+Usage:
+- Quick Edit (pencil icon): Inline editing for fast changes
+- Full Edit (gear icon): Traditional form-based editing with all options
+- Preview (eye icon): Modal preview of template content
+- Click on template content: Quick preview
+{% endcomment %}
+
+{% block title %}قالب‌های پیامک{% endblock %}
+
+{% block extra_head %}
+<style>
+    .template-preview {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        padding: 0.5rem;
+        font-size: 0.875rem;
+        max-height: 60px;
+        overflow-y: auto;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .template-preview:hover {
+        background: #e9ecef;
+        border-color: #adb5bd;
+    }
+    .template-actions {
+        white-space: nowrap;
+    }
+    .template-edit-form {
+        display: none;
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 10px;
+        border: 2px solid #007bff;
+        animation: slideDown 0.3s ease;
+    }
+    .template-edit-form.active {
+        display: block;
+    }
+    .template-content-editable {
+        min-height: 80px;
+        resize: vertical;
+    }
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .template-row-editing {
+        background-color: #fff3cd !important;
+    }
+    .btn-action {
+        margin: 0 2px;
+        transition: all 0.2s ease;
+    }
+    .btn-action:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .character-count {
+        font-size: 0.75rem;
+        color: #6c757d;
+        text-align: right;
+        margin-top: 5px;
+    }
+    .template-type-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">قالب‌های پیامک</h1>
+    
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">مدیریت قالب‌های پیامک</h6>
+                    <div class="text-muted">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        شما می‌توانید قالب‌های موجود را ویرایش کنید
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>نام</th>
+                                    <th>نوع</th>
+                                    <th>ایجاد شده توسط</th>
+                                    <th>پیش‌فرض</th>
+                                    <th>محتوا</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for template in templates %}
+                                <tr id="template-row-{{ template.id }}">
+                                    <td>
+                                        <span class="template-name">{{ template.name }}</span>
+                                    </td>
+                                    <td>
+                                        {% if template.type == 'PROJECT_OUTDATED' %}
+                                            <span class="badge badge-warning template-type-badge">پروژه بروزرسانی نشده</span>
+                                        {% elif template.type == 'PROJECT_REJECTED' %}
+                                            <span class="badge badge-danger template-type-badge">پروژه رد شده</span>
+                                        {% elif template.type == 'PROJECT_NOT_EXAMINED' %}
+                                            <span class="badge badge-info template-type-badge">پروژه بررسی نشده</span>
+                                        {% elif template.type == 'FUNDING_REQUEST_APPROVED' %}
+                                            <span class="badge badge-success template-type-badge">درخواست اعتبار تایید شده</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary template-type-badge">سفارشی</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ template.created_by.get_full_name|default:template.created_by.username }}</td>
+                                    <td>
+                                        {% if template.is_default %}
+                                            <span class="badge badge-success">پیش‌فرض</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">خیر</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="template-preview" title="{{ template.content }}" onclick="previewTemplate({{ template.id }}, '{{ template.content|escapejs }}')">
+                                            {{ template.content|truncatechars:70 }}
+                                        </div>
+                                    </td>
+                                    <td class="template-actions">
+                                        <button class="btn btn-sm btn-outline-primary btn-action" 
+                                                onclick="toggleEditMode({{ template.id }})" 
+                                                title="ویرایش سریع">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <a href="{% url 'edit_template' template.id %}" 
+                                           class="btn btn-sm btn-primary btn-action" 
+                                           title="ویرایش کامل">
+                                            <i class="fas fa-cog"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-info btn-action" 
+                                                onclick="previewTemplate({{ template.id }}, '{{ template.content|escapejs }}')" 
+                                                title="پیش‌نمایش">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr id="edit-form-{{ template.id }}" class="template-edit-form">
+                                    <td colspan="6">
+                                        <form class="edit-template-form" data-template-id="{{ template.id }}">
+                                            {% csrf_token %}
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label>نام قالب</label>
+                                                        <input type="text" class="form-control" name="name" value="{{ template.name }}" required>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label>پیش‌فرض</label>
+                                                        <div class="form-check">
+                                                            <input type="checkbox" class="form-check-input" name="is_default" 
+                                                                   {% if template.is_default %}checked{% endif %}>
+                                                            <label class="form-check-label">قالب پیش‌فرض</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>محتوای قالب</label>
+                                                <textarea class="form-control template-content-editable" 
+                                                          name="content" 
+                                                          rows="4" 
+                                                          maxlength="1000"
+                                                          onInput="updateCharacterCount(this, {{ template.id }})"
+                                                          required>{{ template.content }}</textarea>
+                                                <div class="character-count" id="char-count-{{ template.id }}">
+                                                    <span class="current-count">{{ template.content|length }}</span> / 1000 کاراکتر
+                                                </div>
+                                                <small class="form-text text-muted">
+                                                    متغیرهای موجود: 
+                                                    {% if template.type == 'PROJECT_OUTDATED' %}
+                                                        <strong>کاربر:</strong> <code>{first_name}</code>, <code>{last_name}</code>, <code>{full_name}</code>, <code>{role}</code>, <code>{province}</code> |
+                                                        <strong>پروژه:</strong> <code>{project_name}</code>, <code>{days_overdue}</code> |
+                                                        <strong>زمان:</strong> <code>{current_date}</code>, <code>{current_time}</code>
+                                                    {% elif template.type == 'PROJECT_REJECTED' %}
+                                                        <strong>کاربر:</strong> <code>{first_name}</code>, <code>{last_name}</code>, <code>{full_name}</code>, <code>{role}</code> |
+                                                        <strong>رد:</strong> <code>{rejection_reason}</code>, <code>{expert_name}</code>, <code>{rejection_date}</code> |
+                                                        <strong>پروژه:</strong> <code>{project_name}</code>, <code>{project_id}</code>
+                                                    {% elif template.type == 'PROJECT_NOT_EXAMINED' %}
+                                                        <strong>کارشناس:</strong> <code>{expert_first_name}</code>, <code>{expert_full_name}</code>, <code>{expert_province}</code> |
+                                                        <strong>پروژه:</strong> <code>{project_name}</code>, <code>{project_creator}</code>, <code>{days_pending}</code>
+                                                    {% elif template.type == 'FUNDING_REQUEST_APPROVED' %}
+                                                        <strong>کاربر:</strong> <code>{first_name}</code>, <code>{last_name}</code>, <code>{full_name}</code>, <code>{role}</code>, <code>{province}</code> |
+                                                        <strong>درخواست:</strong> <code>{project_name}</code>, <code>{final_amount}</code>, <code>{province_amount}</code>, <code>{approval_date}</code>, <code>{chief_name}</code>, <code>{expert_name}</code>
+                                                    {% else %}
+                                                        <strong>عمومی:</strong> <code>{first_name}</code>, <code>{last_name}</code>, <code>{full_name}</code>, <code>{role}</code>, <code>{province}</code>, <code>{current_date}</code>, <code>{current_time}</code>
+                                                    {% endif %}
+                                                </small>
+                                            </div>
+                                            <div class="form-group">
+                                                <button type="submit" class="btn btn-success btn-sm">
+                                                    <i class="fas fa-save"></i> ذخیره
+                                                </button>
+                                                <button type="button" class="btn btn-secondary btn-sm" 
+                                                        onclick="toggleEditMode({{ template.id }})">
+                                                    <i class="fas fa-times"></i> لغو
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">هیچ قالبی یافت نشد.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template Preview Modal -->
+    <div class="modal fade" id="templatePreviewModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">پیش‌نمایش قالب</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> پیش‌نمایش محتوای قالب
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="templatePreviewContent" style="font-family: 'Tahoma', sans-serif; line-height: 1.6;">
+                                <!-- Template content will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-mobile-alt"></i> این پیش‌نمایش نشان‌دهنده نحوه نمایش پیام در گوشی موبایل است.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">بستن</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Template Type Info Card -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        اطلاعات انواع قالب پیامک
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb mr-2"></i>
+                        <strong>راهنمای استفاده:</strong> شما می‌توانید محتوای قالب‌های موجود را ویرایش کنید تا با نیازهای خود تطبیق دهید. از متغیرهای مشخص شده برای هر نوع قالب استفاده کنید.
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3 border-warning">
+                                <div class="card-header bg-warning text-white">
+                                    <h6 class="m-0 font-weight-bold">
+                                        <i class="fas fa-clock mr-2"></i>
+                                        پروژه بروزرسانی نشده
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2">برای اطلاع‌رسانی زمانی که پروژه به مدت معینی بروزرسانی نشده است.</p>
+                                    
+                                    <h6 class="text-primary mt-3">متغیرهای در دسترس:</h6>
+                                    <div class="border p-3 rounded bg-light mb-3">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6 class="text-success mb-2">اطلاعات کاربر:</h6>
+                                                <ul class="list-unstyled mb-2">
+                                                    <li><code class="text-success">{first_name}</code> - نام</li>
+                                                    <li><code class="text-success">{last_name}</code> - نام خانوادگی</li>
+                                                    <li><code class="text-success">{full_name}</code> - نام کامل</li>
+                                                    <li><code class="text-success">{username}</code> - نام کاربری</li>
+                                                    <li><code class="text-success">{role}</code> - نقش</li>
+                                                    <li><code class="text-success">{province}</code> - استان</li>
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6 class="text-info mb-2">اطلاعات پروژه:</h6>
+                                                <ul class="list-unstyled mb-2">
+                                                    <li><code class="text-info">{project_name}</code> - نام پروژه</li>
+                                                    <li><code class="text-info">{project_status}</code> - وضعیت پروژه</li>
+                                                    <li><code class="text-info">{days_overdue}</code> - روزهای تاخیر</li>
+                                                    <li><code class="text-info">{last_update}</code> - آخرین بروزرسانی</li>
+                                                </ul>
+                                                
+                                                <h6 class="text-warning mb-2">زمان:</h6>
+                                                <ul class="list-unstyled">
+                                                    <li><code class="text-warning">{current_date}</code> - تاریخ امروز</li>
+                                                    <li><code class="text-warning">{current_time}</code> - زمان فعلی</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <h6 class="text-primary">نمونه پیام:</h6>
+                                    <div class="border p-3 rounded bg-light">
+                                        <small class="text-muted">سلام <span class="text-primary font-weight-bold">{first_name}</span> عزیز، پروژه <span class="text-primary font-weight-bold">{project_name}</span> شما از <span class="text-primary font-weight-bold">{days_overdue}</span> روز پیش بروزرسانی نشده است. لطفاً تا <span class="text-primary font-weight-bold">{current_date}</span> اقدام فرمایید.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card mb-3 border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="m-0 font-weight-bold">
+                                        <i class="fas fa-times-circle mr-2"></i>
+                                        پروژه رد شده
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2">برای اطلاع‌رسانی زمانی که پروژه توسط کارشناس رد شده است.</p>
+                                    
+                                    <h6 class="text-primary mt-3">متغیرهای در دسترس:</h6>
+                                    <div class="border p-3 rounded bg-light mb-3">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6 class="text-success mb-2">اطلاعات کاربر:</h6>
+                                                <ul class="list-unstyled mb-2">
+                                                    <li><code class="text-success">{first_name}</code> - نام</li>
+                                                    <li><code class="text-success">{last_name}</code> - نام خانوادگی</li>
+                                                    <li><code class="text-success">{full_name}</code> - نام کامل</li>
+                                                    <li><code class="text-success">{role}</code> - نقش</li>
+                                                    <li><code class="text-success">{province}</code> - استان</li>
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6 class="text-danger mb-2">اطلاعات رد:</h6>
+                                                <ul class="list-unstyled mb-2">
+                                                    <li><code class="text-danger">{rejection_reason}</code> - دلیل رد</li>
+                                                    <li><code class="text-danger">{expert_name}</code> - نام کارشناس</li>
+                                                    <li><code class="text-danger">{rejection_date}</code> - تاریخ رد</li>
+                                                </ul>
+                                                
+                                                <h6 class="text-info mb-2">پروژه:</h6>
+                                                <ul class="list-unstyled">
+                                                    <li><code class="text-info">{project_name}</code> - نام پروژه</li>
+                                                    <li><code class="text-info">{project_id}</code> - شناسه پروژه</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <h6 class="text-primary">نمونه پیام:</h6>
+                                    <div class="border p-3 rounded bg-light">
+                                        <small class="text-muted">سلام <span class="text-primary font-weight-bold">{full_name}</span>، پروژه <span class="text-primary font-weight-bold">{project_name}</span> شما به دلیل <span class="text-primary font-weight-bold">{rejection_reason}</span> رد شده است. لطفاً اصلاحات لازم را انجام دهید.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3 border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="m-0 font-weight-bold">
+                                        <i class="fas fa-search mr-2"></i>
+                                        پروژه بررسی نشده
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2">برای اطلاع‌رسانی زمانی که پروژه توسط کارشناس مسئول به مدت معینی بررسی نشده است.</p>
+                                    
+                                    <h6 class="text-primary mt-3">متغیرهای در دسترس:</h6>
+                                    <div class="border p-3 rounded bg-light mb-3">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6 class="text-success mb-2">اطلاعات کارشناس:</h6>
+                                                <ul class="list-unstyled mb-2">
+                                                    <li><code class="text-success">{expert_first_name}</code> - نام کارشناس</li>
+                                                    <li><code class="text-success">{expert_last_name}</code> - نام خانوادگی کارشناس</li>
+                                                    <li><code class="text-success">{expert_full_name}</code> - نام کامل کارشناس</li>
+                                                    <li><code class="text-success">{expert_province}</code> - استان کارشناس</li>
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6 class="text-info mb-2">اطلاعات پروژه:</h6>
+                                                <ul class="list-unstyled mb-2">
+                                                    <li><code class="text-info">{project_name}</code> - نام پروژه</li>
+                                                    <li><code class="text-info">{project_creator}</code> - سازنده پروژه</li>
+                                                    <li><code class="text-info">{submission_date}</code> - تاریخ ارسال</li>
+                                                    <li><code class="text-info">{days_pending}</code> - روزهای انتظار</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <h6 class="text-primary">نمونه پیام:</h6>
+                                    <div class="border p-3 rounded bg-light">
+                                        <small class="text-muted">سلام <span class="text-primary font-weight-bold">{expert_first_name}</span> عزیز، پروژه <span class="text-primary font-weight-bold">{project_name}</span> از <span class="text-primary font-weight-bold">{days_pending}</span> روز پیش در انتظار بررسی شماست.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card mb-3 border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="m-0 font-weight-bold">
+                                        <i class="fas fa-check-circle mr-2"></i>
+                                        تایید درخواست اعتبار
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2">برای اطلاع‌رسانی تایید نهایی درخواست‌های اعتبار به استان‌ها و سازندگان پروژه.</p>
+                                    
+                                    <h6 class="text-primary mt-3">متغیرهای در دسترس:</h6>
+                                    <div class="border p-3 rounded bg-light mb-3">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6 class="text-success mb-2">اطلاعات کاربر:</h6>
+                                                <ul class="list-unstyled mb-2">
+                                                    <li><code class="text-success">{first_name}</code> - نام</li>
+                                                    <li><code class="text-success">{last_name}</code> - نام خانوادگی</li>
+                                                    <li><code class="text-success">{full_name}</code> - نام کامل</li>
+                                                    <li><code class="text-success">{role}</code> - نقش</li>
+                                                    <li><code class="text-success">{province}</code> - استان</li>
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6 class="text-success mb-2">اطلاعات درخواست:</h6>
+                                                <ul class="list-unstyled mb-2">
+                                                    <li><code class="text-success">{project_name}</code> - نام پروژه</li>
+                                                    <li><code class="text-success">{final_amount}</code> - مبلغ تایید شده</li>
+                                                    <li><code class="text-success">{province_amount}</code> - مبلغ درخواستی استان</li>
+                                                    <li><code class="text-success">{approval_date}</code> - تاریخ تایید</li>
+                                                    <li><code class="text-success">{chief_name}</code> - نام تایید کننده</li>
+                                                    <li><code class="text-success">{expert_name}</code> - نام کارشناس</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <h6 class="text-primary">نمونه پیام:</h6>
+                                    <div class="border p-3 rounded bg-light">
+                                        <small class="text-muted">سلام <span class="text-primary font-weight-bold">{first_name}</span> عزیز، درخواست اعتبار پروژه <span class="text-primary font-weight-bold">{project_name}</span> به مبلغ <span class="text-primary font-weight-bold">{final_amount}</span> ریال تایید شد. تاریخ تایید: <span class="text-primary font-weight-bold">{approval_date}</span></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3 border-secondary">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="m-0 font-weight-bold">
+                                        <i class="fas fa-edit mr-2"></i>
+                                        پیام سفارشی
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2">برای پیام‌های سفارشی که در سایر دسته‌بندی‌ها قرار نمی‌گیرند.</p>
+                                    
+                                    <h6 class="text-primary mt-3">متغیرهای عمومی:</h6>
+                                    <div class="border p-3 rounded bg-light mb-3">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6 class="text-success mb-2">اطلاعات شخصی:</h6>
+                                                <ul class="list-unstyled mb-2">
+                                                    <li><code class="text-success">{first_name}</code> - نام</li>
+                                                    <li><code class="text-success">{last_name}</code> - نام خانوادگی</li>
+                                                    <li><code class="text-success">{full_name}</code> - نام کامل</li>
+                                                    <li><code class="text-success">{username}</code> - نام کاربری</li>
+                                                    <li><code class="text-success">{email}</code> - ایمیل</li>
+                                                    <li><code class="text-success">{phone_number}</code> - شماره تلفن</li>
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6 class="text-info mb-2">اطلاعات سازمانی:</h6>
+                                                <ul class="list-unstyled mb-2">
+                                                    <li><code class="text-info">{role}</code> - نقش</li>
+                                                    <li><code class="text-info">{province}</code> - استان</li>
+                                                    <li><code class="text-info">{organization}</code> - سازمان</li>
+                                                    <li><code class="text-info">{department}</code> - بخش</li>
+                                                </ul>
+                                                
+                                                <h6 class="text-warning mb-2">زمان:</h6>
+                                                <ul class="list-unstyled">
+                                                    <li><code class="text-warning">{current_date}</code> - تاریخ امروز</li>
+                                                    <li><code class="text-warning">{current_time}</code> - زمان فعلی</li>
+                                                    <li><code class="text-warning">{current_year}</code> - سال جاری</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="alert alert-warning">
+                                        <small>
+                                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                                            برای پیام‌های سفارشی، متغیرها باید در کد برنامه تعریف شوند.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="m-0 font-weight-bold">
+                                <i class="fas fa-cogs mr-2"></i>
+                                نکات مهم در ویرایش قالب‌ها
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-success">
+                                        <i class="fas fa-check mr-2"></i>
+                                        نکات مثبت:
+                                    </h6>
+                                    <ul>
+                                        <li>از زبان محترمانه و رسمی استفاده کنید</li>
+                                        <li>پیام را کوتاه و مفید نگه دارید</li>
+                                        <li>از متغیرهای مشخص شده استفاده کنید</li>
+                                        <li>قبل از ذخیره، پیام را بررسی کنید</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-danger">
+                                        <i class="fas fa-times mr-2"></i>
+                                        نکات منفی:
+                                    </h6>
+                                    <ul>
+                                        <li>از پیام‌های طولانی خودداری کنید</li>
+                                        <li>متغیرهای اشتباه استفاده نکنید</li>
+                                        <li>از کلمات نامناسب اجتناب کنید</li>
+                                        <li>قالب پیش‌فرض را بدون دقت تغییر ندهید</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Comprehensive Variables Reference -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-book mr-2"></i>
+                        راهنمای کامل متغیرهای قالب پیامک
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <strong>نحوه استفاده:</strong> برای استفاده از متغیرها، آنها را بین آکولادهای مجموعه <code>{}</code> قرار دهید. مثال: <code>{first_name}</code>
+                    </div>
+                    
+                    <div class="row">
+                        <!-- User Information Variables -->
+                        <div class="col-lg-4">
+                            <div class="card mb-3">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-user mr-2"></i>
+                                        اطلاعات کاربری
+                                    </h6>
+                                </div>
+                                <div class="card-body p-3">
+                                    <table class="table table-sm table-borderless mb-0">
+                                        <tbody>
+                                            <tr>
+                                                <td><code class="text-success">{first_name}</code></td>
+                                                <td>نام</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-success">{last_name}</code></td>
+                                                <td>نام خانوادگی</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-success">{full_name}</code></td>
+                                                <td>نام کامل</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-success">{username}</code></td>
+                                                <td>نام کاربری</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-success">{email}</code></td>
+                                                <td>ایمیل</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-success">{phone_number}</code></td>
+                                                <td>شماره تلفن</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-success">{role}</code></td>
+                                                <td>نقش</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-success">{province}</code></td>
+                                                <td>استان</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Project Information Variables -->
+                        <div class="col-lg-4">
+                            <div class="card mb-3">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-project-diagram mr-2"></i>
+                                        اطلاعات پروژه
+                                    </h6>
+                                </div>
+                                <div class="card-body p-3">
+                                    <table class="table table-sm table-borderless mb-0">
+                                        <tbody>
+                                            <tr>
+                                                <td><code class="text-info">{project_name}</code></td>
+                                                <td>نام پروژه</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-info">{project_id}</code></td>
+                                                <td>شناسه پروژه</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-info">{project_status}</code></td>
+                                                <td>وضعیت پروژه</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-info">{project_creator}</code></td>
+                                                <td>سازنده پروژه</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-info">{submission_date}</code></td>
+                                                <td>تاریخ ارسال</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-info">{last_update}</code></td>
+                                                <td>آخرین بروزرسانی</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-info">{days_overdue}</code></td>
+                                                <td>روزهای تاخیر</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-info">{days_pending}</code></td>
+                                                <td>روزهای انتظار</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Time and Special Variables -->
+                        <div class="col-lg-4">
+                            <div class="card mb-3">
+                                <div class="card-header bg-warning text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-clock mr-2"></i>
+                                        زمان و اطلاعات ویژه
+                                    </h6>
+                                </div>
+                                <div class="card-body p-3">
+                                    <table class="table table-sm table-borderless mb-0">
+                                        <tbody>
+                                            <tr>
+                                                <td><code class="text-warning">{current_date}</code></td>
+                                                <td>تاریخ امروز</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-warning">{current_time}</code></td>
+                                                <td>زمان فعلی</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-warning">{current_year}</code></td>
+                                                <td>سال جاری</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-danger">{rejection_reason}</code></td>
+                                                <td>دلیل رد</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-danger">{rejection_date}</code></td>
+                                                <td>تاریخ رد</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-danger">{expert_name}</code></td>
+                                                <td>نام کارشناس</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-secondary">{organization}</code></td>
+                                                <td>سازمان</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-secondary">{department}</code></td>
+                                                <td>بخش</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-success">{final_amount}</code></td>
+                                                <td>مبلغ تایید شده</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-success">{province_amount}</code></td>
+                                                <td>مبلغ درخواستی استان</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-success">{chief_name}</code></td>
+                                                <td>نام تایید کننده</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Expert-specific Variables -->
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="card mb-3">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-user-tie mr-2"></i>
+                                        متغیرهای کارشناسی (برای پیام‌های بررسی)
+                                    </h6>
+                                </div>
+                                <div class="card-body p-3">
+                                    <table class="table table-sm table-borderless mb-0">
+                                        <tbody>
+                                            <tr>
+                                                <td><code class="text-primary">{expert_first_name}</code></td>
+                                                <td>نام کارشناس</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-primary">{expert_last_name}</code></td>
+                                                <td>نام خانوادگی کارشناس</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-primary">{expert_full_name}</code></td>
+                                                <td>نام کامل کارشناس</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code class="text-primary">{expert_province}</code></td>
+                                                <td>استان کارشناس</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6">
+                            <div class="card mb-3">
+                                <div class="card-header bg-dark text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-lightbulb mr-2"></i>
+                                        نکات مهم استفاده از متغیرها
+                                    </h6>
+                                </div>
+                                <div class="card-body p-3">
+                                    <ul class="list-unstyled mb-0">
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success mr-2"></i>
+                                            همیشه از آکولادهای مجموعه <code>{}</code> استفاده کنید
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success mr-2"></i>
+                                            نام متغیرها را دقیق و بدون فاصله بنویسید
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success mr-2"></i>
+                                            از متغیرهای مناسب برای هر نوع قالب استفاده کنید
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="fas fa-exclamation-triangle text-warning mr-2"></i>
+                                            متغیرهای غیرموجود خالی نمایش داده می‌شوند
+                                        </li>
+                                        <li class="mb-0">
+                                            <i class="fas fa-info-circle text-info mr-2"></i>
+                                            قبل از ارسال، پیش‌نمایش قالب را بررسی کنید
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleEditMode(templateId) {
+    const editForm = document.getElementById('edit-form-' + templateId);
+    const templateRow = document.getElementById('template-row-' + templateId);
+    const isActive = editForm.classList.contains('active');
+    
+    // Hide all other edit forms and remove editing highlight
+    document.querySelectorAll('.template-edit-form').forEach(form => {
+        form.classList.remove('active');
+    });
+    document.querySelectorAll('.template-row-editing').forEach(row => {
+        row.classList.remove('template-row-editing');
+    });
+    
+    // Toggle current form
+    if (!isActive) {
+        editForm.classList.add('active');
+        templateRow.classList.add('template-row-editing');
+        // Focus on the name field
+        setTimeout(() => {
+            const nameField = editForm.querySelector('input[name="name"]');
+            if (nameField) nameField.focus();
+        }, 100);
+    }
+}
+
+function previewTemplate(templateId, content) {
+    document.getElementById('templatePreviewContent').innerHTML = content.replace(/\n/g, '<br>');
+    $('#templatePreviewModal').modal('show');
+}
+
+function updateCharacterCount(textarea, templateId) {
+    const maxLength = 1000;
+    const currentLength = textarea.value.length;
+    const countElement = document.getElementById('char-count-' + templateId);
+    const currentSpan = countElement.querySelector('.current-count');
+    
+    currentSpan.textContent = currentLength;
+    
+    // Change color based on usage
+    if (currentLength > maxLength * 0.9) {
+        countElement.style.color = '#dc3545'; // Red
+    } else if (currentLength > maxLength * 0.7) {
+        countElement.style.color = '#ffc107'; // Yellow
+    } else {
+        countElement.style.color = '#6c757d'; // Default gray
+    }
+}
+
+// Handle inline edit form submission
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.edit-template-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const templateId = this.dataset.templateId;
+            const formData = new FormData(this);
+            
+            // Validate content length
+            const content = formData.get('content');
+            if (content.length > 1000) {
+                showAlert('error', 'محتوای قالب نمی‌تواند بیش از 1000 کاراکتر باشد.');
+                return;
+            }
+            
+            // Add template ID to form data
+            formData.append('template_id', templateId);
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> در حال ذخیره...';
+            submitBtn.disabled = true;
+            
+            // Send AJAX request
+            fetch('{% url "quick_edit_template" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the template row
+                    const row = document.getElementById('template-row-' + templateId);
+                    const nameText = formData.get('name');
+                    const contentText = formData.get('content');
+                    
+                    row.querySelector('.template-name').textContent = nameText;
+                    
+                    const previewElement = row.querySelector('.template-preview');
+                    previewElement.innerHTML = contentText.length > 70 ? 
+                        contentText.substring(0, 70) + '...' : contentText;
+                    previewElement.setAttribute('title', contentText);
+                    previewElement.setAttribute('onclick', `previewTemplate(${templateId}, '${contentText.replace(/'/g, "\\'")}');`);
+                    
+                    // Update default badge if changed
+                    const isDefault = formData.get('is_default') === 'on';
+                    const defaultBadge = row.querySelector('td:nth-child(4) .badge');
+                    if (isDefault) {
+                        defaultBadge.className = 'badge badge-success';
+                        defaultBadge.textContent = 'پیش‌فرض';
+                    } else {
+                        defaultBadge.className = 'badge badge-secondary';
+                        defaultBadge.textContent = 'خیر';
+                    }
+                    
+                    // Hide edit form and remove highlighting
+                    toggleEditMode(templateId);
+                    
+                    // Show success message
+                    showAlert('success', 'قالب با موفقیت به‌روزرسانی شد.');
+                    
+                    // Add a subtle highlight animation
+                    row.style.background = '#d4edda';
+                    setTimeout(() => {
+                        row.style.background = '';
+                    }, 2000);
+                    
+                } else {
+                    showAlert('error', 'خطا در به‌روزرسانی قالب: ' + (data.error || 'خطای نامشخص'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('error', 'خطا در ارتباط با سرور');
+            })
+            .finally(() => {
+                // Reset button state
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    });
+    
+    // Initialize character counts for all textareas
+    document.querySelectorAll('.template-content-editable').forEach(textarea => {
+        const templateId = textarea.closest('.edit-template-form').dataset.templateId;
+        updateCharacterCount(textarea, templateId);
+    });
+    
+    // Close edit forms when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.template-edit-form') && !e.target.closest('.btn-outline-primary')) {
+            document.querySelectorAll('.template-edit-form.active').forEach(form => {
+                const templateId = form.dataset.templateId;
+                toggleEditMode(templateId);
+            });
+        }
+    });
+});
+
+function showAlert(type, message) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const iconClass = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            <i class="${iconClass} me-2"></i>${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `;
+    
+    // Insert alert at the top of the page
+    const container = document.querySelector('.container-fluid');
+    container.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        const alert = container.querySelector('.alert');
+        if (alert) {
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 300);
+        }
+    }, 5000);
+}
+</script>
+{% endblock %} 

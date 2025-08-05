@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}آپلود تصویر جدید{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h2>آپلود تصویر جدید</h2>
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3>زیرپروژه: {{ subproject.name|default:subproject.get_sub_project_type_display }}</h3>
+                <a href="{% url 'creator_subproject:subproject_gallery' subproject.id %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-right"></i> بازگشت به گالری
+                </a>
+            </div>
+            <hr>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="form-group mb-3">
+                    {{ form.image|as_crispy_field }}
+                </div>
+                <div class="form-group mb-3">
+                    {{ form.title|as_crispy_field }}
+                </div>
+                <div class="form-group mb-3">
+                    {{ form.description|as_crispy_field }}
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-cloud-upload"></i> آپلود تصویر
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const imageInput = document.getElementById('id_image');
+        const filePreview = document.createElement('div');
+        filePreview.className = 'mt-2';
+        imageInput.parentNode.appendChild(filePreview);
+        
+        imageInput.addEventListener('change', function() {
+            filePreview.innerHTML = '';
+            
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                const fileSize = (file.size / 1024 / 1024).toFixed(2); // Size in MB
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    filePreview.innerHTML = `
+                        <div class="card">
+                            <img src="${e.target.result}" class="card-img-top" style="max-height: 200px; object-fit: contain;">
+                            <div class="card-body">
+                                <p class="card-text">نام فایل: ${file.name}</p>
+                                <p class="card-text">حجم فایل: ${fileSize} MB</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    });
+</script>
+{% endblock %} 

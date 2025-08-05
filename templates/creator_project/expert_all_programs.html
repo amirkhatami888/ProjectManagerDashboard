@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold">{{ title }}</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        این صفحه تمام طرح‌های استان‌های تحت نظارت شما را نمایش می‌دهد.
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>عنوان طرح</th>
+                                    <th>کد طرح</th>
+                                    <th>استان</th>
+                                    <th>شهر</th>
+                                    <th>نوع طرح</th>
+                                    <th>وضعیت مجوز</th>
+                                    <th>تعداد پروژه‌ها</th>
+                                    <th>وضعیت</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for program in programs %}
+                                <tr>
+                                    <td>{{ program.title }}</td>
+                                    <td>{{ program.program_id }}</td>
+                                    <td>{{ program.province }}</td>
+                                    <td>{{ program.city|default:"-" }}</td>
+                                    <td>{{ program.get_program_type_display }}</td>
+                                    <td>{{ program.get_license_state_display }}</td>
+                                    <td>{{ program.get_project_count }}</td>
+                                    <td>
+                                        {% if program.is_approved %}
+                                            <span class="badge bg-success">تایید شده</span>
+                                        {% elif program.is_submitted %}
+                                            <span class="badge bg-warning">در انتظار تایید</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">پیش‌نویس</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'creator_program:program_detail' program.id %}" class="btn btn-sm btn-info">جزئیات</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="9" class="text-center">هیچ طرحی یافت نشد.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

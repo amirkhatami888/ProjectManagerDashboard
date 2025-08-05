@@ -1,0 +1,1089 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import HttpResponseForbidden, JsonResponse, HttpResponseNotFound, HttpResponse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import Q, F, Sum, Case, When, Value, DecimalField, ExpressionWrapper, Max
+from django.db.models.functions import Coalesce
+from django.utils import timezone
+from django.urls import reverse
+import json
+import datetime
+from dateutil.relativedelta import relativedelta
+import jdatetime  # Import jdatetime for Persian date conversion
+
+from creator_project.models import Project, ALL_Project
+from accounts.models import User
+from .models import (
+    SubProject, SituationReport, SubProjectRejectionComment, 
+    ProjectSituation, SubProjectUpdateHistory, AdjustmentSituationReport
+)
+from .forms import (
+    SubProjectForm, SubProjectRejectionForm, SituationReportForm, 
+    ProjectSituationForm, AdjustmentSituationReportForm
+)
+from .utils import jalali_to_gregorian, gregorian_to_jalali
+
+@login_required
+def subproject_list(request):
+    # If user is admin, CEO, or chief executive, show all subprojects
+    if request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive:
+        subprojects = SubProject.objects.all()
+    # If user is expert or vice chief executive, show submitted subprojects
+    elif request.user.is_expert or request.user.is_vice_chief_executive:
+        subprojects = SubProject.objects.filter(is_submitted=True)
+    # If user is province manager, show only their subprojects
+    elif request.user.is_province_manager:
+        # Show all subprojects created by this user, without filtering by province
+        subprojects = SubProject.objects.filter(created_by=request.user)
+    else:
+        return HttpResponseForbidden("You don't have permission to view subprojects.")
+
+    return render(request, 'creator_subproject/subproject_list.html', {'subprojects': subprojects})
+
+@login_required
+def subproject_detail(request, pk):
+    subproject = get_object_or_404(SubProject, pk=pk)
+
+    # Check permissions
+    if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
+            request.user.is_vice_chief_executive or request.user.is_expert or 
+            (request.user.is_province_manager and subproject.created_by == request.user)):
+        return HttpResponseForbidden("You don't have permission to view this subproject.")
+
+    # Get situation reports
+    situation_reports = subproject.situation_reports.all()
+    
+    # Get adjustment situation reports
+    adjustment_reports = subproject.adjustment_situation_reports.all()
+    
+    # Get latest adjustment report
+    latest_adjustment_report = adjustment_reports.order_by('-report_number').first()
+
+    # Calculate total payment amount
+    total_payment_amount = sum(report.payment_amount for report in situation_reports)
+
+    # Add today's date to context for timeline comparison
+    today_date = timezone.now().date()
+
+    context = {
+        'subproject': subproject,
+        'allocations': situation_reports,
+        'adjustment_allocations': adjustment_reports,
+        'total_payment_amount': total_payment_amount,
+        'latest_adjustment_report': latest_adjustment_report,
+        'today_date': today_date,
+    }
+
+    return render(request, 'creator_subproject/subproject_detail.html', context)
+
+def parse_jalali_date(jalali_date_str):
+    """
+    Parse a Jalali date string in the format YYYY/MM/DD and convert to Gregorian date
+    """
+    if not jalali_date_str or not jalali_date_str.strip():
+        return None
+        
+    try:
+        # Convert Persian digits to English digits if necessary
+        persian_digits = '۰۱۲۳۴۵۶۷۸۹'
+        english_digits = '0123456789'
+        translation_table = str.maketrans(persian_digits, english_digits)
+        jalali_date_en = jalali_date_str.translate(translation_table)
+        
+        # Parse date parts
+        parts = jalali_date_en.split('/')
+        if len(parts) == 3:
+            year = int(parts[0])
+            month = int(parts[1])
+            day = int(parts[2])
+            
+            # Create Jalali date and convert to Gregorian
+            j_date = jdatetime.date(year, month, day)
+            return j_date.togregorian()
+    except (ValueError, IndexError, TypeError) as e:
+        print(f"Error parsing jalali date '{jalali_date_str}': {str(e)}")
+    
+    return None
+
+def calculate_dates_based_on_relationship(subproject, post_data, related_subproject=None):
+    """
+    Calculate start and end dates based on relationship type and related subproject
+    """
+    has_contract = post_data.get('has_contract') == 'true'
+    
+    # With contract information, use contract dates
+    if has_contract:
+        # Logic is already in the model's save method
+        return
+    
+    # Without contract information
+    relationship_type = post_data.get('relationship_type', '')
+    related_id = post_data.get('related_subproject', '')
+    delay_days = int(post_data.get('relationship_delay', 0) or 0)
+    imagenary_duration = int(post_data.get('imagenary_duration', 180) or 180)
+    
+    # If floating or no relationship, leave dates empty (handled as floating)
+    if related_id == 'floating' or not related_id:
+        subproject.start_date = None
+        subproject.end_date = None
+        return
+    
+    # If we don't have a related_subproject object yet, get it
+    if not related_subproject and related_id and related_id.isdigit():
+        try:
+            related_subproject = SubProject.objects.get(id=int(related_id))
+        except (SubProject.DoesNotExist, ValueError):
+            return
+    
+    if not related_subproject:
+        return
+        
+    # Calculate dates based on relationship type
+    if relationship_type == 'بعد از':  # After
+        if related_subproject.end_date:
+            # Start date = related end date + delay days
+            subproject.start_date = related_subproject.end_date + datetime.timedelta(days=delay_days)
+            # End date = start date + estimated duration
+            subproject.end_date = subproject.start_date + datetime.timedelta(days=imagenary_duration)
+    
+    elif relationship_type == 'شروع با':  # Start with
+        if related_subproject.start_date:
+            # Start date = related start date + delay days
+            subproject.start_date = related_subproject.start_date + datetime.timedelta(days=delay_days)
+            # End date = start date + estimated duration
+            subproject.end_date = subproject.start_date + datetime.timedelta(days=imagenary_duration)
+    
+    elif relationship_type == 'قبل از':  # Before
+        if related_subproject.start_date:
+            # End date = related start date + delay days
+            subproject.end_date = related_subproject.start_date + datetime.timedelta(days=delay_days)
+            # Start date = end date - estimated duration
+            subproject.start_date = subproject.end_date - datetime.timedelta(days=imagenary_duration)
+    
+    elif relationship_type == 'پایان با':  # End with
+        if related_subproject.end_date:
+            # End date = related end date + delay days
+            subproject.end_date = related_subproject.end_date + datetime.timedelta(days=delay_days)
+            # Start date = end date - estimated duration
+            subproject.start_date = subproject.end_date - datetime.timedelta(days=imagenary_duration)
+
+@login_required
+def subproject_create(request, project_id):
+    """Create a new subproject for the given project."""
+    project = get_object_or_404(Project, id=project_id)
+    
+    # Check if project has reached maximum subprojects
+    if not project.has_available_subproject_slots:
+        messages.error(request, "حداکثر تعداد زیرپروژه برای این پروژه ایجاد شده است.")
+        return redirect('project_detail', project_id=project.id)
+    
+    # Only project creator and admins can create subprojects
+    if request.user != project.created_by and not request.user.is_admin:
+        messages.error(request, "شما اجازه ایجاد زیرپروژه برای این پروژه را ندارید.")
+        return redirect('project_detail', project_id=project.id)
+    
+    if request.method == 'POST':
+        has_contract = request.POST.get('has_contract') == 'true'
+        
+        try:
+            # Create a new subproject with the basic data
+            subproject = SubProject(
+                project=project,
+                name=request.POST.get('name', ''),
+                sub_project_type=request.POST.get('sub_project_type'),
+                sub_project_number=int(request.POST.get('sub_project_number')),
+                is_suportting_charity=request.POST.get('is_suportting_charity'),
+                created_by=request.user
+            )
+
+            # If this is a subproject with contract information
+            if has_contract:
+                # Process common fields first
+                subproject.state = request.POST.get('state')
+                subproject.physical_progress = float(request.POST.get('physical_progress', 0))
+                subproject.executive_stage = request.POST.get('executive_stage')
+                subproject.remaining_work = request.POST.get('remaining_work')
+                
+                # Parse dates first
+                contract_start_date = parse_jalali_date(request.POST.get('contract_start_date'))
+                contract_end_date = parse_jalali_date(request.POST.get('contract_end_date'))
+                start_date = parse_jalali_date(request.POST.get('start_date'))
+                estimated_opening_time = parse_jalali_date(request.POST.get('estimated_opening_time'))
+                
+                # Set contract information
+                subproject.contract_start_date = contract_start_date
+                subproject.contract_end_date = contract_end_date
+
+                # For read-only fields, we calculate them based on our business logic
+                # rather than using form input (since they're read-only in the UI)
+                if contract_start_date:
+                    subproject.start_date = contract_start_date
+                if contract_end_date:
+                    subproject.end_date = contract_end_date
+                
+                # Still process estimated_opening_time if provided in backend
+                subproject.estimated_opening_time = estimated_opening_time
+                
+                # Set contract amount if provided
+                if request.POST.get('contract_amount'):
+                    subproject.contract_amount = float(request.POST.get('contract_amount'))
+
+                # Set contract type and execution method if provided
+                subproject.contract_type = request.POST.get('contract_type')
+                subproject.execution_method = request.POST.get('execution_method')
+                
+                # Set adjustment coefficient if applicable
+                subproject.has_adjustment = request.POST.get('has_adjustment', 'ندارد')
+                if subproject.has_adjustment == 'دارد' and request.POST.get('adjustment_coefficient'):
+                    subproject.adjustment_coefficient = float(request.POST.get('adjustment_coefficient'))
+            
+            else:
+                # For subprojects without contract information - set default values
+                subproject.state = 'فعال'  # Default state
+
+                # Set imaginary values
+                subproject.imagenary_duration = int(request.POST.get('imagenary_duration', 0))
+                subproject.imagenrary_cost = float(request.POST.get('imagenrary_cost', 0))
+                # Set debt equal to imagenrary_cost
+                subproject.debt = float(request.POST.get('imagenrary_cost', 0))
+
+                # Handle subproject relationship fields
+                if request.POST.get('related_subproject'):
+                    related_subproject = None
+                    
+                    if request.POST.get('related_subproject') == 'floating':
+                        # For floating type, just set the relationship type
+                        subproject.related_subproject = None
+                        subproject.relationship_type = 'شناور'
+                        subproject.relationship_delay = 0  # Set delay to 0 for floating
+                        
+                        # For floating type, dates remain None to indicate floating
+                        subproject.start_date = None
+                        subproject.end_date = None
+                    else:
+                        try:
+                            related_id = int(request.POST.get('related_subproject'))
+                            related_subproject = SubProject.objects.get(id=related_id)
+                            subproject.related_subproject = related_subproject
+                            subproject.relationship_type = request.POST.get('relationship_type')
+                            subproject.relationship_delay = int(request.POST.get('relationship_delay', 0))
+                            
+                            # Calculate dates based on relationship type and related subproject
+                            calculate_dates_based_on_relationship(subproject, request.POST, related_subproject)
+                        except (ValueError, SubProject.DoesNotExist):
+                            messages.error(request, "زیرپروژه مرتبط یافت نشد.")
+            
+            # Save the subproject
+            subproject.save()
+
+            messages.success(request, "زیرپروژه با موفقیت ایجاد شد.")
+            return redirect('creator_subproject:subproject_detail', pk=subproject.id)
+        
+        except Exception as e:
+            messages.error(request, f"خطا در ایجاد زیرپروژه: {str(e)}")
+
+    context = {
+        'project': project,
+    }
+    return render(request, 'creator_subproject/subproject_form.html', context)
+
+@login_required
+def subproject_update(request, subproject_id):
+    """Update an existing subproject."""
+    subproject = get_object_or_404(SubProject, id=subproject_id)
+    project = subproject.project
+
+    # Only the creator and admins can update
+    if request.user != project.created_by and not request.user.is_admin:
+        messages.error(request, "شما اجازه ویرایش این زیرپروژه را ندارید.")
+        return redirect('creator_subproject:subproject_detail', pk=subproject.id)
+
+    if request.method == 'POST':
+        post_data = request.POST
+        has_contract = post_data.get('has_contract') == 'true'
+        
+        try:
+            # Update basic fields
+            subproject.name = post_data.get('name', subproject.name)
+            subproject.sub_project_type = post_data.get('sub_project_type')
+            subproject.sub_project_number = int(post_data.get('sub_project_number'))
+            subproject.is_suportting_charity = post_data.get('is_suportting_charity')
+            
+            # If this has contract information
+            if has_contract:
+                # Process common fields
+                subproject.state = post_data.get('state')
+                subproject.physical_progress = float(post_data.get('physical_progress', 0))
+                subproject.executive_stage = post_data.get('executive_stage')
+                subproject.remaining_work = post_data.get('remaining_work')
+                
+                # Process contract dates
+                contract_start_date = parse_jalali_date(post_data.get('contract_start_date'))
+                contract_end_date = parse_jalali_date(post_data.get('contract_end_date'))
+                estimated_opening_time = parse_jalali_date(post_data.get('estimated_opening_time'))
+                
+                # Set contract information
+                subproject.contract_start_date = contract_start_date
+                subproject.contract_end_date = contract_end_date
+                
+                # For read-only fields, we calculate them based on our business logic
+                # rather than using form input (since they're read-only in the UI)
+                if contract_start_date:
+                    subproject.start_date = contract_start_date
+                if contract_end_date:
+                    subproject.end_date = contract_end_date
+                
+                # Still process estimated_opening_time if provided in backend
+                subproject.estimated_opening_time = estimated_opening_time
+                
+                # Process other contract fields
+                if post_data.get('contract_amount'):
+                    subproject.contract_amount = float(post_data.get('contract_amount'))
+                
+                subproject.contract_type = post_data.get('contract_type')
+                subproject.execution_method = post_data.get('execution_method')
+                
+                # Handle adjustment coefficient
+                subproject.has_adjustment = post_data.get('has_adjustment', 'ندارد')
+                if subproject.has_adjustment == 'دارد' and post_data.get('adjustment_coefficient'):
+                    subproject.adjustment_coefficient = float(post_data.get('adjustment_coefficient'))
+                else:
+                    subproject.adjustment_coefficient = None
+            else:
+                # For subprojects without contract information - set default values
+                # Update common fields
+                subproject.state = 'فعال'  # Default state
+                
+                # Update imaginary values
+                subproject.imagenary_duration = int(post_data.get('imagenary_duration', 0))
+                
+                if post_data.get('imagenrary_cost'):
+                    subproject.imagenrary_cost = float(post_data.get('imagenrary_cost', 0))
+                    # Set debt equal to imagenrary_cost if no contract
+                    subproject.debt = float(post_data.get('imagenrary_cost', 0))
+                    
+                # Handle subproject relationship fields
+                if post_data.get('related_subproject'):
+                    related_subproject = None
+                    
+                    if post_data.get('related_subproject') == 'floating':
+                        # For floating type, clear relationship and set relationship type
+                        subproject.related_subproject = None
+                        subproject.relationship_type = 'شناور'
+                        subproject.relationship_delay = 0
+                        
+                        # Clear dates to indicate floating
+                        subproject.start_date = None
+                        subproject.end_date = None
+                    else:
+                        try:
+                            related_id = int(post_data.get('related_subproject'))
+                            related_subproject = SubProject.objects.get(id=related_id)
+                            subproject.related_subproject = related_subproject
+                            subproject.relationship_type = post_data.get('relationship_type')
+                            subproject.relationship_delay = int(post_data.get('relationship_delay', 0))
+                            
+                            # Calculate dates based on relationship type and related subproject
+                            calculate_dates_based_on_relationship(subproject, post_data, related_subproject)
+                        except (ValueError, SubProject.DoesNotExist):
+                            messages.error(request, "زیرپروژه مرتبط یافت نشد.")
+                else:
+                    # Clear relationship if no related subproject is selected
+                    subproject.related_subproject = None
+                    subproject.relationship_type = None
+                    subproject.relationship_delay = None
+            
+            # Store the current user for update history tracking
+            subproject._current_user = request.user
+            
+            # Save the subproject with its new values
+            subproject.save()
+            
+            messages.success(request, "زیرپروژه با موفقیت بروزرسانی شد.")
+            return redirect('creator_subproject:subproject_detail', pk=subproject.id)
+        
+        except Exception as e:
+            messages.error(request, f"خطا در بروزرسانی زیرپروژه: {str(e)}")
+    
+    context = {
+        'subproject': subproject,
+        'project': project,
+    }
+    return render(request, 'creator_subproject/subproject_form.html', context)
+
+@login_required
+def subproject_delete(request, pk):
+    subproject = get_object_or_404(SubProject, pk=pk)
+
+    # Only admins or the subproject creator can delete subprojects
+    if not (request.user.is_admin or subproject.created_by == request.user):
+        return HttpResponseForbidden("You don't have permission to delete this subproject.")
+
+    # Placeholder for actual implementation
+    return render(request, 'creator_subproject/subproject_confirm_delete.html', {'subproject': subproject})
+
+@login_required
+def subproject_submit(request, pk):
+    subproject = get_object_or_404(SubProject, pk=pk)
+
+    # Only the subproject creator can submit subprojects
+    if subproject.created_by != request.user:
+        return HttpResponseForbidden("You don't have permission to submit this subproject.")
+
+    # Update subproject status
+    subproject.is_submitted = True
+    # Set the current user as the updater to track in history
+    subproject._update_user = request.user
+    subproject.save()
+
+    messages.success(request, "زیرپروژه با موفقیت برای بررسی ارسال شد.")
+    return redirect('subproject_detail', pk=subproject.pk)
+
+@login_required
+def subproject_approve(request, pk):
+    subproject = get_object_or_404(SubProject, pk=pk)
+
+    # Only admin, expert, or vice chief executive can approve subprojects
+    if not (request.user.is_admin or request.user.is_expert or request.user.is_vice_chief_executive):
+        return HttpResponseForbidden("You don't have permission to approve subprojects.")
+
+    # Update subproject status
+    subproject.is_approved = True
+    # Set the current user as the updater to track in history
+    subproject._update_user = request.user
+    subproject.save()
+
+    messages.success(request, "زیرپروژه با موفقیت تایید شد.")
+    return redirect('subproject_detail', pk=subproject.pk)
+
+@login_required
+def subproject_reject(request, pk):
+    subproject = get_object_or_404(SubProject, pk=pk)
+
+    # Only admin, expert, or vice chief executive can reject subprojects
+    if not (request.user.is_admin or request.user.is_expert or request.user.is_vice_chief_executive):
+        return HttpResponseForbidden("You don't have permission to reject subprojects.")
+
+    if request.method == 'POST':
+        form = SubProjectRejectionForm(request.POST)
+        if form.is_valid():
+            # Create the rejection comment
+            SubProjectRejectionComment.objects.create(
+                subproject=subproject,
+                expert=request.user,
+                field_name=form.cleaned_data['field_name'],
+                comment=form.cleaned_data['comment']
+            )
+
+            # Remove submitted status
+            subproject.is_submitted = False
+            subproject._update_user = request.user
+            # Clear all previous rejection comments when changing to draft status
+            subproject.save()
+
+            messages.success(request, "زیرپروژه با موفقیت رد شد و نظرات برای اصلاح ارسال گردید.")
+            return redirect('subproject_detail', pk=subproject.pk)
+    else:
+        form = SubProjectRejectionForm()
+
+    return render(request, 'creator_subproject/subproject_reject_form.html', {
+        'form': form,
+        'subproject': subproject
+    })
+
+@login_required
+def subproject_financials(request, pk):
+    subproject = get_object_or_404(SubProject, pk=pk)
+
+    # Check permissions
+    if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
+            request.user.is_vice_chief_executive or request.user.is_expert or subproject.created_by == request.user):
+        return HttpResponseForbidden("You don't have permission to view financial details.")
+
+    # Placeholder for actual implementation
+    return render(request, 'creator_subproject/subproject_financials.html', {'subproject': subproject})
+
+@login_required
+def subproject_add_situation_report(request, pk):
+    # This view redirects to the allocation add view 
+    # but needs to be maintained for backward compatibility
+    return redirect('creator_subproject:add_allocation', subproject_id=pk)
+
+@login_required
+def project_situations_list(request, project_id):
+    project = get_object_or_404(Project, pk=project_id)
+
+    # Check permissions
+    if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
+            request.user.is_vice_chief_executive or request.user.is_expert or 
+            (request.user.is_province_manager and project.created_by == request.user)):
+        return HttpResponseForbidden("You don't have permission to view this project's situations.")
+
+    situations = ProjectSituation.objects.filter(project=project)
+
+    context = {
+        'project': project,
+        'situations': situations,
+    }
+
+    return render(request, 'creator_subproject/project_situations_list.html', context)
+
+@login_required
+def project_situation_create(request, project_id):
+    project = get_object_or_404(Project, pk=project_id)
+
+    # Check permissions
+    if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
+            request.user.is_vice_chief_executive or request.user.is_expert or project.created_by == request.user):
+        return HttpResponseForbidden("You don't have permission to add situations to this project.")
+
+    if request.method == 'POST':
+        form = ProjectSituationForm(request.POST)
+        if form.is_valid():
+            situation = form.save(commit=False)
+            situation.project = project
+            situation.created_by = request.user
+            situation.save()
+
+            messages.success(request, "وضعیت پروژه با موفقیت اضافه شد.")
+            return redirect('project_situations_list', project_id=project.id)
+    else:
+        form = ProjectSituationForm()
+
+    context = {
+        'form': form,
+        'project': project
+    }
+
+    return render(request, 'creator_subproject/project_situation_form.html', context)
+
+@login_required
+def project_situation_update(request, pk):
+    situation = get_object_or_404(ProjectSituation, pk=pk)
+
+    # Check permissions
+    if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
+            request.user.is_vice_chief_executive or request.user.is_expert or situation.created_by == request.user):
+        return HttpResponseForbidden("You don't have permission to update this situation.")
+
+    if request.method == 'POST':
+        form = ProjectSituationForm(request.POST, instance=situation)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "وضعیت پروژه با موفقیت به‌روزرسانی شد.")
+            return redirect('project_situations_list', project_id=situation.project.id)
+    else:
+        form = ProjectSituationForm(instance=situation)
+
+    context = {
+        'form': form,
+        'situation': situation,
+        'project': situation.project
+    }
+
+    return render(request, 'creator_subproject/project_situation_form.html', context)
+
+@login_required
+def project_situation_delete(request, pk):
+    situation = get_object_or_404(ProjectSituation, pk=pk)
+
+    # Check permissions
+    if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
+            request.user.is_vice_chief_executive or situation.created_by == request.user):
+        return HttpResponseForbidden("You don't have permission to delete this situation.")
+
+    # Store the project ID for redirecting after deletion
+    project_id = situation.project.id
+
+    if request.method == 'POST':
+        situation.delete()
+        messages.success(request, "وضعیت پروژه با موفقیت حذف شد.")
+        return redirect('project_situations_list', project_id=project_id)
+
+    context = {
+        'situation': situation,
+        'project': situation.project
+    }
+
+    return render(request, 'creator_subproject/project_situation_confirm_delete.html', context)
+
+@login_required
+def project_situation_toggle_resolved(request, pk):
+    situation = get_object_or_404(ProjectSituation, pk=pk)
+
+    # Check permissions
+    if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
+            request.user.is_vice_chief_executive or request.user.is_expert or situation.created_by == request.user):
+        return HttpResponseForbidden("You don't have permission to update this situation.")
+
+    # Toggle the resolved status
+    situation.is_resolved = not situation.is_resolved
+    situation.save()
+
+    if situation.is_resolved:
+        message = "وضعیت به عنوان حل شده علامت‌گذاری شد."
+    else:
+        message = "وضعیت به عنوان حل نشده علامت‌گذاری شد."
+
+    return JsonResponse({
+        'success': True,
+        'message': message,
+        'is_resolved': situation.is_resolved
+    })
+
+@login_required
+def allocations(request, subproject_id):
+    """
+    Display a list of all situation reports for a specific subproject.
+    """
+    from django.http import HttpResponse
+    
+    try:
+        subproject = get_object_or_404(SubProject, pk=subproject_id)
+        situation_reports = list(SituationReport.objects.filter(
+            subproject=subproject
+        ).order_by('-allocation_date'))
+        
+        # Calculate total payment amount
+        total_payment_amount = sum(report.payment_amount_field for report in situation_reports)
+        
+        context = {
+            'subproject': subproject,
+            'allocations': situation_reports,
+            'total_payment_amount': total_payment_amount,
+        }
+        return render(request, 'creator_subproject/allocations.html', context)
+        
+    except Exception as e:
+        messages.error(request, f"Error retrieving allocation data: {str(e)}")
+        return redirect('creator_subproject:subproject_list')
+
+@login_required
+def situation_reports(request, subproject_id):
+    """
+    Display a list of all situation reports for a specific subproject.
+    """
+    subproject = get_object_or_404(SubProject, pk=subproject_id)
+    situation_reports = SituationReport.objects.filter(
+        subproject=subproject
+    ).order_by('-allocation_date')
+
+    # Calculate total payment amount
+    total_payment_amount = situation_reports.aggregate(
+        total=Sum('payment_amount_field')
+    )['total'] or 0
+
+    context = {
+        'subproject': subproject,
+        'situation_reports': situation_reports,
+        'total_payment_amount': total_payment_amount,
+    }
+    return render(request, 'creator_subproject/situation_reports.html', context)
+
+@login_required
+def add_allocation(request, subproject_id):
+    """
+    Add a new situation report for a subproject.
+    """
+    subproject = get_object_or_404(SubProject, pk=subproject_id)
+    project = subproject.project
+
+    if request.method == 'POST':
+        # Get the raw date from POST data
+        raw_date = request.POST.get('allocation_date')
+        
+        # Create a new POST data with the processed date
+        post_data = request.POST.copy()
+        
+        # Log the date value for debugging
+        print(f"DEBUG: Raw allocation_date from form: {raw_date}")
+        
+        form = SituationReportForm(post_data)
+        if form.is_valid():
+            situation_report = form.save(commit=False)
+            situation_report.subproject = subproject
+
+            # Auto-increment report number if not provided
+            if not situation_report.report_number:
+                highest_report = SituationReport.objects.filter(subproject=subproject).order_by('-report_number').first()
+                situation_report.report_number = (highest_report.report_number + 1 if highest_report else 1)
+
+            situation_report.save()
+
+            # Reset project approval status if user is province manager
+            if request.user.is_province_manager:
+                project.is_submitted = False
+                project.is_expert_approved = False
+                project.is_approved = False
+                project.save()
+
+            messages.success(request, "صورت وضعیت با موفقیت اضافه شد.")
+            return redirect('creator_subproject:allocations', subproject_id=subproject.id)
+        else:
+            # Log validation errors for debugging
+            print(f"DEBUG: Form validation errors: {form.errors}")
+    else:
+        # Initialize form with today's date in Jalali format
+        from .utils import gregorian_to_jalali
+        import datetime
+        
+        today = datetime.date.today()
+        initial_data = {
+            'allocation_date': gregorian_to_jalali(today)
+        }
+        
+        form = SituationReportForm(initial=initial_data)
+
+    context = {
+        'form': form,
+        'subproject': subproject,
+    }
+    return render(request, 'creator_subproject/add_allocation.html', context)
+
+@login_required
+def edit_allocation(request, allocation_id):
+    """
+    Edit an existing situation report.
+    """
+    allocation = get_object_or_404(SituationReport, pk=allocation_id)
+    subproject = allocation.subproject
+    project = subproject.project
+
+    if request.method == 'POST':
+        form = SituationReportForm(request.POST, instance=allocation)
+        if form.is_valid():
+            form.save()
+
+            # Reset project approval status if user is province manager
+            if request.user.is_province_manager:
+                project.is_submitted = False
+                project.is_expert_approved = False
+                project.is_approved = False
+                project.save()
+
+            messages.success(request, "صورت وضعیت با موفقیت به‌روزرسانی شد.")
+            return redirect('creator_subproject:allocations', subproject_id=subproject.id)
+    else:
+        form = SituationReportForm(instance=allocation)
+
+    context = {
+        'form': form,
+        'subproject': subproject,
+        'allocation': allocation,
+    }
+    return render(request, 'creator_subproject/situation_report_form.html', context)
+
+@login_required
+def delete_allocation(request, allocation_id):
+    allocation = get_object_or_404(SituationReport, pk=allocation_id)
+    subproject = allocation.subproject
+
+    if not subproject:
+        messages.error(request, "خطا: صورت وضعیت به زیرپروژه متصل نیست.")
+        # Redirect to a safe page, perhaps the dashboard or project list
+        return redirect('dashboard') # Adjust redirect target as needed
+
+    # Permissions check
+    # Allow admin or the creator of the SUBPROJECT to delete
+    if not (request.user.is_admin or subproject.created_by == request.user):
+        return HttpResponseForbidden("شما اجازه حذف این صورت وضعیت را ندارید.")
+
+    # Find the latest report for this subproject based on report_number
+    latest_report = SituationReport.objects.filter(
+        subproject=subproject
+    ).order_by('-report_number').first()
+
+    # Check if the report to be deleted is the latest one
+    if latest_report is None or allocation.id != latest_report.id:
+        messages.error(request, "فقط آخرین صورت وضعیت قابل حذف است.")
+        return redirect('creator_subproject:allocations', subproject_id=subproject.id)
+
+    if request.method == 'POST':
+        try:
+            allocation.delete()
+            messages.success(request, "صورت وضعیت با موفقیت حذف شد.")
+        except Exception as e:
+            messages.error(request, f"خطا در حذف صورت وضعیت: {str(e)}")
+        return redirect('creator_subproject:allocations', subproject_id=subproject.id)
+
+    return render(request, 'creator_subproject/delete_allocation.html', {
+        'allocation': allocation,
+        'subproject': subproject
+    })
+
+@login_required
+def add_situation_report(request, subproject_id):
+    """View to add a new situation report to a subproject."""
+    subproject = get_object_or_404(SubProject, pk=subproject_id)
+    
+    # Check if user has permission to add allocation
+    if not (request.user.is_admin or request.user.is_chief_executive or 
+            request.user.is_vice_chief_executive or request.user.is_expert or
+            (request.user.is_province_manager and request.user.province == subproject.project.province)):
+        return HttpResponseForbidden("You don't have permission to add situation reports to this subproject.")
+    
+    if request.method == 'POST':
+        form = SituationReportForm(request.POST)
+        if form.is_valid():
+            situation_report = form.save(commit=False)
+            situation_report.subproject = subproject
+            situation_report.save()
+            
+            # Update subproject's status after adding the situation report
+            subproject.save()  # This will trigger the save method and recalculate debt
+            
+            messages.success(request, "صورت وضعیت کارکرد با موفقیت ثبت شد.")
+            return redirect('creator_subproject:allocations', subproject_id=subproject.id)
+    else:
+        # Get the next report number
+        next_report_number = 1
+        last_report = SituationReport.objects.filter(
+            subproject=subproject
+        ).order_by('-report_number').first()
+        
+        if last_report and last_report.report_number:
+            next_report_number = last_report.report_number + 1
+            
+        form = SituationReportForm(initial={'report_number': next_report_number})
+    
+    context = {
+        'form': form,
+        'subproject': subproject,
+    }
+    
+    return render(request, 'creator_subproject/add_situation_report.html', context)
+
+@login_required
+def edit_situation_report(request, report_id):
+    """View to edit an existing situation report."""
+    report = get_object_or_404(SituationReport, pk=report_id)
+    subproject = report.subproject
+    
+    if not subproject:
+        return HttpResponseNotFound("Subproject not found for this report.")
+    
+    # Check if user has permission to edit allocation
+    if not (request.user.is_admin or request.user.is_chief_executive or 
+            request.user.is_vice_chief_executive or request.user.is_expert or
+            (request.user.is_province_manager and request.user.province == subproject.project.province)):
+        return HttpResponseForbidden("You don't have permission to edit this situation report.")
+    
+    if request.method == 'POST':
+        form = SituationReportForm(request.POST, instance=report)
+        if form.is_valid():
+            form.save()
+            
+            # Update subproject's status after editing the situation report
+            subproject.save()  # This will trigger the save method and recalculate debt
+            
+            messages.success(request, "صورت وضعیت کارکرد با موفقیت بروزرسانی شد.")
+            return redirect('creator_subproject:allocations', subproject_id=subproject.id)
+    else:
+        # Convert Gregorian date to Jalali for display in the form
+        initial_data = {
+            'allocation_date': gregorian_to_jalali(report.allocation_date)
+        }
+        form = SituationReportForm(instance=report, initial=initial_data)
+    
+    context = {
+        'form': form,
+        'report': report,
+        'subproject': subproject,
+    }
+    
+    return render(request, 'creator_subproject/edit_situation_report.html', context)
+
+@login_required
+def delete_situation_report(request, report_id):
+    """View to delete an existing situation report."""
+    report = get_object_or_404(SituationReport, pk=report_id)
+    subproject = report.subproject
+    
+    if not subproject:
+        messages.error(request, "خطا: صورت وضعیت به زیرپروژه متصل نیست.")
+        return redirect('dashboard')
+    
+    # Check if user has permission to delete the report
+    if not (request.user.is_admin or request.user.is_chief_executive or 
+            request.user.is_vice_chief_executive or 
+            (request.user.is_province_manager and request.user.province == subproject.project.province)):
+        return HttpResponseForbidden("شما اجازه حذف این صورت وضعیت را ندارید.")
+    
+    # Find the latest report for this subproject based on report_number
+    latest_report = SituationReport.objects.filter(
+        subproject=subproject
+    ).order_by('-report_number').first()
+    
+    # Check if the report to be deleted is the latest one
+    if latest_report is None or report.id != latest_report.id:
+        messages.error(request, "فقط آخرین صورت وضعیت قابل حذف است.")
+        return redirect('creator_subproject:allocations', subproject_id=subproject.id)
+    
+    if request.method == 'POST':
+        try:
+            report.delete()
+            messages.success(request, "صورت وضعیت با موفقیت حذف شد.")
+        except Exception as e:
+            messages.error(request, f"خطا در حذف صورت وضعیت: {str(e)}")
+        return redirect('creator_subproject:allocations', subproject_id=subproject.id)
+    
+    return render(request, 'creator_subproject/delete_situation_report.html', {
+        'report': report,
+        'subproject': subproject
+    })
+
+@login_required
+def adjustment_allocations(request, subproject_id):
+    """
+    Display a list of all adjustment situation reports for a specific subproject.
+    """
+    subproject = get_object_or_404(SubProject, pk=subproject_id)
+    adjustment_reports = AdjustmentSituationReport.objects.filter(
+        subproject=subproject
+    ).order_by('-allocation_date')
+    
+    # Calculate total payment amount
+    total_payment_amount = sum(report.payment_amount for report in adjustment_reports)
+    
+    context = {
+        'subproject': subproject,
+        'adjustment_allocations': adjustment_reports,
+        'total_payment_amount': total_payment_amount,
+    }
+    return render(request, 'creator_subproject/adjustment_allocations.html', context)
+
+@login_required
+def add_adjustment_allocation(request, subproject_id):
+    """
+    Add a new adjustment situation report for a subproject.
+    """
+    subproject = get_object_or_404(SubProject, pk=subproject_id)
+    project = subproject.project
+
+    # Calculate the next report number
+    highest_report = AdjustmentSituationReport.objects.filter(subproject=subproject).order_by('-report_number').first()
+    next_report_number = (highest_report.report_number + 1 if highest_report else 1)
+
+    if request.method == 'POST':
+        # Get the raw date from POST data
+        raw_date = request.POST.get('allocation_date')
+        
+        # Create a new POST data with the processed date
+        post_data = request.POST.copy()
+        
+        # Force the report number to be the next one
+        post_data['report_number'] = next_report_number
+        
+        # Log the date value for debugging
+        print(f"DEBUG: Raw allocation_date from form: {raw_date}")
+        
+        form = AdjustmentSituationReportForm(post_data)
+        if form.is_valid():
+            adjustment_report = form.save(commit=False)
+            adjustment_report.subproject = subproject
+            adjustment_report.report_number = next_report_number
+            adjustment_report.save()
+
+            # Reset project approval status if user is province manager
+            if request.user.is_province_manager:
+                project.is_submitted = False
+                project.is_expert_approved = False
+                project.is_approved = False
+                project.save()
+
+            messages.success(request, "صورت وضعیت تعدیل با موفقیت اضافه شد.")
+            return redirect('creator_subproject:adjustment_allocations', subproject_id=subproject.id)
+        else:
+            # Log validation errors for debugging
+            print(f"DEBUG: Form validation errors: {form.errors}")
+    else:
+        # Initialize form with today's date in Jalali format
+        from .utils import gregorian_to_jalali
+        import datetime
+        
+        today = datetime.date.today()
+        initial_data = {
+            'allocation_date': gregorian_to_jalali(today)
+        }
+        
+        form = AdjustmentSituationReportForm(initial=initial_data)
+
+    context = {
+        'form': form,
+        'subproject': subproject,
+        'next_report_number': next_report_number,
+    }
+    return render(request, 'creator_subproject/add_adjustment_allocation.html', context)
+
+@login_required
+def edit_adjustment_allocation(request, adjustment_allocation_id):
+    """
+    Edit an existing adjustment situation report.
+    """
+    adjustment = get_object_or_404(AdjustmentSituationReport, pk=adjustment_allocation_id)
+    subproject = adjustment.subproject
+    project = subproject.project
+
+    if request.method == 'POST':
+        form = AdjustmentSituationReportForm(request.POST, instance=adjustment)
+        if form.is_valid():
+            form.save()
+
+            # Reset project approval status if user is province manager
+            if request.user.is_province_manager:
+                project.is_submitted = False
+                project.is_expert_approved = False
+                project.is_approved = False
+                project.save()
+
+            messages.success(request, "صورت وضعیت تعدیل با موفقیت به‌روزرسانی شد.")
+            return redirect('creator_subproject:adjustment_allocations', subproject_id=subproject.id)
+    else:
+        form = AdjustmentSituationReportForm(instance=adjustment)
+
+    context = {
+        'form': form,
+        'subproject': subproject,
+        'adjustment': adjustment,
+    }
+    return render(request, 'creator_subproject/edit_adjustment_allocation.html', context)
+
+@login_required
+def delete_adjustment_allocation(request, adjustment_allocation_id):
+    """
+    Delete an existing adjustment situation report.
+    """
+    adjustment = get_object_or_404(AdjustmentSituationReport, pk=adjustment_allocation_id)
+    subproject = adjustment.subproject
+    
+    if not subproject:
+        messages.error(request, "خطا: صورت وضعیت تعدیل به زیرپروژه متصل نیست.")
+        return redirect('dashboard')
+    
+    # Permission check
+    if not (request.user.is_admin or subproject.created_by == request.user):
+        return HttpResponseForbidden("شما اجازه حذف این صورت وضعیت تعدیل را ندارید.")
+
+    # Find the latest report for this subproject based on report_number
+    latest_report = AdjustmentSituationReport.objects.filter(
+        subproject=subproject
+    ).order_by('-report_number').first()
+
+    # Check if the report to be deleted is the latest one
+    if latest_report is None or adjustment.id != latest_report.id:
+        messages.error(request, "فقط آخرین صورت وضعیت تعدیل قابل حذف است.")
+        return redirect('creator_subproject:adjustment_allocations', subproject_id=subproject.id)
+
+    if request.method == 'POST':
+        try:
+            adjustment.delete()
+            messages.success(request, "صورت وضعیت تعدیل با موفقیت حذف شد.")
+        except Exception as e:
+            messages.error(request, f"خطا در حذف صورت وضعیت تعدیل: {str(e)}")
+        return redirect('creator_subproject:adjustment_allocations', subproject_id=subproject.id)
+
+    return render(request, 'creator_subproject/delete_adjustment_allocation.html', {
+        'adjustment': adjustment,
+        'subproject': subproject
+    })

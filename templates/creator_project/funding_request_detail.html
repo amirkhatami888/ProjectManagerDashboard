@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load jalali_tags %}
+
+{% block title %}جزئیات درخواست اعتبار{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h2>جزئیات درخواست اعتبار</h2>
+            <div>
+                {% if can_submit %}
+                <a href="{% url 'creator_project:funding_request_submit' funding_request.id %}" class="btn btn-success">
+                    <i class="bi bi-send"></i> ارسال به کارشناس
+                </a>
+                {% endif %}
+                
+                {% if can_expert_review %}
+                <a href="{% url 'creator_project:expert_review' funding_request.id %}" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> بررسی کارشناسی
+                </a>
+                {% endif %}
+                
+                {% if can_chief_review %}
+                <a href="{% url 'creator_project:chief_review' funding_request.id %}" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> بررسی نهایی
+                </a>
+                {% endif %}
+                
+                <a href="{% url 'creator_project:funding_request_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> بازگشت به لیست
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5>اطلاعات اصلی</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>پروژه</th>
+                            <td>
+                                <a href="{% url 'creator_project:project_detail' funding_request.project.id %}">
+                                    {{ funding_request.project.name }}
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>وضعیت درخواست</th>
+                            <td><span class="badge {% if funding_request.status == 'تایید شده' %}bg-success{% elif 'رد' in funding_request.status %}bg-danger{% else %}bg-warning{% endif %}">{{ funding_request.get_status_display }}</span></td>
+                        </tr>
+                        <tr>
+                            <th>ایجاد کننده</th>
+                            <td>{{ funding_request.created_by.get_full_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>تاریخ ایجاد</th>
+                            <td>{{ funding_request.created_at|to_jalali:"%Y/%m/%d" }}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="col-md-6">
+                    <h5>اطلاعات استان</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>مبلغ پیشنهادی استان</th>
+                            <td>{{ funding_request.province_suggested_amount|intcomma }} ریال</td>
+                        </tr>
+                        <tr>
+                            <th>اولویت</th>
+                            <td>{{ funding_request.get_priority_display }}</td>
+                        </tr>
+                        <tr>
+                            <th>توضیحات استان</th>
+                            <td>{{ funding_request.province_description|linebreaks }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            {% if funding_request.expert_user or funding_request.headquarters_suggested_amount or funding_request.expert_description or funding_request.expert_rejection_reason %}
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <h5>اطلاعات کارشناس</h5>
+                    <table class="table table-bordered">
+                        {% if funding_request.expert_user %}
+                        <tr>
+                            <th>کارشناس بررسی کننده</th>
+                            <td>{{ funding_request.expert_user.get_full_name }}</td>
+                        </tr>
+                        {% endif %}
+                        
+                        {% if funding_request.headquarters_suggested_amount %}
+                        <tr>
+                            <th>مبلغ پیشنهادی ستاد</th>
+                            <td>{{ funding_request.headquarters_suggested_amount|intcomma }} ریال</td>
+                        </tr>
+                        {% endif %}
+                        
+                        {% if funding_request.expert_description %}
+                        <tr>
+                            <th>توضیحات کارشناس</th>
+                            <td>{{ funding_request.expert_description|linebreaks }}</td>
+                        </tr>
+                        {% endif %}
+                        
+                        {% if funding_request.expert_rejection_reason %}
+                        <tr>
+                            <th>دلیل رد توسط کارشناس</th>
+                            <td class="text-danger">{{ funding_request.expert_rejection_reason|linebreaks }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if funding_request.chief_user or funding_request.final_amount or funding_request.chief_rejection_reason %}
+            <div class="row">
+                <div class="col-md-12">
+                    <h5>اطلاعات رئیس</h5>
+                    <table class="table table-bordered">
+                        {% if funding_request.chief_user %}
+                        <tr>
+                            <th>رئیس بررسی کننده</th>
+                            <td>{{ funding_request.chief_user.get_full_name }}</td>
+                        </tr>
+                        {% endif %}
+                        
+                        {% if funding_request.final_amount %}
+                        <tr>
+                            <th>مبلغ نهایی</th>
+                            <td>{{ funding_request.final_amount|intcomma }} ریال</td>
+                        </tr>
+                        {% endif %}
+                        
+                        {% if funding_request.chief_rejection_reason %}
+                        <tr>
+                            <th>دلیل رد توسط رئیس</th>
+                            <td class="text-danger">{{ funding_request.chief_rejection_reason|linebreaks }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        <div class="card-footer text-muted">
+            آخرین بروزرسانی: {{ funding_request.updated_at|to_jalali:"%Y/%m/%d " }}
+        </div>
+    </div>
+</div>
+{% endblock %} 

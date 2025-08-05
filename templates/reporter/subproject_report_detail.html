@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load jalali_tags %}
+
+{% block title %}{{ report.title }}{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">{{ report.title }}</h2>
+            <div>
+                <a href="{% url 'subproject_report_update' report.id %}" class="btn btn-warning">
+                    <i class="fas fa-edit"></i> ویرایش
+                </a>
+                <a href="{% url 'subproject_report_delete' report.id %}" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> حذف
+                </a>
+            </div>
+        </div>
+        <div class="card-body" dir="rtl">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5>اطلاعات گزارش</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th class="bg-light">عنوان</th>
+                            <td>{{ report.title }}</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">زیرپروژه</th>
+                            <td>
+                                <a href="{% url 'creator_subproject:subproject_detail' report.subproject.id %}">
+                                    {{ report.subproject.title }}
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">نوع گزارش</th>
+                            <td>{{ report.get_report_type_display }}</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">تاریخ ایجاد</th>
+                            <td>{{ report.created_at|to_jalali:'%Y/%m/%d' }}</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">ایجاد کننده</th>
+                            <td>{{ report.created_by.get_full_name|default:report.created_by.username }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5>اطلاعات زیرپروژه</h5>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th class="bg-light">عنوان زیرپروژه</th>
+                            <td>{{ report.subproject.title }}</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">پروژه</th>
+                            <td>
+                                <a href="{% url 'creator_project:project_detail' report.subproject.project.id %}">
+                                    {{ report.subproject.project.title }}
+                                </a>
+                            </td>
+                        </tr>
+                        {% if report.subproject.start_date %}
+                        <tr>
+                            <th class="bg-light">تاریخ شروع</th>
+                            <td>{{ report.subproject.start_date|to_jalali:'%Y/%m/%d' }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <th class="bg-light">بودجه تخصیصی</th>
+                            <td>{{ report.subproject.allocated_budget|floatformat:0 }} ریال</td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light">وضعیت</th>
+                            <td>
+                                {% if report.subproject.is_approved %}
+                                <span class="badge bg-success">تأیید شده</span>
+                                {% elif report.subproject.is_submitted %}
+                                <span class="badge bg-warning">در انتظار تأیید</span>
+                                {% else %}
+                                <span class="badge bg-secondary">پیش‌نویس</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">محتوای گزارش</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="p-3 bg-light rounded">
+                                {{ report.content|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <a href="{% url 'subproject_report_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> بازگشت به لیست گزارش‌ها
+            </a>
+            <a href="{% url 'report_dashboard' %}" class="btn btn-primary">
+                <i class="fas fa-tachometer-alt"></i> داشبورد گزارش‌ها
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

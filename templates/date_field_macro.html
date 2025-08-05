@@ -1,0 +1,23 @@
+{% load static %}
+
+{% comment %}
+This template contains a reusable macro for Jalali date picker fields.
+To use it, include this template and then use the macro like this:
+
+{% include 'date_field_macro.html' %}
+{% with field_id="contract_start_date" field_name="contract_start_date" field_label="تاریخ شروع قرارداد" field_value=value is_required=True %}
+    {% include 'date_field.html' %}
+{% endwith %}
+{% endcomment %}
+
+<div class="form-group mb-3">
+    <label for="{{ field_id }}" class="form-label">{{ field_label }}{% if not is_required %} <small class="text-muted">(اختیاری)</small>{% endif %}</label>
+    <div class="input-group">
+        <input type="text" id="{{ field_id }}" name="{{ field_name }}" class="form-control persian-date" 
+               placeholder="انتخاب تاریخ{% if not is_required %} (اختیاری){% endif %}" 
+               value="{{ field_value }}" {% if is_required %}required{% endif %}>
+        <span class="input-group-text calendar-icon-container" style="cursor:pointer; background:transparent; border-left:0;">
+            <img src="{% static 'admin/img/icon-calendar.svg' %}" alt="calendar" width="20" height="20">
+        </span>
+    </div>
+</div> 

@@ -1,0 +1,239 @@
+/* RTL (Right-to-Left) CSS for Persian/Arabic languages */
+
+/* Base RTL layout */
+html {
+    direction: rtl;
+}
+
+body {
+    direction: rtl;
+    text-align: right;
+}
+
+/* Bootstrap RTL overrides */
+.container, .container-sm, .container-md, .container-lg, .container-xl {
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+.row {
+    margin-right: -15px;
+    margin-left: -15px;
+}
+
+[class*="col-"] {
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+/* Navigation */
+.navbar-nav {
+    flex-direction: row;
+}
+
+.navbar-nav .nav-link {
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+}
+
+/* Buttons */
+.btn-group > .btn:not(:first-child) {
+    margin-right: -1px;
+    margin-left: 0;
+}
+
+.btn-group > .btn:not(:last-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+.btn-group > .btn:not(:first-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+}
+
+/* Forms */
+.form-check-input {
+    margin-right: -1.25em;
+    margin-left: 0;
+}
+
+.form-check-label {
+    padding-right: 1.25em;
+    padding-left: 0;
+}
+
+/* Input groups */
+.input-group > .form-control:not(:last-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.input-group > .form-control:not(:first-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* Dropdown */
+.dropdown-menu {
+    right: 0;
+    left: auto;
+}
+
+.dropdown-menu-right {
+    right: auto !important;
+    left: 0 !important;
+}
+
+.dropdown-menu-left {
+    right: 0 !important;
+    left: auto !important;
+}
+
+/* Modal */
+.modal-header .close {
+    margin: -1rem auto -1rem -1rem;
+}
+
+/* Breadcrumb */
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "\\";
+    padding-right: 0.5rem;
+    padding-left: 0;
+}
+
+/* Pagination */
+.page-link {
+    margin-right: -1px;
+    margin-left: 0;
+}
+
+.page-item:first-child .page-link {
+    margin-right: 0;
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.page-item:last-child .page-link {
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* Tables */
+.table th,
+.table td {
+    text-align: right;
+}
+
+/* Card */
+.card-header-tabs {
+    margin-right: -0.5rem;
+    margin-left: -0.5rem;
+    margin-bottom: -0.75rem;
+}
+
+.card-header-pills {
+    margin-right: -0.5rem;
+    margin-left: -0.5rem;
+}
+
+/* List group */
+.list-group-horizontal > .list-group-item:first-child {
+    border-bottom-right-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+    border-bottom-left-radius: 0;
+    border-top-left-radius: 0;
+}
+
+.list-group-horizontal > .list-group-item:last-child {
+    border-bottom-left-radius: 0.25rem;
+    border-top-left-radius: 0.25rem;
+    border-bottom-right-radius: 0;
+    border-top-right-radius: 0;
+}
+
+/* Progress */
+.progress-bar {
+    direction: ltr;
+}
+
+/* Carousel */
+.carousel-control-prev {
+    right: 0;
+    left: auto;
+}
+
+.carousel-control-next {
+    right: auto;
+    left: 0;
+}
+
+.carousel-indicators {
+    right: 50%;
+    left: auto;
+    transform: translateX(50%);
+}
+
+/* Utilities */
+.float-left {
+    float: right !important;
+}
+
+.float-right {
+    float: left !important;
+}
+
+.text-left {
+    text-align: right !important;
+}
+
+.text-right {
+    text-align: left !important;
+}
+
+/* Margins and Paddings RTL */
+.mr-auto,
+.mx-auto {
+    margin-left: auto !important;
+}
+
+.ml-auto,
+.mx-auto {
+    margin-right: auto !important;
+}
+
+.pr-0 { padding-left: 0 !important; }
+.pr-1 { padding-left: 0.25rem !important; }
+.pr-2 { padding-left: 0.5rem !important; }
+.pr-3 { padding-left: 1rem !important; }
+.pr-4 { padding-left: 1.5rem !important; }
+.pr-5 { padding-left: 3rem !important; }
+
+.pl-0 { padding-right: 0 !important; }
+.pl-1 { padding-right: 0.25rem !important; }
+.pl-2 { padding-right: 0.5rem !important; }
+.pl-3 { padding-right: 1rem !important; }
+.pl-4 { padding-right: 1.5rem !important; }
+.pl-5 { padding-right: 3rem !important; }
+
+.mr-0 { margin-left: 0 !important; }
+.mr-1 { margin-left: 0.25rem !important; }
+.mr-2 { margin-left: 0.5rem !important; }
+.mr-3 { margin-left: 1rem !important; }
+.mr-4 { margin-left: 1.5rem !important; }
+.mr-5 { margin-left: 3rem !important; }
+
+.ml-0 { margin-right: 0 !important; }
+.ml-1 { margin-right: 0.25rem !important; }
+.ml-2 { margin-right: 0.5rem !important; }
+.ml-3 { margin-right: 1rem !important; }
+.ml-4 { margin-right: 1.5rem !important; }
+.ml-5 { margin-right: 3rem !important; } 

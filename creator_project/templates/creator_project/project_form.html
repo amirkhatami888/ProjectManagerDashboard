@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load jalali_tags %}
+{% load static %}
+
+{% block title %}{% if is_create %}ایجاد پروژه جدید{% else %}ویرایش پروژه{% endif %}{% endblock %}
+
+{% block extra_head %}
+<!-- Add Persian Datepicker -->
+<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h1 class="h3 mb-0">{% if is_create %}ایجاد پروژه جدید{% else %}ویرایش پروژه{% endif %}</h1>
+        </div>
+        <div class="card-body">
+            <!-- Debug information - only visible in DEBUG mode -->
+            {% if debug %}
+            <div class="alert alert-warning">
+                <strong>Debug Info:</strong><br>
+                User: {{ user.username }} ({{ user.role }})<br>
+                Province: {{ user.province }}<br>
+                Is Province Manager: {{ user.is_province_manager }}<br>
+                <hr>
+                <strong>Form Errors:</strong><br>
+                {% if form.errors %}
+                    <ul>
+                    {% for field, errors in form.errors.items %}
+                        <li>{{ field }}: {{ errors }}</li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    No form errors.
+                {% endif %}
+            </div>
+            {% endif %}
+            <!-- End debug information -->
+            
+            {% if user.is_province_manager and user.province %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> اطلاعات مالی پروژه از طریق بخش صورت وضعیت ها در صفحه جزئیات پروژه مدیریت می‌شود.
+            </div>
+            <div class="small text-muted mb-3">
+                برای مدیریت اطلاعات مالی، لطفاً پس از ذخیره تغییرات به صفحه جزئیات پروژه مراجعه کرده و از بخش "صورت وضعیت ها" استفاده نمایید.
+            </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">اطلاعات پایه</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ form.name|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form.project_type|as_crispy_field }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ form.province|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form.city|as_crispy_field }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        {{ form.address|as_crispy_field }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        {{ form.building_area|as_crispy_field }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        {{ form.floor|as_crispy_field }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group position-relative">
+                                            <label for="id_estimated_opening_time" class="form-label">تاریخ پایان پروژه <small class="text-muted">(اختیاری)</small></label>
+                                            <div class="input-group">
+                                                <input type="text" name="estimated_opening_time" id="id_estimated_opening_time" class="form-control persian-date" 
+                                                       placeholder="انتخاب تاریخ (اختیاری)" value="{% if project.estimated_opening_time %}{{ project.estimated_opening_time|to_jalali:'%Y/%m/%d' }}{% endif %}">
+                                                <span class="input-group-text calendar-icon-container" style="cursor:pointer; background:transparent; border-left:0;">
+                                                    <img src="{% static 'admin/img/icon-calendar.svg' %}" alt="calendar" width="20" height="20">
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if not is_create %}
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">اطلاعات مالی</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i> اطلاعات مالی پروژه از طریق بخش صورت وضعیت ها در صفحه جزئیات پروژه مدیریت می‌شود.
+                                </p>
+                                <div class="small text-muted mb-3">
+                                برای مدیریت اطلاعات مالی، لطفاً پس از ذخیره تغییرات به صفحه جزئیات پروژه مراجعه کرده و از بخش "صورت وضعیت ها" استفاده نمایید.
+                                </div>
+                                {% if project.get_total_contract_amount > 0 %}
+                                <div class="alert alert-secondary">
+                                    <strong>جمع مبلغ قرار دادها:</strong> {{ project.get_total_contract_amount|floatformat:0|intcomma }} ریال
+                                    <small class="text-muted d-block">(مجموع مبلغ نهایی قرارداد زیرپروژه‌ها)</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'project_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-right"></i> بازگشت
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        {% if is_create %}
+                        <i class="bi bi-plus-circle"></i> ایجاد پروژه
+                        {% else %}
+                        <i class="bi bi-save"></i> ذخیره تغییرات
+                        {% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Persian Datepicker -->
+<script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Image preview
+        $('#id_image').change(function() {
+            if (this.files && this.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#image-preview').attr('src', e.target.result).show();
+                    $('.image-preview-container').show();
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+        
+        // Initialize with existing image if available
+        {% if project and project.image %}
+        $('.image-preview-container').show();
+        {% endif %}
+        
+        // Ensure provinces are set in the multi-select
+        {% if provinces %}
+        var selectedProvinces = [{% for province in provinces %}"{{ province.id }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+        $('#id_province').val(selectedProvinces);
+        {% endif %}
+    });
+</script>
+{% endblock %} 

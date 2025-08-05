@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}داشبورد معاون اجرایی{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">داشبورد مدیر اجرایی</h2>
+            <p>سلام {{ user.first_name }} {{ user.last_name }}، به سامانه مدیریت پروژه خوش آمدید.</p>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="card-title mb-0">اقدامات سریع</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'creator_project:project_list' %}" class="btn btn-lg btn-outline-primary w-100">
+                                <i class="bi bi-list-check mb-2 d-block fs-3"></i>
+                                مشاهده همه پروژه‌ها
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Provincial Statistics Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">اطلاعات آماری استانی</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for province in province_stats %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100 {% if province.total_projects == 0 %}bg-light text-muted{% endif %}">
+                                <div class="card-header {% if province.total_projects > 0 %}bg-info text-white{% else %}bg-secondary text-white{% endif %}" 
+                                     data-bs-toggle="collapse" 
+                                     data-bs-target="#collapse{{ forloop.counter }}" 
+                                     aria-expanded="false" 
+                                     aria-controls="collapse{{ forloop.counter }}"
+                                     style="cursor: pointer;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="card-title mb-0">{{ province.province }}</h5>
+                                        <span class="badge bg-light text-dark">{{ province.total_projects }} پروژه</span>
+                                        <i class="bi bi-chevron-down"></i>
+                                    </div>
+                                </div>
+                                <div class="collapse" id="collapse{{ forloop.counter }}">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>تعداد پروژه‌ها:</span>
+                                            <strong>{{ province.total_projects }}</strong>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <span>میانگین پیشرفت فیزیکی:</span>
+                                                <strong>{{ province.avg_physical_progress|floatformat:2 }}%</strong>
+                                            </div>
+                                            <div class="progress">
+                                                <div class="progress-bar" role="progressbar" 
+                                                    style="width: {{ province.avg_physical_progress }}%;" 
+                                                    aria-valuenow="{{ province.avg_physical_progress }}" 
+                                                    aria-valuemin="0" aria-valuemax="100">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <span>میانگین پیشرفت مالی:</span>
+                                                <strong>{{ province.avg_financial_progress|floatformat:2 }}%</strong>
+                                            </div>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-success" role="progressbar" 
+                                                    style="width: {{ province.avg_financial_progress }}%;" 
+                                                    aria-valuenow="{{ province.avg_financial_progress }}" 
+                                                    aria-valuemin="0" aria-valuemax="100">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>تخصیص مالی نقدی (ریال):</td>
+                                                        <td class="text-start">{{ province.total_cash_allocation|floatformat:0|intcomma }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>تخصیص مالی اسناد خزانه (ریال):</td>
+                                                        <td class="text-start">{{ province.total_treasury_allocation|floatformat:0|intcomma }}</td>
+                                                    </tr>
+                                                    <tr class="table-primary">
+                                                        <td>مجموع تخصیص مالی (ریال):</td>
+                                                        <td class="text-start"><strong>{{ province.total_allocation|floatformat:0|intcomma }}</strong></td>
+                                                    </tr>
+                                                    <tr class="table-danger">
+                                                        <td>مجموع دیون استان (ریال):</td>
+                                                        <td class="text-start"><strong>{{ province.total_debt|floatformat:0|intcomma }}</strong></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

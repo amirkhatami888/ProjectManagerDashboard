@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load jalali_tags %}
+{% load humanize %}
+
+{% block title %}{% if is_create %}ایجاد پروژه جدید{% else %}ویرایش پروژه{% endif %}{% endblock %}
+
+{% block extra_head %}
+<!-- Add Persian Datepicker -->
+<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+<style>
+    .datepicker-plot-area {
+        font-family: 'IRANSans', 'Tahoma', sans-serif;
+        z-index: 9999 !important;
+    }
+    
+    /* Date input styling */
+    .date-input-container {
+        position: relative;
+    }
+    
+    .date-input-container .calendar-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #6c757d;
+        z-index: 100;
+        font-size: 18px;
+        background: transparent;
+        border: none;
+        outline: none;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .date-input-container .form-control {
+        padding-left: 35px;
+    }
+    
+    /* Force visibility for date inputs */
+    input[type="text"].persian-date::-webkit-calendar-picker-indicator {
+        opacity: 0;
+    }
+    
+    /* Override any theme styles hiding the calendar icon */
+    .calendar-icon {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h1 class="h3 mb-0">
+                {% if is_create %}
+                    {% if program %}
+                    ایجاد پروژه جدید برای طرح "{{ program.title }}"
+                    {% else %}
+                    ایجاد پروژه جدید
+                    {% endif %}
+                {% else %}
+                    ویرایش پروژه
+                {% endif %}
+            </h1>
+        </div>
+        <div class="card-body">
+            {% if debug %}
+            <div class="alert alert-info">
+                <p>اطلاعات دیباگ: هرگونه خطایی در فرم نمایش داده خواهد شد.</p>
+            </div>
+            {% endif %}
+            
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <form method="post" id="projectForm">
+                {% csrf_token %}
+                
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">اطلاعات پایه</h5>
+                            </div>
+                            <div class="card-body">
+                                {% if program %}
+                                <div class="alert alert-success">
+                                    <i class="bi bi-info-circle-fill"></i> شما در حال ایجاد پروژه برای طرح <strong>"{{ program.title }}"</strong> با کد <strong>{{ program.program_id }}</strong> هستید.
+                                </div>
+                                {% else %}
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle-fill"></i> توجه: برای ایجاد پروژه، ابتدا باید یک طرح را انتخاب کنید. اگر طرح ندارید، ابتدا باید <a href="{% url 'creator_program:program_create' %}" class="alert-link">یک طرح ایجاد کنید</a>.
+                                </div>
+                                {% endif %}
+                                
+                                <div class="row mb-4">
+                                    <div class="col-md-12">
+                                        {{ form.program|as_crispy_field }}
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ form.name|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form.project_type|as_crispy_field }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ form.province|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form.city|as_crispy_field }}
+                                    </div>
+                                </div>
+
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ form.area_size|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form.notables|as_crispy_field }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        {{ form.floor|as_crispy_field }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="id_estimated_opening_time" class="form-label">تاریخ پایان پروژه</label>
+                                            <div class="date-input-container">
+                                                <input type="text" name="estimated_opening_time" id="id_estimated_opening_time" class="form-control persian-date" 
+                                                       value="{% if project.estimated_opening_time %}{{ project.estimated_opening_time|to_jalali:'%Y/%m/%d' }}{% endif %}">
+                                                <i class="bi bi-calendar3 calendar-icon" data-input="id_estimated_opening_time"></i>
+                                            </div>
+                                            <div class="form-text text-muted">فرمت تاریخ: سال/ماه/روز</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Hidden fields for default values -->
+                                <input type="hidden" name="physical_progress" value="0">
+                                <input type="hidden" name="overall_status" value="غیره فعال">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'creator_project:project_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-right"></i> بازگشت
+                    </a>
+                    <button type="submit" class="btn btn-primary" id="submitButton">
+                        {% if is_create %}
+                        <i class="bi bi-plus-circle"></i> ایجاد پروژه
+                        {% else %}
+                        <i class="bi bi-save"></i> ذخیره تغییرات
+                        {% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Persian Datepicker -->
+<script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+
+<script>
+    // Initialize Persian Datepicker for date fields
+    $(document).ready(function() {
+        // Initialize datepickers
+        $(".persian-date").each(function() {
+            var inputId = this.id;
+            var $input = $(this);
+            
+            // Initialize Persian datepicker and store instance
+            var datepickerInstance = $input.persianDatepicker({
+                format: 'YYYY/MM/DD',
+                autoClose: true,
+                initialValueType: 'persian',
+                persianDigit: true,
+                observer: true,
+                calendar: {
+                    persian: {
+                        locale: 'fa'
+                    }
+                },
+                onSelect: function(unix) {
+                    console.log('Date selected for', inputId);
+                    // Make sure the input value is updated when a date is selected
+                    var pd = new persianDate(unix);
+                    var formattedDate = pd.format('YYYY/MM/DD');
+                    $('#' + inputId).val(formattedDate);
+                },
+                onShow: function() {
+                    console.log('Datepicker shown for', inputId);
+                },
+                onHide: function() {
+                    console.log('Datepicker hidden for', inputId);
+                    $input.trigger('blur');
+                }
+            }).data('datepicker');
+            
+            // Store datepicker instance in data attribute
+            $input.data('datepicker', datepickerInstance);
+            
+            // Disable default click behavior on input to prevent auto-opening
+            $input.on('click', function(e) {
+                if($(e.target).hasClass('persian-date')) {
+                    e.stopPropagation();
+                }
+            });
+        });
+        
+        // Handle calendar icon clicks separately
+        $(document).on('click', '.calendar-icon', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            var inputId = $(this).data('input');
+            var $input = $('#' + inputId);
+            
+            if ($input.length) {
+                // Force close any open datepickers first
+                $('.datepicker-container, .datepicker-plot-area').hide();
+                
+                // Get the datepicker instance
+                var datepicker = $input.data('datepicker');
+                
+                // Show the datepicker
+                if (datepicker && typeof datepicker.show === 'function') {
+                    setTimeout(function() {
+                        datepicker.show();
+                    }, 50);
+                }
+            }
+        });
+        
+        // Close datepicker when clicking outside
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('.date-input-container, .datepicker-plot-area, .calendar-icon').length) {
+                $('.datepicker-container').hide();
+                $('.datepicker-plot-area').hide();
+            }
+        });
+        
+
+        
+        // Auto-populate province and city when program changes
+        $("#id_program").on('change', function() {
+            var programId = $(this).val();
+            if (programId) {
+                // Make AJAX call to get program details
+                $.ajax({
+                    url: '{% url "creator_project:get_program_details" %}',
+                    data: {
+                        'program_id': programId
+                    },
+                    success: function(data) {
+                        if (data.success) {
+                            $("#id_province").val(data.province);
+                            $("#id_city").val(data.city);
+                        }
+                    },
+                    error: function() {
+                        console.log('Error fetching program details');
+                    }
+                });
+            }
+        });
+        
+        // Explicitly set the form submission handling to prevent validation issues
+        $('#projectForm').on('submit', function(e) {
+            // Ensure the date is in the correct format before submitting
+            var date = $('#id_estimated_opening_time').val();
+            if (date) {
+                if (!date.match(/^\d{4}\/\d{2}\/\d{2}$/)) {
+                    // Try to clean up the date format if it doesn't match YYYY/MM/DD
+                    var parts = date.split('/');
+                    if (parts.length === 3) {
+                        // Ensure each part has correct formatting (add leading zeros)
+                        parts[0] = parts[0].padStart(4, '0');
+                        parts[1] = parts[1].padStart(2, '0');
+                        parts[2] = parts[2].padStart(2, '0');
+                        $('#id_estimated_opening_time').val(parts.join('/'));
+                    }
+                }
+            }
+        });
+        
+        // Debug button behavior
+        $('#submitButton').click(function() {
+            console.log("Form is being submitted");
+            console.log("Date value: " + $('#id_estimated_opening_time').val());
+        });
+    });
+</script>
+{% endblock %} 

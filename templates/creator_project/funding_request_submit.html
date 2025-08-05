@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load jalali_tags %}
+
+{% block title %}ارسال درخواست اعتبار به کارشناس{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2>ارسال درخواست اعتبار به کارشناس</h2>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <h4 class="alert-heading">اطلاعات درخواست</h4>
+                <p><strong>پروژه:</strong> {{ funding_request.project.name }}</p>
+                <p><strong>استان:</strong> {{ funding_request.project.province }}</p>
+                <p><strong>مبلغ پیشنهادی استان:</strong> {{ funding_request.province_suggested_amount|intcomma }} ریال</p>
+                <p><strong>اولویت:</strong> {{ funding_request.get_priority_display }}</p>
+                <p><strong>توضیحات:</strong> {{ funding_request.province_description|linebreaks }}</p>
+                <hr>
+                <p>
+                    پس از ارسال، درخواست اعتبار شما به کارشناس مربوطه ارسال خواهد شد و شما تنها در صورت رد شدن توسط کارشناس امکان ویرایش آن را خواهید داشت.
+                    آیا از ارسال این درخواست اطمینان دارید؟
+                </p>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="mt-4 d-flex justify-content-between">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-send"></i> بله، ارسال شود
+                    </button>
+                    <a href="{% url 'creator_project:funding_request_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> انصراف
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

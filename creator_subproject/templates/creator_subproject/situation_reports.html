@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}
+    صورت وضعیت‌های کارکرد زیرپروژه {{ subproject }}
+{% endblock %}
+
+{% block breadcrumb %}
+    <ol class="breadcrumb float-sm-left">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard:home' %}">خانه</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'creator_subproject:index' %}">زیرپروژه‌ها</a></li>
+        <li class="breadcrumb-item"><a
+                href="{% url 'creator_subproject:detail' subproject.id %}">{{ subproject }}</a></li>
+        <li class="breadcrumb-item active">صورت وضعیت‌های کارکرد</li>
+    </ol>
+{% endblock %}
+
+{% block sidebar %}
+    {% include 'creator_subproject/includes/sidebar.html' with active='situation_reports' %}
+{% endblock %}
+
+{% block content %}
+    <div class="card card-info">
+        <div class="card-header">
+            <h3 class="card-title">صورت وضعیت‌های کارکرد زیرپروژه</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12">
+                    <a href="{% url 'creator_subproject:add_situation_report' subproject.id %}"
+                       class="btn btn-success">
+                        <i class="fa fa-plus"></i>
+                        افزودن صورت وضعیت کارکرد
+                    </a>
+                </div>
+
+                {% if situation_reports %}
+                    <div class="col-12 mt-4">
+                        <table class="table table-bordered table-striped table-sm">
+                            <thead>
+                            <tr>
+                                <th>ردیف</th>
+                                <th>تاریخ</th>
+                                <th>مبلغ پرداختی</th>
+                                <th>شماره صورت وضعیت کارکرد</th>
+                                <th>نوع</th>
+                                <th>توضیحات</th>
+                                <th>عملیات</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for report in situation_reports %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ report.jalali_allocation_date }}</td>
+                                    <td>{{ report.payment_amount_field|intcomma }}</td>
+                                    <td>{{ report.report_number }}</td>
+                                    <td>{{ report.get_allocation_type_display }}</td>
+                                    <td>{{ report.description|default:"-" }}</td>
+                                    <td>
+                                        <a href="{% url 'creator_subproject:edit_situation_report' report.id %}"
+                                           class="btn btn-info btn-sm">
+                                            <i class="fa fa-edit"></i>
+                                            ویرایش
+                                        </a>
+                                        <a href="{% url 'creator_subproject:delete_situation_report' report.id %}"
+                                           class="btn btn-danger btn-sm"
+                                           onclick="return confirm('آیا مطمئن هستید؟')">
+                                            <i class="fa fa-trash"></i>
+                                            حذف
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                            <tfoot>
+                            <tr>
+                                <th colspan="2">مجموع</th>
+                                <th>{{ total_payment_amount|intcomma }}</th>
+                                <th colspan="4"></th>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="col-12 mt-4">
+                        <div class="alert alert-info">
+                            هیچ صورت وضعیت کارکردی برای این زیرپروژه ثبت نشده است.
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %} 
