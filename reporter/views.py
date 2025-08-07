@@ -1654,7 +1654,7 @@ def export_projects_excel(request):
     # Define headers
     headers = [
         'کد پروژه', 'نام پروژه', 'استان', 'شهر', 'نوع پروژه', 'وضعیت مجوز', 'کد مجوز', 'تا تاریخ افتتاح طرح میشود',
-        'عرصه', 'اعیان', 'طبقه', 'پیشرفت فیزیکی', 'پیشرفت مالی', 'مجموع دیون',
+        'عرصه', 'مساحت محوطه سازی', 'طول دیوار کشی', 'اعیان', 'طبقه', 'پیشرفت فیزیکی', 'پیشرفت مالی', 'مجموع دیون',
         'اعتبار مورد نیاز تکمیل قرار داد ها', 'اعتبار مورد نیاز تکمیل پروژه', 'مجموع تخصیص‌ها',
         'تاریخ پایان پروژه', 'مجموع تخصیص‌ها ی اعتبار نقدی نوع ملی', 'مجموع تخصیص‌ها ی اعتبار نقدی نوع استانی',
         'مجموع تخصیص‌ها ی اعتبار نقدی نوع خیریه', 'مجموع تخصیص‌ها ی اعتبار نقدی نوع سفر',
@@ -1709,22 +1709,24 @@ def export_projects_excel(request):
         
         # Write numeric columns with proper format and null handling
         worksheet.write(row_num, 8, float(project.area_size or 0) if project.area_size else 0, number_format)
-        worksheet.write(row_num, 9, float(project.notables or 0) if project.notables else 0, number_format)
-        worksheet.write(row_num, 10, project.floor if project.floor else '', cell_format)
-        worksheet.write(row_num, 11, float(project.physical_progress or 0), number_format)
-        worksheet.write(row_num, 12, financial_progress or 0, number_format)
-        worksheet.write(row_num, 14, float(project.cached_total_debt or 0), number_format)
-        worksheet.write(row_num, 15, float(project.cached_required_credit_contracts or 0), number_format)
-        worksheet.write(row_num, 16, float(project.cached_required_credit_project or 0), number_format)
-        worksheet.write(row_num, 17, float(total_allocation), number_format)
-        worksheet.write(row_num, 18, estimated_opening_time, cell_format)
-        worksheet.write(row_num, 19, float(project.allocation_credit_cash_national or 0), number_format)
-        worksheet.write(row_num, 20, float(project.allocation_credit_cash_province or 0), number_format)
-        worksheet.write(row_num, 21, float(project.allocation_credit_cash_charity or 0), number_format)
-        worksheet.write(row_num, 22, float(project.allocation_credit_cash_travel or 0), number_format)
-        worksheet.write(row_num, 23, float(project.allocation_credit_treasury_national or 0), number_format)
-        worksheet.write(row_num, 24, float(project.allocation_credit_treasury_province or 0), number_format)
-        worksheet.write(row_num, 25, float(project.allocation_credit_treasury_travel or 0), number_format)
+        worksheet.write(row_num, 9, float(project.site_area or 0) if project.site_area else 0, number_format)
+        worksheet.write(row_num, 10, float(project.wall_length or 0) if project.wall_length else 0, number_format)
+        worksheet.write(row_num, 11, float(project.notables or 0) if project.notables else 0, number_format)
+        worksheet.write(row_num, 12, project.floor if project.floor else '', cell_format)
+        worksheet.write(row_num, 13, float(project.physical_progress or 0), number_format)
+        worksheet.write(row_num, 14, financial_progress or 0, number_format)
+        worksheet.write(row_num, 15, float(project.cached_total_debt or 0), number_format)
+        worksheet.write(row_num, 16, float(project.cached_required_credit_contracts or 0), number_format)
+        worksheet.write(row_num, 17, float(project.cached_required_credit_project or 0), number_format)
+        worksheet.write(row_num, 18, float(total_allocation), number_format)
+        worksheet.write(row_num, 19, estimated_opening_time, cell_format)
+        worksheet.write(row_num, 20, float(project.allocation_credit_cash_national or 0), number_format)
+        worksheet.write(row_num, 21, float(project.allocation_credit_cash_province or 0), number_format)
+        worksheet.write(row_num, 22, float(project.allocation_credit_cash_charity or 0), number_format)
+        worksheet.write(row_num, 23, float(project.allocation_credit_cash_travel or 0), number_format)
+        worksheet.write(row_num, 24, float(project.allocation_credit_treasury_national or 0), number_format)
+        worksheet.write(row_num, 25, float(project.allocation_credit_treasury_province or 0), number_format)
+        worksheet.write(row_num, 26, float(project.allocation_credit_treasury_travel or 0), number_format)
     
     # Close the workbook
     workbook.close()
@@ -2203,6 +2205,10 @@ def export_search_results_excel(request):
                             worksheet.write(row_num, current_col, float(financial_progress), number_format)
                         elif field == 'area_size':
                             worksheet.write(row_num, current_col, float(project.area_size or 0), number_format)
+                        elif field == 'site_area':
+                            worksheet.write(row_num, current_col, float(project.site_area or 0), number_format)
+                        elif field == 'wall_length':
+                            worksheet.write(row_num, current_col, float(project.wall_length or 0), number_format)
                         elif field == 'notables':
                             worksheet.write(row_num, current_col, float(project.notables or 0), number_format)
                         elif field == 'floor':
