@@ -15,6 +15,23 @@ class ProjectAdmin(admin.ModelAdmin):
     list_filter = ('province', 'project_type', 'is_approved')
     search_fields = ('name', 'project_id', 'city')
     readonly_fields = ('project_id', 'created_by', 'created_at', 'updated_at')
+    fieldsets = (
+        ('اطلاعات پایه', {
+            'fields': ('program', 'name', 'project_type', 'province', 'city')
+        }),
+        ('جزئیات پروژه', {
+            'fields': ('area_size', 'site_area', 'wall_length', 'notables', 'floor', 'physical_progress', 'estimated_opening_time', 'overall_status')
+        }),
+        ('اطلاعات مالی', {
+            'fields': ('allocation_credit_cash_national', 'allocation_credit_cash_province', 'allocation_credit_cash_charity', 'allocation_credit_cash_travel',
+                      'allocation_credit_treasury_national', 'allocation_credit_treasury_province', 'allocation_credit_treasury_travel', 'debt'),
+            'classes': ('collapse',)
+        }),
+        ('اطلاعات سیستمی', {
+            'fields': ('created_by', 'created_at', 'updated_at', 'is_approved', 'is_submitted', 'is_expert_approved'),
+            'classes': ('collapse',)
+        }),
+    )
     
     def total_budget(self, obj):
         return f"{obj.allocation_credit_cash_national or 0:,} IRR"

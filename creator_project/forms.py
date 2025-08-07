@@ -8,7 +8,7 @@ class ProjectForm(forms.ModelForm):
         model = Project
         fields = [
             'program', 'name', 'project_type', 'province', 'city', 
-            'area_size', 'notables', 'floor', 'physical_progress', 'estimated_opening_time', 
+            'area_size', 'site_area', 'wall_length', 'notables', 'floor', 'physical_progress', 'estimated_opening_time', 
             'overall_status'
         ]
         widgets = {
@@ -18,6 +18,8 @@ class ProjectForm(forms.ModelForm):
             'province': forms.Select(attrs={'class': 'form-control'}),
             'city': forms.TextInput(attrs={'class': 'form-control'}),
             'area_size': forms.NumberInput(attrs={'class': 'form-control'}),
+            'site_area': forms.NumberInput(attrs={'class': 'form-control'}),
+            'wall_length': forms.NumberInput(attrs={'class': 'form-control'}),
             'notables': forms.NumberInput(attrs={'class': 'form-control'}),
             'floor': forms.NumberInput(attrs={'class': 'form-control'}),
             'physical_progress': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 100, 'step': '0.01'}),
@@ -31,6 +33,8 @@ class ProjectForm(forms.ModelForm):
             'province': 'استان',
             'city': 'شهر',
             'area_size': 'عرصه',
+            'site_area': 'مساحت محوطه سازی',
+            'wall_length': 'طول دیوار کشی',
             'notables': 'اعیان',
             'floor': 'طبقه',
             'physical_progress': 'پیشرفت فیزیکی (٪)',

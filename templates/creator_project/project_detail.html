@@ -301,6 +301,28 @@
                             </div>
                         </div>
                         {% endif %}
+                        {% if project.site_area %}
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-grid-3x3-gap text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">مساحت محوطه سازی</small>
+                                    <p class="mb-0">{{ project.site_area }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if project.wall_length %}
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-border-width text-muted me-2"></i>
+                                <div>
+                                    <small class="text-muted fw-bold">طول دیوار کشی</small>
+                                    <p class="mb-0">{{ project.wall_length }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                         {% if project.notables %}
                         <div class="col-md-6 mb-2">
                             <div class="d-flex align-items-center">

@@ -468,6 +468,14 @@ def search_history_view(request):
     min_floor = request.GET.get('min_floor', '')
     max_floor = request.GET.get('max_floor', '')
     
+    # Site Area filter
+    min_site_area = request.GET.get('min_site_area', '')
+    max_site_area = request.GET.get('max_site_area', '')
+    
+    # Wall Length filter
+    min_wall_length = request.GET.get('min_wall_length', '')
+    max_wall_length = request.GET.get('max_wall_length', '')
+    
     # Initialize project search results
     projects = []
     
@@ -555,6 +563,10 @@ def search_history_view(request):
         'max_notables': max_notables,
         'min_floor': min_floor,
         'max_floor': max_floor,
+        'min_site_area': min_site_area,
+        'max_site_area': max_site_area,
+        'min_wall_length': min_wall_length,
+        'max_wall_length': max_wall_length,
         # Financial filters
         'cash_allocation_enabled': cash_allocation_enabled,
         'min_cash_allocation': min_cash_allocation,
@@ -810,6 +822,58 @@ def search_history_view(request):
                     except ValueError:
                         pass
             
+            # Site Area filter
+            if min_site_area or max_site_area:
+                # Handle null values properly
+                if min_site_area and max_site_area:
+                    try:
+                        min_site_area_value = float(min_site_area)
+                        max_site_area_value = float(max_site_area)
+                        project_queryset = project_queryset.filter(
+                            site_area__gte=min_site_area_value,
+                            site_area__lte=max_site_area_value
+                        )
+                    except ValueError:
+                        pass
+                elif min_site_area:
+                    try:
+                        min_site_area_value = float(min_site_area)
+                        project_queryset = project_queryset.filter(site_area__gte=min_site_area_value)
+                    except ValueError:
+                        pass
+                elif max_site_area:
+                    try:
+                        max_site_area_value = float(max_site_area)
+                        project_queryset = project_queryset.filter(site_area__lte=max_site_area_value)
+                    except ValueError:
+                        pass
+            
+            # Wall Length filter
+            if min_wall_length or max_wall_length:
+                # Handle null values properly
+                if min_wall_length and max_wall_length:
+                    try:
+                        min_wall_length_value = float(min_wall_length)
+                        max_wall_length_value = float(max_wall_length)
+                        project_queryset = project_queryset.filter(
+                            wall_length__gte=min_wall_length_value,
+                            wall_length__lte=max_wall_length_value
+                        )
+                    except ValueError:
+                        pass
+                elif min_wall_length:
+                    try:
+                        min_wall_length_value = float(min_wall_length)
+                        project_queryset = project_queryset.filter(wall_length__gte=min_wall_length_value)
+                    except ValueError:
+                        pass
+                elif max_wall_length:
+                    try:
+                        max_wall_length_value = float(max_wall_length)
+                        project_queryset = project_queryset.filter(wall_length__lte=max_wall_length_value)
+                    except ValueError:
+                        pass
+            
             # Opening time filter
             if opening_time_filter_enabled == 'on' and opening_time_date:
                 try:
@@ -820,7 +884,7 @@ def search_history_view(request):
                 except Exception as e:
                     print(f"Error parsing opening time date '{opening_time_date}': {str(e)}")
                     pass
-                    
+                
             # Approval status filter
             if approval_statuses:
                 approval_mapping = {
@@ -1704,6 +1768,10 @@ def export_search_results_excel(request):
     max_notables = request.POST.get('max_notables', '')
     min_floor = request.POST.get('min_floor', '')
     max_floor = request.POST.get('max_floor', '')
+    min_site_area = request.POST.get('min_site_area', '')
+    max_site_area = request.POST.get('max_site_area', '')
+    min_wall_length = request.POST.get('min_wall_length', '')
+    max_wall_length = request.POST.get('max_wall_length', '')
     project_status = request.POST.get('project_status', '')
     project_types = request.POST.get('project_types', '')
     program_types = request.POST.get('program_types', '')
@@ -2033,6 +2101,8 @@ def export_search_results_excel(request):
                     'physical_progress': 'پیشرفت فیزیکی',
                     'financial_progress': 'پیشرفت مالی',
                     'area_size': 'عرصه',
+                    'site_area': 'مساحت محوطه سازی',
+                    'wall_length': 'طول دیوار کشی',
                     'notables': 'اعیان',
                     'floor': 'طبقه',
                     'project_opening_date': 'تا تاریخ افتتاح پروژه میشود'

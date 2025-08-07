@@ -10,7 +10,7 @@
 <!-- Add Persian Datepicker -->
 <link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
 <!-- Add toggle fields JavaScript -->
-<script src="{% static 'js/toggle-fields.js' %}"></script>
+<script src="{% static 'js/toggle-fields.js' %}?v=1.1"></script>
 <style>
     .search-hero {
         background: #2c3e50;
@@ -684,6 +684,74 @@
                                                                 value="{{ request.GET.max_notables|default:'' }}" 
                                                                 min="0" step="0.01" placeholder="1000"
                                                                 {% if not request.GET.min_notables and not request.GET.max_notables %}disabled{% endif %}>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                    <!-- Site Area -->
+                                    <div class="col-md-6">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <label class="form-label mb-0 fw-semibold">مساحت محوطه سازی</label>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="site_area_toggle"
+                                                           name="site_area_enabled" value="on"
+                                                           {% if request.GET.min_site_area or request.GET.max_site_area %}checked{% endif %}
+                                                           onchange="toggleSiteAreaField()">
+                                                    <label class="form-check-label" for="site_area_toggle">فعال</label>
+                                                </div>
+                                            </div>
+                                            <div class="card" id="site_area_container" {% if not request.GET.min_site_area and not request.GET.max_site_area %}style="display: none;"{% endif %}>
+                                                <div class="card-body p-2">
+                                                    <div class="row g-2">
+                                                    <div class="col-6">
+                                                        <label for="min_site_area" class="form-label small">حداقل</label>
+                                                            <input type="number" class="form-control" id="min_site_area" name="min_site_area" 
+                                                                value="{{ request.GET.min_site_area|default:'' }}" 
+                                                                min="0" step="0.01" placeholder="0"
+                                                                {% if not request.GET.min_site_area and not request.GET.max_site_area %}disabled{% endif %}>
+                                                        </div>
+                                                    <div class="col-6">
+                                                        <label for="max_site_area" class="form-label small">حداکثر</label>
+                                                            <input type="number" class="form-control" id="max_site_area" name="max_site_area" 
+                                                                value="{{ request.GET.max_site_area|default:'' }}" 
+                                                                min="0" step="0.01" placeholder="1000"
+                                                                {% if not request.GET.min_site_area and not request.GET.max_site_area %}disabled{% endif %}>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                    <!-- Wall Length -->
+                                    <div class="col-md-6">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <label class="form-label mb-0 fw-semibold">طول دیوار کشی</label>
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="wall_length_toggle"
+                                                           name="wall_length_enabled" value="on"
+                                                           {% if request.GET.min_wall_length or request.GET.max_wall_length %}checked{% endif %}
+                                                           onchange="toggleWallLengthField()">
+                                                    <label class="form-check-label" for="wall_length_toggle">فعال</label>
+                                                </div>
+                                            </div>
+                                            <div class="card" id="wall_length_container" {% if not request.GET.min_wall_length and not request.GET.max_wall_length %}style="display: none;"{% endif %}>
+                                                <div class="card-body p-2">
+                                                    <div class="row g-2">
+                                                    <div class="col-6">
+                                                        <label for="min_wall_length" class="form-label small">حداقل</label>
+                                                            <input type="number" class="form-control" id="min_wall_length" name="min_wall_length" 
+                                                                value="{{ request.GET.min_wall_length|default:'' }}" 
+                                                                min="0" step="0.01" placeholder="0"
+                                                                {% if not request.GET.min_wall_length and not request.GET.max_wall_length %}disabled{% endif %}>
+                                                        </div>
+                                                    <div class="col-6">
+                                                        <label for="max_wall_length" class="form-label small">حداکثر</label>
+                                                            <input type="number" class="form-control" id="max_wall_length" name="max_wall_length" 
+                                                                value="{{ request.GET.max_wall_length|default:'' }}" 
+                                                                min="0" step="0.01" placeholder="1000"
+                                                                {% if not request.GET.min_wall_length and not request.GET.max_wall_length %}disabled{% endif %}>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1387,6 +1455,10 @@
                             <input type="hidden" name="max_notables" value="{{ request.GET.max_notables|default:'' }}">
                             <input type="hidden" name="min_floor" value="{{ request.GET.min_floor|default:'' }}">
                             <input type="hidden" name="max_floor" value="{{ request.GET.max_floor|default:'' }}">
+                            <input type="hidden" name="min_site_area" value="{{ request.GET.min_site_area|default:'' }}">
+                            <input type="hidden" name="max_site_area" value="{{ request.GET.max_site_area|default:'' }}">
+                            <input type="hidden" name="min_wall_length" value="{{ request.GET.min_wall_length|default:'' }}">
+                            <input type="hidden" name="max_wall_length" value="{{ request.GET.max_wall_length|default:'' }}">
                             <input type="hidden" name="project_status" value="{{ request.GET.project_status|default:'' }}">
                             <input type="hidden" name="project_types" value="{{ request.GET.project_types|default:'' }}">
                             <input type="hidden" name="program_types" value="{{ request.GET.program_types|default:'' }}">
@@ -1490,6 +1562,14 @@
                                             <div class="form-check mb-2">
                                                 <input class="form-check-input" type="checkbox" id="excel_floor" name="excel_fields" value="floor" checked>
                                                 <label class="form-check-label" for="excel_floor">طبقه</label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="excel_site_area" name="excel_fields" value="site_area" checked>
+                                                <label class="form-check-label" for="excel_site_area">مساحت محوطه سازی</label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="excel_wall_length" name="excel_fields" value="wall_length" checked>
+                                                <label class="form-check-label" for="excel_wall_length">طول دیوار کشی</label>
                                             </div>
                                         </div>
             </div>
@@ -3003,6 +3083,8 @@
             maxInput.value = '';
         }
     }
+    
+
     
     // Toggle project status field
     function toggleProjectStatusField() {

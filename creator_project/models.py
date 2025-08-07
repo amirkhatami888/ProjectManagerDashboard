@@ -84,6 +84,8 @@ class Project(models.Model):
     city = models.CharField(max_length=50)
     # Removed longitude and latitude fields - moved to Program model
     area_size = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name="عرصه")
+    site_area = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name="مساحت محوطه سازی")
+    wall_length = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name="طول دیوار کشی")
     notables = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name="اعیان")
     floor = models.IntegerField(blank=True, null=True, verbose_name="طبقه")
     # Removed license_state and license_code fields - moved to Program model
