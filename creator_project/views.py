@@ -1129,26 +1129,26 @@ class ExportFundingTableView(LoginRequiredMixin, UserPassesTestMixin, View):
             'num_format': '#,##0'
         })
         
-        # Make the columns wider
+        # Make the columns wider (aligned with headers order)
         worksheet.set_column(0, 0, 20)  # استان
         worksheet.set_column(1, 1, 30)  # طرح
         worksheet.set_column(2, 2, 20)  # نوع طرح
         worksheet.set_column(3, 3, 30)  # نام پروژه
         worksheet.set_column(4, 4, 20)  # نوع پروژه
-        worksheet.set_column(6, 5, 20)  # شهر
-        worksheet.set_column(7, 7, 40)  # آدرس
-        worksheet.set_column(8, 8, 15)  # عرصه
-        worksheet.set_column(9, 9, 15)  # اعیان
-        worksheet.set_column(10, 10, 15)  # طبقه
-        worksheet.set_column(11, 11, 20)  # پیشرفت فیزیکی
-        worksheet.set_column(12, 12, 20)  # وضعیت مجوز
-        worksheet.set_column(13, 13, 20)  # کد مجوز
-        worksheet.set_column(14, 14, 20)  # مجموع دیون
-        worksheet.set_column(15, 15, 30)  # اعتبار مورد نیاز تکمیل قرار داد ها
-        worksheet.set_column(16, 16, 30)  # اعتبار مورد نیاز تکمیل پروژه
-        worksheet.set_column(17, 17, 15)  # اولویت
-        worksheet.set_column(18, 18, 20)  # مبلغ نهایی
-        worksheet.set_column(19, 19, 40)  # توضیحات استان
+        worksheet.set_column(5, 5, 20)  # شهر
+        worksheet.set_column(6, 6, 40)  # آدرس
+        worksheet.set_column(7, 7, 15)  # عرصه
+        worksheet.set_column(8, 8, 15)  # اعیان
+        worksheet.set_column(9, 9, 15)  # طبقه
+        worksheet.set_column(10, 10, 20)  # پیشرفت فیزیکی
+        worksheet.set_column(11, 11, 20)  # وضعیت مجوز
+        worksheet.set_column(12, 12, 20)  # کد مجوز
+        worksheet.set_column(13, 13, 20)  # مجموع دیون
+        worksheet.set_column(14, 14, 30)  # اعتبار مورد نیاز تکمیل قرار داد ها
+        worksheet.set_column(15, 15, 30)  # اعتبار مورد نیاز تکمیل پروژه
+        worksheet.set_column(16, 16, 15)  # اولویت
+        worksheet.set_column(17, 17, 20)  # مبلغ نهایی
+        worksheet.set_column(18, 18, 40)  # توضیحات استان
         
         # Set RTL (right-to-left) mode for the worksheet
         worksheet.right_to_left()
@@ -1185,34 +1185,33 @@ class ExportFundingTableView(LoginRequiredMixin, UserPassesTestMixin, View):
         # Write data rows
         for row, request in enumerate(approved_requests, start=1):
             project = request.project
-            
-            # Write project data according to new order
+
+            # Write project data aligned with headers order
             worksheet.write(row, 0, project.province, cell_format)  # استان
             program_name = project.program.title if project.program else ''
             worksheet.write(row, 1, program_name, cell_format)  # طرح
             program_type = project.program.program_type if project.program else ''
             worksheet.write(row, 2, program_type, cell_format)  # نوع طرح
             worksheet.write(row, 3, project.name, cell_format)  # نام پروژه
-            worksheet.write(row, 4, project.city, cell_format)  # شهر
-            worksheet.write(row, 5, project.project_type, cell_format)  # نوع پروژه
-            worksheet.write(row, 6, project.city, cell_format)  # شهر (duplicate as requested)
+            worksheet.write(row, 4, project.project_type, cell_format)  # نوع پروژه
+            worksheet.write(row, 5, project.city, cell_format)  # شهر
             # Get address from program
             address = project.program.address if project.program else ''
-            worksheet.write(row, 7, address, cell_format)  # آدرس
-            worksheet.write(row, 8, project.area_size or 0, number_format)  # عرصه
-            worksheet.write(row, 9, project.notables or 0, number_format)  # اعیان
-            worksheet.write(row, 10, project.floor or 0, number_format)  # طبقه
-            worksheet.write(row, 11, project.physical_progress or 0, number_format)  # پیشرفت فیزیکی
+            worksheet.write(row, 6, address, cell_format)  # آدرس
+            worksheet.write(row, 7, project.area_size or 0, number_format)  # عرصه
+            worksheet.write(row, 8, project.notables or 0, number_format)  # اعیان
+            worksheet.write(row, 9, project.floor or 0, number_format)  # طبقه
+            worksheet.write(row, 10, project.physical_progress or 0, number_format)  # پیشرفت فیزیکی
             license_state = project.program.license_state if project.program else ''
-            worksheet.write(row, 12, license_state, cell_format)  # وضعیت مجوز
+            worksheet.write(row, 11, license_state, cell_format)  # وضعیت مجوز
             license_code = project.program.license_code if project.program else ''
-            worksheet.write(row, 13, license_code, cell_format)  # کد مجوز
-            worksheet.write(row, 14, project.cached_total_debt or 0, number_format)  # مجموع دیون
-            worksheet.write(row, 15, project.cached_required_credit_contracts or 0, number_format)  # اعتبار مورد نیاز تکمیل قرار داد ها
-            worksheet.write(row, 16, project.cached_required_credit_project or 0, number_format)  # اعتبار مورد نیاز تکمیل پروژه
-            worksheet.write(row, 17, request.priority, cell_format)  # اولویت
-            worksheet.write(row, 18, request.final_amount or 0, number_format)  # مبلغ نهایی
-            worksheet.write(row, 19, request.province_description, cell_format)  # توضیحات استان
+            worksheet.write(row, 12, license_code, cell_format)  # کد مجوز
+            worksheet.write(row, 13, project.cached_total_debt or 0, number_format)  # مجموع دیون
+            worksheet.write(row, 14, project.cached_required_credit_contracts or 0, number_format)  # اعتبار مورد نیاز تکمیل قرار داد ها
+            worksheet.write(row, 15, project.cached_required_credit_project or 0, number_format)  # اعتبار مورد نیاز تکمیل پروژه
+            worksheet.write(row, 16, request.priority, cell_format)  # اولویت
+            worksheet.write(row, 17, request.final_amount or 0, number_format)  # مبلغ نهایی
+            worksheet.write(row, 18, request.province_description, cell_format)  # توضیحات استان
         
         # Close the workbook
         workbook.close()
