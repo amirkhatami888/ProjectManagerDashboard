@@ -27,4 +27,11 @@ def debug_info(request):
     </body>
     </html>
     """.format(request.path)
-    return HttpResponse(html) 
+    return HttpResponse(html)
+
+def gantt_test(request):
+    """Simple test view for Gantt chart debugging"""
+    return render(request, 'gantt_test.html')
+
+def index(request):
+    return HttpResponse("Project Dashboard - Index") 

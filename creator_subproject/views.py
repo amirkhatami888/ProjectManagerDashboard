@@ -1395,7 +1395,7 @@ def get_project_gantt_data(request, project_id):
                 'relatedId': sp.related_subproject.id if sp.related_subproject else None,
                 'relationshipDelay': sp.relationship_delay or 0,
                 'hasContract': bool(sp.contract_amount),
-                'imaginaryDuration': sp.imagenary_duration or 180
+                'imagenaryDuration': sp.imagenary_duration or 180
             })
         
         # Calculate dynamic dates
@@ -1432,11 +1432,11 @@ def calculate_dynamic_dates_backend(subprojects, today):
             if not sp['start'] or not sp['end']:
                 # Set default dates even for contract subprojects if dates are missing
                 sp['start'] = today.strftime('%Y-%m-%d')
-                sp['end'] = (today + datetime.timedelta(days=sp['imaginaryDuration'])).strftime('%Y-%m-%d')
+                sp['end'] = (today + datetime.timedelta(days=sp['imagenaryDuration'])).strftime('%Y-%m-%d')
         elif sp['relationshipType'] == 'شناور' or not sp['relatedId'] or not sp['relationshipType']:
             # Floating subprojects or those without relationships start from today
             start_date = today
-            end_date = start_date + datetime.timedelta(days=sp['imaginaryDuration'])
+            end_date = start_date + datetime.timedelta(days=sp['imagenaryDuration'])
             
             sp['start'] = start_date.strftime('%Y-%m-%d')
             sp['end'] = end_date.strftime('%Y-%m-%d')
@@ -1476,16 +1476,16 @@ def calculate_dynamic_dates_backend(subprojects, today):
             
             if sp['relationshipType'] == 'بعد از':  # After - sp starts when related ends
                 new_start = related_end + datetime.timedelta(days=delay)
-                new_end = new_start + datetime.timedelta(days=sp['imaginaryDuration'])
+                new_end = new_start + datetime.timedelta(days=sp['imagenaryDuration'])
             elif sp['relationshipType'] == 'قبل از':  # Before - sp ends when related starts
                 new_end = related_start - datetime.timedelta(days=delay)
-                new_start = new_end - datetime.timedelta(days=sp['imaginaryDuration'])
+                new_start = new_end - datetime.timedelta(days=sp['imagenaryDuration'])
             elif sp['relationshipType'] == 'شروع با':  # Start with - sp starts with related
                 new_start = related_start + datetime.timedelta(days=delay)
-                new_end = new_start + datetime.timedelta(days=sp['imaginaryDuration'])
+                new_end = new_start + datetime.timedelta(days=sp['imagenaryDuration'])
             elif sp['relationshipType'] == 'پایان با':  # End with - sp ends with related
                 new_end = related_end + datetime.timedelta(days=delay)
-                new_start = new_end - datetime.timedelta(days=sp['imaginaryDuration'])
+                new_start = new_end - datetime.timedelta(days=sp['imagenaryDuration'])
             else:
                 continue
             

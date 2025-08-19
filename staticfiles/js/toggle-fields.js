@@ -236,6 +236,72 @@ function toggleFloorField() {
     }
 }
 
+// Toggle site area field
+function toggleSiteAreaField() {
+    const toggle = document.getElementById('site_area_toggle');
+    const container = document.getElementById('site_area_container');
+    const minInput = document.getElementById('min_site_area');
+    const maxInput = document.getElementById('max_site_area');
+    
+    console.log('toggleSiteAreaField called');
+    console.log('toggle:', toggle);
+    console.log('container:', container);
+    console.log('minInput:', minInput);
+    console.log('maxInput:', maxInput);
+    
+    if (!toggle || !container || !minInput || !maxInput) {
+        console.log('Site area elements not found');
+        return;
+    }
+    
+    if (toggle.checked) {
+        container.style.display = 'block';
+        minInput.disabled = false;
+        maxInput.disabled = false;
+        console.log('Site area fields enabled');
+    } else {
+        container.style.display = 'none';
+        minInput.disabled = true;
+        maxInput.disabled = true;
+        minInput.value = '';
+        maxInput.value = '';
+        console.log('Site area fields disabled');
+    }
+}
+
+// Toggle wall length field
+function toggleWallLengthField() {
+    const toggle = document.getElementById('wall_length_toggle');
+    const container = document.getElementById('wall_length_container');
+    const minInput = document.getElementById('min_wall_length');
+    const maxInput = document.getElementById('max_wall_length');
+    
+    console.log('toggleWallLengthField called');
+    console.log('toggle:', toggle);
+    console.log('container:', container);
+    console.log('minInput:', minInput);
+    console.log('maxInput:', maxInput);
+    
+    if (!toggle || !container || !minInput || !maxInput) {
+        console.log('Wall length elements not found');
+        return;
+    }
+    
+    if (toggle.checked) {
+        container.style.display = 'block';
+        minInput.disabled = false;
+        maxInput.disabled = false;
+        console.log('Wall length fields enabled');
+    } else {
+        container.style.display = 'none';
+        minInput.disabled = true;
+        maxInput.disabled = true;
+        minInput.value = '';
+        maxInput.value = '';
+        console.log('Wall length fields disabled');
+    }
+}
+
 // Toggle project status field
 function toggleProjectStatusField() {
     const toggle = document.getElementById('project_statuses_toggle');
@@ -631,6 +697,8 @@ function toggleRequiredCreditContractsFields() {
 
 // Initialize all toggle functions when document is ready
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded - Initializing toggle functions');
+    
     // Initialize all toggle functions
     toggleQueryField();
     toggleProjectTypeField();
@@ -641,6 +709,8 @@ document.addEventListener('DOMContentLoaded', function() {
     toggleAreaSizeField();
     toggleNotablesField();
     toggleFloorField();
+    toggleSiteAreaField();
+    toggleWallLengthField();
     toggleProjectStatusField();
     toggleProgramTypeField();
     toggleLicenseStateField();
@@ -664,4 +734,40 @@ document.addEventListener('DOMContentLoaded', function() {
     if (openingTimeFilterToggle) {
         handleOpeningTimeFilterToggle(openingTimeFilterToggle);
     }
-}); 
+    
+    // Test the new toggle functions
+    console.log('Testing site area toggle function...');
+    const siteAreaToggle = document.getElementById('site_area_toggle');
+    if (siteAreaToggle) {
+        console.log('✓ Site area toggle found');
+        siteAreaToggle.addEventListener('change', function() {
+            console.log('Site area toggle changed:', this.checked);
+            toggleSiteAreaField();
+        });
+    } else {
+        console.log('✗ Site area toggle not found');
+    }
+    
+    console.log('Testing wall length toggle function...');
+    const wallLengthToggle = document.getElementById('wall_length_toggle');
+    if (wallLengthToggle) {
+        console.log('✓ Wall length toggle found');
+        wallLengthToggle.addEventListener('change', function() {
+            console.log('Wall length toggle changed:', this.checked);
+            toggleWallLengthField();
+        });
+    } else {
+        console.log('✗ Wall length toggle not found');
+    }
+});
+
+// Add global test functions for debugging
+window.testSiteAreaToggle = function() {
+    console.log('Testing site area toggle manually...');
+    toggleSiteAreaField();
+};
+
+window.testWallLengthToggle = function() {
+    console.log('Testing wall length toggle manually...');
+    toggleWallLengthField();
+};

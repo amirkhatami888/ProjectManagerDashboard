@@ -37,6 +37,7 @@ urlpatterns = [
     path("sms/", include("notifications_sms.urls")),
     path("webhooks/", include("webhooks.urls")),
     path("activity-monitor/", include("activity_monitor.urls", namespace="activity_monitor")),
+    path('gantt-test/', views.gantt_test, name='gantt_test'),
 ]
 
 if settings.DEBUG:
