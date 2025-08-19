@@ -1,0 +1,1475 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}گزارش فعالیت‌های کاربران - نظارت بر فعالیت‌ها{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Professional Light Theme Styles */
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        color: #2c3e50;
+        font-family: 'Vazir', Tahoma, Arial, sans-serif;
+    }
+    
+    .container-fluid {
+        background: transparent;
+        padding: 20px;
+    }
+    
+    /* Header Styling */
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .page-header h1 {
+        color: white;
+        font-weight: 700;
+        margin-bottom: 10px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .page-header p {
+        color: rgba(255,255,255,0.9);
+        font-size: 1.1rem;
+        margin-bottom: 0;
+    }
+    
+    /* Card Styling */
+    .card {
+        background: white;
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        margin-bottom: 25px;
+        overflow: hidden;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-bottom: 2px solid #dee2e6;
+        padding: 20px 25px;
+        color: #495057;
+    }
+    
+    .card-header h6 {
+        color: #495057;
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin: 0;
+    }
+    
+    .card-body {
+        background: white;
+        color: #495057;
+        padding: 25px;
+    }
+    
+    /* Text Colors */
+    .text-gray-800 {
+        color: #2c3e50 !important;
+    }
+    
+    .text-muted {
+        color: #6c757d !important;
+    }
+    
+    .text-primary {
+        color: #007bff !important;
+    }
+    
+    .text-success {
+        color: #28a745 !important;
+    }
+    
+    .text-info {
+        color: #17a2b8 !important;
+    }
+    
+    .text-warning {
+        color: #ffc107 !important;
+    }
+    
+    .text-danger {
+        color: #dc3545 !important;
+    }
+    
+    /* Border Colors */
+    .border-left-primary {
+        border-left: 4px solid #007bff !important;
+    }
+    
+    .border-left-success {
+        border-left: 4px solid #28a745 !important;
+    }
+    
+    .border-left-info {
+        border-left: 4px solid #17a2b8 !important;
+    }
+    
+    .border-left-warning {
+        border-left: 4px solid #ffc107 !important;
+    }
+    
+    .border-left-danger {
+        border-left: 4px solid #dc3545 !important;
+    }
+    
+    /* Online Indicator */
+    .online-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+        position: relative;
+    }
+    
+    .online-indicator.online {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        box-shadow: 0 0 8px rgba(40, 167, 69, 0.6);
+        animation: pulse 2s infinite;
+    }
+    
+    .online-indicator.offline {
+        background: #6c757d;
+        box-shadow: 0 0 4px rgba(108, 117, 125, 0.3);
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 8px rgba(40, 167, 69, 0.6); }
+        50% { box-shadow: 0 0 12px rgba(40, 167, 69, 0.8); }
+        100% { box-shadow: 0 0 8px rgba(40, 167, 69, 0.6); }
+    }
+    
+    /* Table Styling */
+    .table {
+        background: white;
+        color: #495057;
+        border: none;
+        margin-bottom: 0;
+    }
+    
+    .table th {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-bottom: 2px solid #dee2e6;
+        color: #495057;
+        font-weight: 700;
+        text-align: center;
+        vertical-align: middle;
+        padding: 15px 12px;
+        font-size: 0.95rem;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        text-align: center;
+        background: white;
+        border-bottom: 1px solid #f1f3f4;
+        color: #495057;
+        padding: 15px 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .table td:nth-child(2),
+    .table td:nth-child(3),
+    .table td:nth-child(5),
+    .table td:nth-child(6),
+    .table td:nth-child(13) {
+        text-align: right;
+    }
+    
+    .table-hover tbody tr:hover {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .table-hover tbody tr:hover td {
+        background: transparent;
+        color: #2c3e50;
+    }
+    
+    /* Badge Styling */
+    .badge {
+        font-size: 0.75rem;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .badge-success {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+    }
+    
+    .badge-secondary {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+        color: white;
+    }
+    
+    .badge-info {
+        background: linear-gradient(135deg, #17a2b8, #138496);
+        color: white;
+    }
+    
+    .badge-primary {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+    }
+    
+    .badge-warning {
+        background: linear-gradient(135deg, #ffc107, #e0a800);
+        color: #212529;
+    }
+    
+    .badge-danger {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+    }
+    
+    /* Role-specific text colors */
+    .role-admin {
+        color: #dc3545;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(220, 53, 69, 0.2);
+    }
+    
+    .role-ceo {
+        color: #fd7e14;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(253, 126, 20, 0.2);
+    }
+    
+    .role-chief_executive {
+        color: #6f42c1;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(111, 66, 193, 0.2);
+    }
+    
+    .role-vice_chief_executive {
+        color: #20c997;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(32, 201, 151, 0.2);
+    }
+    
+    .role-expert {
+        color: #17a2b8;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(23, 162, 184, 0.2);
+    }
+    
+    .role-province_manager {
+        color: #28a745;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(40, 167, 69, 0.2);
+    }
+    
+    /* Filter Styling */
+    .filter-row {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border: 1px solid #e9ecef;
+    }
+    
+    .filter-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    
+    .filter-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #007bff;
+        font-size: 0.9rem;
+        z-index: 2;
+    }
+    
+    .filter-input {
+        background: white;
+        border: 2px solid #e9ecef;
+        color: #495057;
+        width: 100%;
+        padding: 12px 12px 12px 35px;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .filter-input:focus {
+        background: white;
+        border-color: #007bff;
+        color: #495057;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1), 0 4px 8px rgba(0,0,0,0.1);
+        transform: translateY(-1px);
+    }
+    
+    .filter-input::placeholder {
+        color: #6c757d;
+        font-style: italic;
+    }
+    
+    .filter-select {
+        background: white;
+        border: 2px solid #e9ecef;
+        color: #495057;
+        width: 100%;
+        padding: 12px 12px 12px 35px;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        cursor: pointer;
+    }
+    
+    .filter-select:focus {
+        background: white;
+        border-color: #007bff;
+        color: #495057;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1), 0 4px 8px rgba(0,0,0,0.1);
+        transform: translateY(-1px);
+    }
+    
+    /* Button Styling */
+    .btn {
+        border-radius: 10px;
+        font-weight: 600;
+        padding: 10px 20px;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #0056b3, #004085);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
+    }
+    
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: linear-gradient(135deg, #5a6268, #495057);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);
+    }
+    
+    .btn-outline-primary {
+        border: 2px solid #007bff;
+        color: #007bff;
+        background: transparent;
+    }
+    
+    .btn-outline-primary:hover {
+        background: #007bff;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
+    }
+    
+    /* Dropdown Styling */
+    .dropdown-menu {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .dropdown-item {
+        color: #495057;
+        padding: 10px 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .dropdown-item:hover {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        color: #2c3e50;
+    }
+    
+    .dropdown-header {
+        color: #6c757d;
+        font-weight: 600;
+        padding: 10px 20px;
+    }
+    
+    /* Shadow Effects */
+    .shadow {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 10px;
+        }
+        
+        .page-header {
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-row {
+            padding: 20px;
+        }
+        
+        .table-responsive {
+            font-size: 0.9rem;
+        }
+        
+        .table thead th,
+        .table tbody td {
+            padding: 10px 8px;
+        }
+        
+        .badge {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+        }
+    }
+    
+    /* Loading Animation */
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+    
+    .empty-state p {
+        font-size: 1.1rem;
+        margin-bottom: 0;
+    }
+    
+    /* Form Controls */
+    .form-control {
+        background: white;
+        border: 2px solid #e9ecef;
+        color: #495057;
+        border-radius: 10px;
+        padding: 12px 15px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .form-control:focus {
+        background: white;
+        border-color: #007bff;
+        color: #495057;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1), 0 4px 8px rgba(0,0,0,0.1);
+        transform: translateY(-1px);
+    }
+    
+    .form-control::placeholder {
+        color: #6c757d;
+        font-style: italic;
+    }
+    
+    /* Form Labels */
+    .form-label {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+    }
+    
+    .form-label.text-dark {
+        color: #2c3e50 !important;
+    }
+    
+    /* Input Groups */
+    .input-group-text {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        border: 2px solid #007bff;
+        color: white;
+        font-weight: 600;
+        border-radius: 10px 0 0 10px;
+    }
+    
+    /* Additional Button Styles */
+    .btn-outline-success {
+        border: 2px solid #28a745;
+        color: #28a745;
+        background: transparent;
+    }
+    
+    .btn-outline-success:hover {
+        background: #28a745;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    }
+    
+    .btn-outline-warning {
+        border: 2px solid #ffc107;
+        color: #ffc107;
+        background: transparent;
+    }
+    
+    .btn-outline-warning:hover {
+        background: #ffc107;
+        color: #212529;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+    }
+    
+    .btn-outline-info {
+        border: 2px solid #17a2b8;
+        color: #17a2b8;
+        background: transparent;
+    }
+    
+    .btn-outline-info:hover {
+        background: #17a2b8;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(23, 162, 184, 0.4);
+    }
+    
+    .btn-outline-danger {
+        border: 2px solid #dc3545;
+        color: #dc3545;
+        background: transparent;
+    }
+    
+    .btn-outline-danger:hover {
+        background: #dc3545;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    }
+    
+    /* Small Button */
+    .btn-sm {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+        border-radius: 8px;
+    }
+    
+    /* Print Styles */
+    @media print {
+        .card-header,
+        .dropdown,
+        .btn,
+        .filter-row {
+            display: none !important;
+        }
+        
+        .table {
+            font-size: 12px;
+        }
+        
+        .badge {
+            border: 1px solid #000;
+            color: #000 !important;
+        }
+        
+        body {
+            background: white !important;
+        }
+        
+        .card {
+            box-shadow: none !important;
+            border: 1px solid #000 !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-users text-primary"></i>
+                گزارش فعالیت‌های کاربران
+            </h1>
+            <p class="text-muted">مشاهده جزئیات فعالیت‌ها، زمان‌های ورود و آمار کاربران</p>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                کل کاربران
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_users }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                کاربران آنلاین
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ online_users }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-circle fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                فعالیت‌های امروز
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ today_activities }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                                                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                 ورودهای فعال
+                             </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ online_users }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Filter Panel -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-filter mr-2"></i>
+                فیلترهای پیشرفته
+            </h6>
+            <div class="d-flex align-items-center">
+                <button class="btn btn-outline-success btn-sm mr-2" onclick="applyFilters()">
+                    <i class="fas fa-check mr-1"></i>
+                    اعمال فیلترها
+                </button>
+                <button class="btn btn-outline-warning btn-sm mr-2" onclick="clearFilters()">
+                    <i class="fas fa-times mr-1"></i>
+                    پاک کردن
+                </button>
+                <button class="btn btn-outline-info btn-sm" onclick="toggleFilterPanel()">
+                    <i class="fas fa-chevron-up" id="toggleIcon"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body" id="filterPanel">
+            <!-- Global Search -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <label class="form-label text-dark">
+                        <i class="fas fa-search mr-1"></i>
+                        جستجوی عمومی
+                    </label>
+                    <input type="text" class="form-control" id="globalSearch" placeholder="جستجو در تمام فیلدها...">
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Basic Filters -->
+                <div class="col-md-3 mb-3">
+                    <label class="form-label text-dark">
+                        <i class="fas fa-circle text-success mr-1"></i>
+                        وضعیت
+                    </label>
+                    <select class="form-control" id="statusFilter">
+                        <option value="">همه وضعیت‌ها</option>
+                        <option value="آنلاین">آنلاین</option>
+                        <option value="آفلاین">آفلاین</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label class="form-label text-dark">
+                        <i class="fas fa-user mr-1"></i>
+                        نام کاربری
+                    </label>
+                    <input type="text" class="form-control" id="usernameFilter" placeholder="جستجو در نام کاربری...">
+                </div>
+                
+
+                
+                <div class="col-md-3 mb-3">
+                    <label class="form-label text-dark">
+                        <i class="fas fa-user-tag mr-1"></i>
+                        نقش
+                    </label>
+                    <select class="form-control" id="roleFilter">
+                        <option value="">همه نقش‌ها</option>
+                        <option value="ADMIN">admin</option>
+                        <option value="VICE_CHIEF_EXECUTIVE">مدیر اجرایی</option>
+                        <option value="CEO">CEO(دبیر کل)</option>
+                        <option value="EXPERT">کارشناس</option>
+                        <option value="PROVINCE_MANAGER">مدیر استان</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label class="form-label text-dark">
+                        <i class="fas fa-map-marker-alt mr-1"></i>
+                        استان
+                    </label>
+                    <select class="form-control" id="provinceFilter">
+                        <option value="">همه استان‌ها</option>
+                        <option value="البرز">البرز</option>
+                        <option value="آذربایجان شرقی">آذربایجان شرقی</option>
+                        <option value="آذربایجان غربی">آذربایجان غربی</option>
+                        <option value="بوشهر">بوشهر</option>
+                        <option value="چهارمحال و بختیاری">چهارمحال و بختیاری</option>
+                        <option value="فارس">فارس</option>
+                        <option value="گیلان">گیلان</option>
+                        <option value="گلستان">گلستان</option>
+                        <option value="همدان">همدان</option>
+                        <option value="هرمزگان">هرمزگان</option>
+                        <option value="ایلام">ایلام</option>
+                        <option value="اصفهان">اصفهان</option>
+                        <option value="کرمان">کرمان</option>
+                        <option value="کرمانشاه">کرمانشاه</option>
+                        <option value="خراسان شمالی">خراسان شمالی</option>
+                        <option value="خراسان رضوی">خراسان رضوی</option>
+                        <option value="خراسان جنوبی">خراسان جنوبی</option>
+                        <option value="خوزستان">خوزستان</option>
+                        <option value="کهگیلویه و بویراحمد">کهگیلویه و بویراحمد</option>
+                        <option value="کردستان">کردستان</option>
+                        <option value="لرستان">لرستان</option>
+                        <option value="مرکزی">مرکزی</option>
+                        <option value="مازندران">مازندران</option>
+                        <option value="قزوین">قزوین</option>
+                        <option value="قم">قم</option>
+                        <option value="سمنان">سمنان</option>
+                        <option value="سیستان و بلوچستان">سیستان و بلوچستان</option>
+                        <option value="تهران">تهران</option>
+                        <option value="یزد">یزد</option>
+                        <option value="زنجان">زنجان</option>
+                        <option value="کیش">کیش</option>
+                        <option value="اردبیل">اردبیل</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Range Filters -->
+                <div class="col-md-3 mb-3">
+                    <label class="form-label text-dark">
+                        <i class="fas fa-sign-in-alt mr-1"></i>
+                        تعداد ورود به سایت
+                    </label>
+                    <div class="row">
+                        <div class="col-6">
+                            <input type="number" class="form-control" id="sessionsMin" placeholder="حداقل">
+                        </div>
+                        <div class="col-6">
+                            <input type="number" class="form-control" id="sessionsMax" placeholder="حداکثر">
+                        </div>
+                    </div>
+                </div>
+                
+
+                
+
+                
+                <div class="col-md-3 mb-3">
+                    <label class="form-label text-dark">
+                        <i class="fas fa-calendar-week mr-1"></i>
+                        ورودهای هفته
+                    </label>
+                    <div class="row">
+                        <div class="col-6">
+                            <input type="number" class="form-control" id="weekLoginsMin" placeholder="حداقل">
+                        </div>
+                        <div class="col-6">
+                            <input type="number" class="form-control" id="weekLoginsMax" placeholder="حداکثر">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label text-dark">
+                        <i class="fas fa-calendar-alt mr-1"></i>
+                        ورودهای ماه
+                    </label>
+                    <div class="row">
+                        <div class="col-6">
+                            <input type="number" class="form-control" id="monthLoginsMin" placeholder="حداقل">
+                        </div>
+                        <div class="col-6">
+                            <input type="number" class="form-control" id="monthLoginsMax" placeholder="حداکثر">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 mb-3">
+                    <label class="form-label text-dark">
+                        <i class="fas fa-calendar mr-1"></i>
+                        ورودهای سال
+                    </label>
+                    <div class="row">
+                        <div class="col-6">
+                            <input type="number" class="form-control" id="yearLoginsMin" placeholder="حداقل">
+                        </div>
+                        <div class="col-6">
+                            <input type="number" class="form-control" id="yearLoginsMax" placeholder="حداکثر">
+                        </div>
+                    </div>
+                </div>
+                
+
+            </div>
+        </div>
+    </div>
+
+    <!-- User Activity Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-table mr-2"></i>
+                    جدول فعالیت‌های کاربران
+                </h6>
+                <span class="badge badge-info ml-3" id="userCount">0 کاربر</span>
+            </div>
+            <div class="d-flex align-items-center">
+                <!-- Actions Dropdown -->
+                <div class="dropdown no-arrow">
+                    <a class="btn btn-outline-primary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-cog mr-1"></i>
+                        عملیات
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                        <div class="dropdown-header">
+                            <i class="fas fa-tools mr-2"></i>
+                            عملیات جدول
+                        </div>
+                        <a class="dropdown-item" href="#" onclick="exportTableToCSV()">
+                            <i class="fas fa-download fa-sm fa-fw mr-2 text-success"></i>
+                            دانلود CSV
+                        </a>
+                        <a class="dropdown-item" href="#" onclick="printTable()">
+                            <i class="fas fa-print fa-sm fa-fw mr-2 text-info"></i>
+                            چاپ جدول
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#" onclick="clearFilters()">
+                            <i class="fas fa-times fa-sm fa-fw mr-2 text-warning"></i>
+                            پاک کردن فیلترها
+                        </a>
+                        <a class="dropdown-item" href="#" onclick="resetTable()">
+                            <i class="fas fa-redo fa-sm fa-fw mr-2 text-secondary"></i>
+                            بازنشانی جدول
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                                 <table class="table table-bordered table-hover" id="userActivityTable">
+                     <thead class="thead-light">
+                         <tr>
+                             <th>وضعیت</th>
+                             <th>نام کاربری</th>
+
+                             <th>نقش</th>
+                             <th>استان</th>
+                             <th>آخرین فعالیت</th>
+                             <th>آخرین ورود</th>
+                             <th>تعداد ورود به سایت</th>
+
+
+                             <th>ورودهای هفته</th>
+                             <th>ورودهای ماه</th>
+                             <th>ورودهای سال</th>
+                         </tr>
+                     </thead>
+                    <tbody>
+                        {% for user_data in users_with_activity %}
+                        <tr>
+                            <td>
+                                {% if user_data.is_online %}
+                                    <div class="text-sm">
+                                        <span class="online-indicator online"></span>
+                                        آنلاین
+                                    </div>
+                                    <small class="text-muted">
+                                        {{ user_data.active_session.last_activity|timesince }} پیش
+                                    </small>
+                                {% else %}
+                                    <div class="text-sm">
+                                        <span class="online-indicator offline"></span>
+                                        آفلاین
+                                    </div>
+                                    <small class="text-muted">
+                                        {% if user_data.last_activity %}
+                                            {{ user_data.last_activity|timesince }} پیش
+                                        {% else %}
+                                            هیچ فعالیتی
+                                        {% endif %}
+                                    </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ user_data.user.username }}</strong>
+                                {% if user_data.active_session %}
+                                    <br>
+                                    <small class="text-success">
+                                        <i class="fas fa-circle"></i> 
+                                        مدت: {{ user_data.active_session.last_activity|timesince }}
+                                    </small>
+                                {% endif %}
+                            </td>
+
+                            <td data-role="{{ user_data.user.role }}">
+                                <div class="text-sm">
+                                    {{ user_data.user.get_role_display }}
+                                </div>
+                                <small class="text-muted">
+                                    نقش کاربر
+                                </small>
+                            </td>
+                            <td>
+                                {% if user_data.user.province %}
+                                    <div class="text-sm">
+                                        {{ user_data.user.province }}
+                                    </div>
+                                    <small class="text-muted">
+                                        استان کاربر
+                                    </small>
+                                {% else %}
+                                    <span class="text-muted">تعیین نشده</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user_data.last_activity %}
+                                    <div class="text-sm">
+                                        {{ user_data.last_activity|timesince }} پیش
+                                    </div>
+                                    <small class="text-muted">
+                                        {{ user_data.last_activity|date:"Y-m-d H:i" }}
+                                    </small>
+                                {% else %}
+                                    <span class="text-muted">هیچ فعالیتی</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user_data.last_login %}
+                                    <div class="text-sm">
+                                        {{ user_data.last_login|timesince }} پیش
+                                    </div>
+                                    <small class="text-muted">
+                                        {{ user_data.last_login|date:"Y-m-d H:i" }}
+                                    </small>
+                                {% else %}
+                                    <span class="text-muted">هیچ ورودی</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="text-sm">
+                                    {{ user_data.total_sessions }} ورود
+                                </div>
+                                <small class="text-muted">
+                                    کل ورودها
+                                </small>
+                            </td>
+
+
+                            <td>
+                                <div class="text-sm">
+                                    {{ user_data.logins_week }} ورود
+                                </div>
+                                <small class="text-muted">
+                                    این هفته
+                                </small>
+                            </td>
+                            <td>
+                                <div class="text-sm">
+                                    {{ user_data.logins_month }} ورود
+                                </div>
+                                <small class="text-muted">
+                                    این ماه
+                                </small>
+                            </td>
+                                                         <td>
+                                 <div class="text-sm">
+                                     {{ user_data.logins_year }} ورود
+                                 </div>
+                                 <small class="text-muted">
+                                     این سال
+                                 </small>
+                             </td>
+                        </tr>
+                        {% empty %}
+                                                 <tr>
+                             <td colspan="10" class="text-center py-4">
+                                <i class="fas fa-users fa-2x text-muted mb-2"></i>
+                                <p class="text-muted">هیچ کاربری یافت نشد.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh every 30 seconds to update online status
+    setTimeout(function() {
+        location.reload();
+    }, 30000);
+    
+    // Export table to CSV
+    function exportTableToCSV() {
+        const table = document.getElementById('userActivityTable');
+        const rows = table.querySelectorAll('tr');
+        let csv = [];
+        
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const cols = row.querySelectorAll('td, th');
+            let csvRow = [];
+            
+            for (let j = 0; j < cols.length; j++) {
+                const col = cols[j];
+                // Remove HTML tags and get text content
+                let text = col.textContent || col.innerText || '';
+                text = text.replace(/\s+/g, ' ').trim();
+                // Escape quotes and wrap in quotes if contains comma
+                if (text.includes(',') || text.includes('"')) {
+                    text = '"' + text.replace(/"/g, '""') + '"';
+                }
+                csvRow.push(text);
+            }
+            csv.push(csvRow.join(','));
+        }
+        
+        const csvContent = csv.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'user_activity_report.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    
+    // Print table
+    function printTable() {
+        window.print();
+    }
+    
+    // Advanced filter table function
+    function applyFilters() {
+        const table = document.getElementById('userActivityTable');
+        const tbody = table.querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr');
+        
+        // Get filter values
+        const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+        const usernameFilter = document.getElementById('usernameFilter').value.toLowerCase();
+        const roleFilter = document.getElementById('roleFilter').value.toLowerCase();
+        const provinceFilter = document.getElementById('provinceFilter').value.toLowerCase();
+        const globalSearch = document.getElementById('globalSearch').value.toLowerCase();
+        
+        // Range filters
+        const sessionsMin = document.getElementById('sessionsMin').value;
+        const sessionsMax = document.getElementById('sessionsMax').value;
+        const weekLoginsMin = document.getElementById('weekLoginsMin').value;
+        const weekLoginsMax = document.getElementById('weekLoginsMax').value;
+        const monthLoginsMin = document.getElementById('monthLoginsMin').value;
+        const monthLoginsMax = document.getElementById('monthLoginsMax').value;
+        const yearLoginsMin = document.getElementById('yearLoginsMin').value;
+        const yearLoginsMax = document.getElementById('yearLoginsMax').value;
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            let showRow = true;
+            
+            // Status filter (column 0)
+            if (statusFilter && !cells[0].textContent.toLowerCase().includes(statusFilter)) {
+                showRow = false;
+            }
+            
+            // Username filter (column 1)
+            if (usernameFilter && !cells[1].textContent.toLowerCase().includes(usernameFilter)) {
+                showRow = false;
+            }
+            
+            // Role filter (column 2)
+            if (roleFilter) {
+                const roleCell = cells[2];
+                const userRole = roleCell.getAttribute('data-role');
+                if (userRole !== roleFilter) {
+                    showRow = false;
+                }
+            }
+            
+            // Province filter (column 3)
+            if (provinceFilter && !cells[3].textContent.toLowerCase().includes(provinceFilter)) {
+                showRow = false;
+            }
+            
+            // Sessions range filter (column 6)
+            if (sessionsMin || sessionsMax) {
+                const sessionsText = cells[6].textContent.trim();
+                const sessionsNum = parseInt(sessionsText);
+                if (isNaN(sessionsNum)) {
+                    showRow = false;
+                } else {
+                    if (sessionsMin && sessionsNum < parseInt(sessionsMin)) showRow = false;
+                    if (sessionsMax && sessionsNum > parseInt(sessionsMax)) showRow = false;
+                }
+            }
+            
+            // Week logins range filter (column 7)
+            if (weekLoginsMin || weekLoginsMax) {
+                const weekLoginsText = cells[7].textContent.trim();
+                const weekLoginsNum = parseInt(weekLoginsText);
+                if (isNaN(weekLoginsNum)) {
+                    showRow = false;
+                } else {
+                    if (weekLoginsMin && weekLoginsNum < parseInt(weekLoginsMin)) showRow = false;
+                    if (weekLoginsMax && weekLoginsNum > parseInt(weekLoginsMax)) showRow = false;
+                }
+            }
+            
+            // Month logins range filter (column 8)
+            if (monthLoginsMin || monthLoginsMax) {
+                const monthLoginsText = cells[8].textContent.trim();
+                const monthLoginsNum = parseInt(monthLoginsText);
+                if (isNaN(monthLoginsNum)) {
+                    showRow = false;
+                } else {
+                    if (monthLoginsMin && monthLoginsNum < parseInt(monthLoginsMin)) showRow = false;
+                    if (monthLoginsMax && monthLoginsNum > parseInt(monthLoginsMax)) showRow = false;
+                }
+            }
+            
+            // Year logins range filter (column 9)
+            if (yearLoginsMin || yearLoginsMax) {
+                const yearLoginsText = cells[9].textContent.trim();
+                const yearLoginsNum = parseInt(yearLoginsText);
+                if (isNaN(yearLoginsNum)) {
+                    showRow = false;
+                } else {
+                    if (yearLoginsMin && yearLoginsNum < parseInt(yearLoginsMin)) showRow = false;
+                    if (yearLoginsMax && yearLoginsNum > parseInt(yearLoginsMax)) showRow = false;
+                }
+            }
+            
+            // Global search
+            if (globalSearch) {
+                let foundInRow = false;
+                cells.forEach(cell => {
+                    if (cell.textContent.toLowerCase().includes(globalSearch)) {
+                        foundInRow = true;
+                    }
+                });
+                if (!foundInRow) {
+                    showRow = false;
+                }
+            }
+            
+            // Show/hide row
+            row.style.display = showRow ? '' : 'none';
+        });
+        
+        // Update visible row count
+        updateVisibleCount();
+        
+        // Show success message
+        showNotification('فیلترها با موفقیت اعمال شد', 'success');
+    }
+    
+    // Toggle filter panel
+    function toggleFilterPanel() {
+        const panel = document.getElementById('filterPanel');
+        const icon = document.getElementById('toggleIcon');
+        
+        if (panel.style.display === 'none') {
+            panel.style.display = 'block';
+            icon.className = 'fas fa-chevron-up';
+        } else {
+            panel.style.display = 'none';
+            icon.className = 'fas fa-chevron-down';
+        }
+    }
+    
+    // Update visible row count
+    function updateVisibleCount() {
+        const table = document.getElementById('userActivityTable');
+        const tbody = table.querySelector('tbody');
+        const visibleRows = tbody.querySelectorAll('tr:not([style*="display: none"])');
+        const totalRows = tbody.querySelectorAll('tr').length;
+        
+        // Update the user count badge
+        const userCountBadge = document.getElementById('userCount');
+        if (userCountBadge) {
+            userCountBadge.textContent = `${visibleRows.length} کاربر`;
+            
+            // Change color based on filter status
+            if (visibleRows.length < totalRows) {
+                userCountBadge.className = 'badge badge-warning ml-3';
+            } else {
+                userCountBadge.className = 'badge badge-info ml-3';
+            }
+        }
+        
+        console.log(`Showing ${visibleRows.length} of ${totalRows} users`);
+    }
+    
+    // Global search function
+    function globalSearch() {
+        const searchTerm = document.getElementById('globalSearch').value.toLowerCase();
+        const table = document.getElementById('userActivityTable');
+        const tbody = table.querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr');
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            let showRow = false;
+            
+            // Search in all cells
+            cells.forEach(cell => {
+                if (cell.textContent.toLowerCase().includes(searchTerm)) {
+                    showRow = true;
+                }
+            });
+            
+            // Show/hide row
+            row.style.display = showRow ? '' : 'none';
+        });
+        
+        updateVisibleCount();
+    }
+    
+    // Reset table function
+    function resetTable() {
+        // Clear all filters
+        clearFilters();
+        
+        // Clear global search
+        document.getElementById('globalSearch').value = '';
+        
+        // Show all rows
+        const table = document.getElementById('userActivityTable');
+        const tbody = table.querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr');
+        
+        rows.forEach(row => {
+            row.style.display = '';
+        });
+        
+        updateVisibleCount();
+        
+        // Show success message
+        showNotification('جدول با موفقیت بازنشانی شد', 'success');
+    }
+    
+    // Show notification function
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        `;
+        
+        // Add to page
+        document.body.appendChild(notification);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 3000);
+    }
+    
+    // Clear all filters
+    function clearFilters() {
+        const filterInputs = document.querySelectorAll('.form-control');
+        filterInputs.forEach(input => {
+            input.value = '';
+        });
+        
+        // Show all rows
+        const table = document.getElementById('userActivityTable');
+        const tbody = table.querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr');
+        
+        rows.forEach(row => {
+            row.style.display = '';
+        });
+        
+        updateVisibleCount();
+        showNotification('فیلترها پاک شدند', 'info');
+    }
+    
+    // Add sorting functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const table = document.getElementById('userActivityTable');
+        const headers = table.querySelectorAll('th');
+        
+        // Add sort indicators to headers (skip filter row)
+        headers.forEach((header, index) => {
+            if (!header.querySelector('.filter-input') && !header.querySelector('.filter-select')) {
+                header.style.cursor = 'pointer';
+                header.addEventListener('click', () => {
+                    sortTable(table, index);
+                });
+                
+                // Add sort indicator
+                header.innerHTML += ' <i class="fas fa-sort text-muted"></i>';
+            }
+        });
+        
+        // Add global search event listener
+        const globalSearchInput = document.getElementById('globalSearch');
+        if (globalSearchInput) {
+            globalSearchInput.addEventListener('input', globalSearch);
+        }
+        
+        // Initialize user count
+        updateVisibleCount();
+        
+        // Add clear filters button to dropdown
+        const dropdownMenu = document.querySelector('.dropdown-menu');
+        const clearFiltersItem = document.createElement('a');
+        clearFiltersItem.className = 'dropdown-item';
+        clearFiltersItem.href = '#';
+        clearFiltersItem.onclick = clearFilters;
+        clearFiltersItem.innerHTML = '<i class="fas fa-times fa-sm fa-fw mr-2 text-gray-400"></i> پاک کردن فیلترها';
+        dropdownMenu.appendChild(clearFiltersItem);
+    });
+    
+    function sortTable(table, columnIndex) {
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        // Remove existing sort indicators
+        const headers = table.querySelectorAll('th');
+        headers.forEach(header => {
+            const icon = header.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-sort text-muted';
+            }
+        });
+        
+        // Add sort indicator to clicked header
+        const clickedHeader = headers[columnIndex];
+        const icon = clickedHeader.querySelector('i');
+        if (icon) {
+            icon.className = 'fas fa-sort-up text-primary';
+        }
+        
+        // Sort rows
+        rows.sort((a, b) => {
+            const aText = a.cells[columnIndex].textContent.trim();
+            const bText = b.cells[columnIndex].textContent.trim();
+            
+            // Try to parse as numbers first
+            const aNum = parseFloat(aText);
+            const bNum = parseFloat(bText);
+            
+            if (!isNaN(aNum) && !isNaN(bNum)) {
+                return aNum - bNum;
+            }
+            
+            // Otherwise sort as strings
+            return aText.localeCompare(bText, 'fa');
+        });
+        
+        // Reorder rows in the table
+        rows.forEach(row => tbody.appendChild(row));
+    }
+</script>
+{% endblock %}

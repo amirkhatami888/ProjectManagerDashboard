@@ -69,7 +69,7 @@
         <div class="col-md-6 mb-4">
             <div class="card h-100">
                 <div class="card-header bg-success text-white">
-                    <h5 class="card-title mb-0">Quick Actions</h5>
+                    <h5 class="card-title mb-0">Quick Actions & Monitoring</h5>
                 </div>
                 <div class="card-body">
                     <div class="list-group">
@@ -109,6 +109,16 @@
                                 <div>
                                     <h6 class="mb-0">Admin Panel</h6>
                                     <small class="text-muted">Access the full admin interface</small>
+                                </div>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'activity_monitor:dashboard' %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-chart-line fs-4 me-3"></i>
+                                <div>
+                                    <h6 class="mb-0">Activity Monitor</h6>
+                                    <small class="text-muted">Monitor system activities and user actions</small>
                                 </div>
                             </div>
                         </a>

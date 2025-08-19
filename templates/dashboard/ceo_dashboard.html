@@ -28,6 +28,24 @@
                                 مشاهده همه پروژه‌ها
                             </a>
                         </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'activity_monitor:dashboard' %}" class="btn btn-lg btn-outline-success w-100">
+                                <i class="fas fa-chart-line mb-2 d-block fs-3"></i>
+                                نظارت بر فعالیت‌ها
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'reporter:reporter_dashboard' %}" class="btn btn-lg btn-outline-info w-100">
+                                <i class="bi bi-file-earmark-bar-graph mb-2 d-block fs-3"></i>
+                                گزارش گیر و جستجو
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'admin:index' %}" class="btn btn-lg btn-outline-warning w-100">
+                                <i class="bi bi-gear mb-2 d-block fs-3"></i>
+                                پنل مدیریت
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

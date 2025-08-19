@@ -100,6 +100,9 @@
             margin-left: 0 !important;
         }
     </style>
+    
+    <!-- Page specific CSS -->
+    {% block extra_css %}{% endblock %}
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     <link rel="stylesheet" href="{% static 'css/rtl.css' %}">
@@ -266,6 +269,27 @@
                             <i class="bi bi-geo-alt"></i> نقشه پیشرفت پروژه‌ها
                         </a>
                     </li>
+                    {% endif %}
+
+                    <!-- Activity Monitor Section -->
+                    {% if user.is_authenticated %}
+                        {% if user.is_admin or user.is_chief_executive or user.is_ceo %}
+                        <li class="nav-item">
+                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseActivityMonitor"
+                               aria-expanded="true" aria-controls="collapseActivityMonitor">
+                                <i class="fas fa-chart-line"></i>
+                                <span>نظارت بر فعالیت‌ها</span>
+                            </a>
+                            <div id="collapseActivityMonitor" class="collapse" aria-labelledby="headingActivityMonitor" data-bs-parent="#accordionSidebar">
+                                <div class="bg-white py-2 collapse-inner rounded">
+                                    <h6 class="collapse-header">نظارت و پایش:</h6>
+                                    <a class="collapse-item" href="{% url 'activity_monitor:dashboard' %}">داشبورد نظارت</a>
+                                    <a class="collapse-item" href="{% url 'activity_monitor:user_activity_report' %}">گزارش فعالیت‌ها</a>
+                                    <a class="collapse-item" href="{% url 'activity_monitor:project_changes' %}">تغییرات</a>
+                                </div>
+                            </div>
+                        </li>
+                        {% endif %}
                     {% endif %}
 
                     <!-- سامانه پیامک Section -->

@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Activity Monitor Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .stats-card.success {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+    
+    .stats-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .stats-card.info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    .activity-item {
+        border-left: 4px solid #667eea;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        background: #f8f9fa;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .activity-item.error {
+        border-left-color: #dc3545;
+    }
+    
+    .activity-item.warning {
+        border-left-color: #ffc107;
+    }
+    
+    .activity-item.success {
+        border-left-color: #28a745;
+    }
+    
+    .session-item {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+    
+    .event-item {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .event-item.resolved {
+        border-left-color: #28a745;
+    }
+    
+    .quick-actions {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .quick-action-btn {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 10px;
+        border: none;
+        border-radius: 8px;
+        background: #667eea;
+        color: white;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-action-btn:hover {
+        background: #5a6fd8;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-chart-line text-primary"></i>
+                Activity Monitor Dashboard
+            </h1>
+            <p class="text-muted">Real-time monitoring of system activities and user actions</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="stats-number">{{ summary.total_activities|default:0 }}</div>
+                <div class="stats-label">Total Activities (7 days)</div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card success">
+                <div class="stats-number">{{ summary.total_logins|default:0 }}</div>
+                <div class="stats-label">User Logins (7 days)</div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card info">
+                <div class="stats-number">{{ summary.total_project_changes|default:0 }}</div>
+                <div class="stats-label">Project Changes (7 days)</div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card warning">
+                <div class="stats-number">{{ summary.total_errors|default:0 }}</div>
+                <div class="stats-label">System Errors (7 days)</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Activities -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-history"></i> Recent Activities
+                    </h6>
+                    <a href="{% url 'activity_monitor:activity_logs' %}" class="btn btn-sm btn-primary">
+                        View All
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_activities %}
+                        {% for activity in recent_activities %}
+                        <div class="activity-item {% if activity.severity == 'HIGH' %}error{% elif activity.severity == 'MEDIUM' %}warning{% else %}success{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ activity.user.username|default:"System" }}</strong>
+                                    <span class="badge badge-{% if activity.activity_type == 'LOGIN' %}success{% elif activity.activity_type == 'ERROR' %}danger{% else %}primary{% endif %} ml-2">
+                                        {{ activity.activity_type }}
+                                    </span>
+                                </div>
+                                <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                            </div>
+                            <p class="mb-0 mt-1">{{ activity.description }}</p>
+                            {% if activity.ip_address %}
+                            <small class="text-muted">IP: {{ activity.ip_address }}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center py-4">No recent activities found.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Today's Project Changes -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-project-diagram"></i> Today's Project Changes
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if today_changes %}
+                        {% for change in today_changes %}
+                        <div class="activity-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ change.project_name }}</strong>
+                                    <span class="badge badge-info ml-2">{{ change.change_type }}</span>
+                                </div>
+                                <small class="text-muted">{{ change.timestamp|timesince }} ago</small>
+                            </div>
+                            <p class="mb-0 mt-1">{{ change.change_description }}</p>
+                            <small class="text-muted">By: {{ change.user.username|default:"System" }}</small>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center py-4">No project changes today.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Active Sessions -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-users"></i> Active Sessions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if active_sessions %}
+                        {% for session in active_sessions %}
+                        <div class="session-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ session.user.username }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ session.ip_address }}</small>
+                                </div>
+                                <div class="text-right">
+                                    <small class="text-muted">{{ session.last_activity|timesince }} ago</small>
+                                    <br>
+                                    <span class="badge badge-success">{{ session.page_views }} views</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center py-4">No active sessions.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Unresolved System Events -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-exclamation-triangle"></i> Unresolved Events
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if unresolved_events %}
+                        {% for event in unresolved_events %}
+                        <div class="event-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ event.title }}</strong>
+                                    <span class="badge badge-{% if event.severity == 'CRITICAL' %}danger{% elif event.severity == 'HIGH' %}warning{% else %}info{% endif %} ml-2">
+                                        {{ event.severity }}
+                                    </span>
+                                </div>
+                                <small class="text-muted">{{ event.timestamp|timesince }} ago</small>
+                            </div>
+                            <p class="mb-0 mt-1">{{ event.description|truncatechars:100 }}</p>
+                            <small class="text-muted">{{ event.component }}</small>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center py-4">No unresolved events.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h6 class="font-weight-bold text-primary mb-3">
+                    <i class="fas fa-bolt"></i> Quick Actions
+                </h6>
+                
+                <a href="{% url 'activity_monitor:activity_logs' %}" class="quick-action-btn">
+                    <i class="fas fa-list"></i> View All Activities
+                </a>
+                
+                <a href="{% url 'activity_monitor:project_changes' %}" class="quick-action-btn">
+                    <i class="fas fa-project-diagram"></i> Project Changes
+                </a>
+                
+                <a href="{% url 'activity_monitor:system_events' %}" class="quick-action-btn">
+                    <i class="fas fa-exclamation-triangle"></i> System Events
+                </a>
+                
+                <a href="{% url 'activity_monitor:analytics' %}" class="quick-action-btn">
+                    <i class="fas fa-chart-bar"></i> Analytics
+                </a>
+                
+                <a href="{% url 'activity_monitor:audit_trail' %}" class="quick-action-btn">
+                    <i class="fas fa-shield-alt"></i> Audit Trail
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh dashboard every 30 seconds
+    setTimeout(function() {
+        location.reload();
+    }, 30000);
+    
+    // Update timestamps every minute
+    setInterval(function() {
+        document.querySelectorAll('.text-muted').forEach(function(element) {
+            if (element.textContent.includes('ago')) {
+                // Update relative time
+                // This is a simple implementation - you might want to use a library like moment.js
+            }
+        });
+    }, 60000);
+</script>
+{% endblock %}

@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Activity Logs - Activity Monitor{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .activity-row {
+        transition: all 0.3s ease;
+    }
+    
+    .activity-row:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .severity-badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+    }
+    
+    .activity-type-badge {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+    }
+    
+    .table-responsive {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-history text-primary"></i>
+                Activity Logs
+            </h1>
+            <p class="text-muted">Monitor all user activities and system events</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card">
+        <form method="get" class="row">
+            <div class="col-md-2">
+                <label for="activity_type" class="form-label">Activity Type</label>
+                <select name="activity_type" id="activity_type" class="form-control">
+                    <option value="">All Types</option>
+                    {% for value, label in activity_types %}
+                    <option value="{{ value }}" {% if filters.activity_type == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="user" class="form-label">User</label>
+                <select name="user" id="user" class="form-control">
+                    <option value="">All Users</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}" {% if filters.user_id == user.id|stringformat:"s" %}selected{% endif %}>
+                        {{ user.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="severity" class="form-label">Severity</label>
+                <select name="severity" id="severity" class="form-control">
+                    <option value="">All Severities</option>
+                    {% for value, label in severities %}
+                    <option value="{{ value }}" {% if filters.severity == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="date_from" class="form-label">From Date</label>
+                <input type="date" name="date_from" id="date_from" class="form-control" 
+                       value="{{ filters.date_from }}">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="date_to" class="form-label">To Date</label>
+                <input type="date" name="date_to" id="date_to" class="form-control" 
+                       value="{{ filters.date_to }}">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" name="search" id="search" class="form-control" 
+                       placeholder="Search..." value="{{ filters.search }}">
+            </div>
+            
+            <div class="col-12 mt-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Filter
+                </button>
+                <a href="{% url 'activity_monitor:activity_logs' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Clear
+                </a>
+                <a href="{% url 'activity_monitor:dashboard' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results -->
+    <div class="card shadow">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-list"></i> Activity Logs
+                {% if page_obj %}
+                <span class="badge badge-primary ml-2">{{ page_obj.paginator.count }} total</span>
+                {% endif %}
+            </h6>
+            <div>
+                <span class="text-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Activity Type</th>
+                        <th>Description</th>
+                        <th>Severity</th>
+                        <th>IP Address</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if page_obj %}
+                        {% for activity in page_obj %}
+                        <tr class="activity-row">
+                            <td>
+                                <small class="text-muted">{{ activity.timestamp|date:"Y-m-d H:i:s" }}</small>
+                                <br>
+                                <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                            </td>
+                            <td>
+                                {% if activity.user %}
+                                    <strong>{{ activity.user.username }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ activity.user.email }}</small>
+                                {% else %}
+                                    <span class="text-muted">System</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge activity-type-badge badge-{% if activity.activity_type == 'LOGIN' %}success{% elif activity.activity_type == 'ERROR' %}danger{% elif activity.activity_type == 'DELETE' %}warning{% else %}primary{% endif %}">
+                                    {{ activity.activity_type }}
+                                </span>
+                            </td>
+                            <td>
+                                <div style="max-width: 300px;">
+                                    {{ activity.description|truncatechars:100 }}
+                                    {% if activity.details %}
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i> Has details
+                                        </small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge severity-badge badge-{% if activity.severity == 'CRITICAL' %}danger{% elif activity.severity == 'HIGH' %}warning{% elif activity.severity == 'MEDIUM' %}info{% else %}secondary{% endif %}">
+                                    {{ activity.severity }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if activity.ip_address %}
+                                    <code>{{ activity.ip_address }}</code>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'activity_monitor:activity_log_detail' activity.id %}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No activity logs found matching your criteria.</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="card-footer">
+            <nav aria-label="Activity logs pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-submit form when filters change
+    document.querySelectorAll('select, input[type="date"]').forEach(function(element) {
+        element.addEventListener('change', function() {
+            if (this.name !== 'search') {
+                this.closest('form').submit();
+            }
+        });
+    });
+    
+    // Search with delay
+    let searchTimeout;
+    document.getElementById('search').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            this.closest('form').submit();
+        }, 500);
+    });
+</script>
+{% endblock %}

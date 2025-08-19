@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تغییرات زیرپروژه‌ها - نظارت بر فعالیت‌ها{% endblock %}
+
+{% block extra_css %}
+<!-- Add Persian Datepicker CSS -->
+<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+<style>
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .change-row {
+        transition: all 0.3s ease;
+    }
+    
+    .change-row:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .change-type-badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+    }
+    
+    .table-responsive {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    /* Date input styling */
+    .datepicker-plot-area {
+        font-family: 'IRANSans', 'Tahoma', sans-serif;
+        z-index: 9999 !important;
+    }
+    
+    .input-group .calendar-icon-container {
+        cursor: pointer;
+        background: transparent;
+        border-left: 0;
+    }
+    
+    .input-group .calendar-icon-container img {
+        width: 20px;
+        height: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-layers text-primary"></i>
+                تغییرات زیرپروژه‌ها
+            </h1>
+            <p class="text-muted">مشاهده تمام تغییرات انجام شده در زیرپروژه‌ها</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card">
+        <form method="get" class="row">
+            <div class="col-md-2">
+                <label for="change_type" class="form-label">نوع تغییر</label>
+                <select name="change_type" id="change_type" class="form-control">
+                    <option value="">همه انواع</option>
+                    {% for value, label in change_types %}
+                    <option value="{{ value }}" {% if filters.change_type == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="user" class="form-label">کاربر</label>
+                <select name="user" id="user" class="form-control">
+                    <option value="">همه کاربران</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}" {% if filters.user_id == user.id|stringformat:"s" %}selected{% endif %}>
+                        {{ user.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="date_from" class="form-label">از تاریخ</label>
+                <div class="input-group">
+                    <input type="text" name="date_from" id="date_from" class="form-control persian-date" 
+                           value="{{ filters.date_from }}" placeholder="انتخاب تاریخ">
+                    <span class="input-group-text calendar-icon-container" data-input="date_from">
+                        <img src="/staticfiles/admin/img/icon-calendar.svg" alt="calendar">
+                    </span>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="date_to" class="form-label">تا تاریخ</label>
+                <div class="input-group">
+                    <input type="text" name="date_to" id="date_to" class="form-control persian-date" 
+                           value="{{ filters.date_to }}" placeholder="انتخاب تاریخ">
+                    <span class="input-group-text calendar-icon-container" data-input="date_to">
+                        <img src="/staticfiles/admin/img/icon-calendar.svg" alt="calendar">
+                    </span>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="search" class="form-label">جستجو</label>
+                <input type="text" name="search" id="search" class="form-control" 
+                       placeholder="جستجو..." value="{{ filters.search }}">
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> فیلتر
+                    </button>
+                    <a href="{% url 'activity_monitor:subproject_changes' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> پاک کردن
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results -->
+    <div class="card shadow">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-list"></i> تغییرات زیرپروژه‌ها
+                {% if page_obj %}
+                <span class="badge badge-primary ml-2">{{ page_obj.paginator.count }} مورد</span>
+                {% endif %}
+            </h6>
+            <div>
+                <a href="{% url 'activity_monitor:dashboard' %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-arrow-left"></i> بازگشت به داشبورد
+                </a>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>تاریخ و زمان</th>
+                        <th>کاربر</th>
+                        <th>نوع تغییر</th>
+                        <th>توضیحات</th>
+                        <th>جزئیات</th>
+                        <th>IP آدرس</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if page_obj %}
+                        {% for activity in page_obj %}
+                        <tr class="change-row">
+                            <td>
+                                <small class="text-muted">{{ activity.timestamp|date:"Y-m-d H:i:s" }}</small>
+                                <br>
+                                <small class="text-muted">{{ activity.timestamp|timesince }} پیش</small>
+                            </td>
+                            <td>
+                                {% if activity.user %}
+                                    <strong>{{ activity.user.username }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ activity.user.email }}</small>
+                                {% else %}
+                                    <span class="text-muted">سیستم</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge change-type-badge badge-{% if activity.activity_type == 'CREATE' %}success{% elif activity.activity_type == 'UPDATE' %}primary{% elif activity.activity_type == 'DELETE' %}danger{% else %}secondary{% endif %}">
+                                    {{ activity.activity_type }}
+                                </span>
+                            </td>
+                            <td>
+                                <div style="max-width: 300px;">
+                                    {{ activity.description|truncatechars:100 }}
+                                </div>
+                            </td>
+                            <td>
+                                {% if activity.details %}
+                                    <button class="btn btn-sm btn-outline-info" data-toggle="modal" data-target="#detailsModal{{ activity.id }}">
+                                        <i class="fas fa-info-circle"></i> جزئیات
+                                    </button>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if activity.ip_address %}
+                                    <code>{{ activity.ip_address }}</code>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        
+                        <!-- Details Modal -->
+                        {% if activity.details %}
+                        <div class="modal fade" id="detailsModal{{ activity.id }}" tabindex="-1" role="dialog">
+                            <div class="modal-dialog modal-lg" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">جزئیات تغییر</h5>
+                                        <button type="button" class="close" data-dismiss="modal">
+                                            <span>&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <pre>{{ activity.details|pprint }}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">هیچ تغییر زیرپروژه‌ای یافت نشد.</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="card-footer">
+            <nav aria-label="Subproject changes pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Persian Datepicker -->
+<script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+
+<script>
+    function initializePersianDatepickers() {
+        $('.persian-date').each(function() {
+            var $input = $(this);
+            var $container = $input.closest('.input-group');
+            var $icon = $container.find('.calendar-icon-container');
+            var datepickerInstance = null;
+            var isOpen = false;
+
+            // Initialize datepicker
+            $input.persianDatepicker({
+                format: 'YYYY/MM/DD',
+                autoClose: true,
+                initialValueType: 'persian',
+                persianDigit: true,
+                observer: true,
+                calendar: {
+                    persian: {
+                        locale: 'fa'
+                    }
+                },
+                onSelect: function() {
+                    isOpen = false;
+                },
+                onHide: function() {
+                    isOpen = false;
+                },
+                onShow: function() {
+                    isOpen = true;
+                }
+            });
+            
+            // Store datepicker instance for later use
+            datepickerInstance = $input.data('datepicker');
+
+            // Toggle datepicker on input click
+            $input.on('click', function(e) {
+                if (!isOpen) {
+                    datepickerInstance.show();
+                    isOpen = true;
+                }
+            });
+
+            // Toggle datepicker on icon click
+            $icon.on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (isOpen) {
+                    datepickerInstance.hide();
+                    isOpen = false;
+                } else {
+                    datepickerInstance.show();
+                    isOpen = true;
+                }
+            });
+
+            // Close datepicker when clicking outside
+            $(document).on('click', function(e) {
+                if (isOpen && 
+                    !$(e.target).closest('.datepicker-plot-area').length && 
+                    !$(e.target).closest('.input-group').is($container)) {
+                    datepickerInstance.hide();
+                    isOpen = false;
+                }
+            });
+        });
+    }
+
+    // Initialize when document is ready
+    $(document).ready(function() {
+        initializePersianDatepickers();
+    });
+
+    // Auto-submit form when filters change (excluding date inputs to prevent conflicts)
+    document.querySelectorAll('select').forEach(function(element) {
+        element.addEventListener('change', function() {
+            this.closest('form').submit();
+        });
+    });
+    
+    // Search with delay
+    let searchTimeout;
+    document.getElementById('search').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            this.closest('form').submit();
+        }, 500);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,914 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تغییرات پروژه‌ها - نظارت بر فعالیت‌ها{% endblock %}
+
+{% block extra_css %}
+<!-- Add Persian Datepicker CSS -->
+<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+<style>
+    /* Professional styling for project changes page */
+    :root {
+        --primary-color: #2c3e50;
+        --secondary-color: #34495e;
+        --accent-color: #3498db;
+        --success-color: #27ae60;
+        --warning-color: #f39c12;
+        --danger-color: #e74c3c;
+        --light-bg: #f8f9fa;
+        --border-color: #e9ecef;
+        --text-muted: #6c757d;
+        --shadow-light: 0 2px 4px rgba(0,0,0,0.1);
+        --shadow-medium: 0 4px 8px rgba(0,0,0,0.15);
+        --shadow-heavy: 0 8px 16px rgba(0,0,0,0.2);
+        --border-radius: 8px;
+        --border-radius-lg: 12px;
+    }
+
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        font-family: 'IRANSans', 'Tahoma', sans-serif;
+    }
+
+    .container-fluid {
+        padding: 2rem 1.5rem;
+    }
+
+    /* Header styling */
+    .page-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        padding: 2rem 0;
+        margin: -2rem -1.5rem 2rem -1.5rem;
+        border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .page-header h1 {
+        font-weight: 700;
+        font-size: 2.2rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .page-header .icon {
+        font-size: 2.5rem;
+        margin-left: 1rem;
+        opacity: 0.9;
+    }
+
+    /* Statistics cards */
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: var(--border-radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow-medium);
+        transition: all 0.3s ease;
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+        pointer-events: none;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-heavy);
+    }
+
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .stats-label {
+        font-size: 1rem;
+        font-weight: 500;
+        opacity: 0.9;
+    }
+
+    /* Filter section */
+    .filter-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-light);
+        border: 1px solid var(--border-color);
+    }
+
+    .filter-card .form-label {
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+    }
+
+    .filter-card .form-control {
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    .filter-card .form-control:focus {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+    }
+
+    .filter-card .btn {
+        border-radius: var(--border-radius);
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .filter-card .btn-primary {
+        background: linear-gradient(135deg, var(--accent-color) 0%, #2980b9 100%);
+        box-shadow: var(--shadow-light);
+    }
+
+    .filter-card .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .filter-card .btn-secondary {
+        background: linear-gradient(135deg, var(--text-muted) 0%, #495057 100%);
+        box-shadow: var(--shadow-light);
+    }
+
+    .filter-card .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    /* Date input styling */
+    .datepicker-plot-area {
+        font-family: 'IRANSans', 'Tahoma', sans-serif;
+        z-index: 9999 !important;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-heavy);
+    }
+    
+    .input-group .calendar-icon-container {
+        cursor: pointer;
+        background: linear-gradient(135deg, var(--accent-color) 0%, #2980b9 100%);
+        border: none;
+        border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        transition: all 0.3s ease;
+    }
+    
+    .input-group .calendar-icon-container:hover {
+        background: linear-gradient(135deg, #2980b9 0%, #1f5f8b 100%);
+        transform: scale(1.05);
+    }
+    
+    .input-group .calendar-icon-container img {
+        width: 18px;
+        height: 18px;
+        filter: brightness(0) invert(1);
+    }
+
+    /* Results table */
+    .results-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-medium);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+
+    .results-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        padding: 1.5rem 2rem;
+        border-bottom: none;
+    }
+
+    .results-header h6 {
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin: 0;
+    }
+
+    .results-header .badge {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        font-size: 0.85rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+    }
+
+    .results-header .btn {
+        border-radius: var(--border-radius);
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        border: 2px solid rgba(255,255,255,0.3);
+        background: transparent;
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .results-header .btn:hover {
+        background: rgba(255,255,255,0.1);
+        border-color: rgba(255,255,255,0.5);
+        transform: translateY(-2px);
+    }
+
+    /* Table styling */
+    .table-responsive {
+        border-radius: 0;
+        overflow: hidden;
+    }
+
+    .table {
+        margin: 0;
+        background: white;
+    }
+
+    .table thead th {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: none;
+        padding: 1rem 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .table tbody td {
+        padding: 1.25rem 1.5rem;
+        border: none;
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: middle;
+    }
+
+    .change-row {
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .change-row:hover {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-light);
+    }
+
+    /* Badge styling */
+    .change-type-badge {
+        font-size: 0.75rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .object-type-badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-weight: 600;
+    }
+
+    /* Value changes */
+    .value-change {
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+    
+    .old-value {
+        color: var(--danger-color);
+        text-decoration: line-through;
+        font-weight: 500;
+    }
+    
+    .new-value {
+        color: var(--success-color);
+        font-weight: 700;
+    }
+
+    .field-name {
+        font-weight: 700;
+        color: var(--primary-color);
+        font-size: 0.9rem;
+    }
+
+    /* Timestamp and user info */
+    .timestamp-info {
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+
+    .timestamp-info strong {
+        color: var(--primary-color);
+        font-weight: 700;
+    }
+
+    .user-info {
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    .user-info strong {
+        color: var(--primary-color);
+        font-weight: 700;
+    }
+
+    /* Description */
+    .change-description {
+        font-size: 0.9rem;
+        line-height: 1.5;
+        color: var(--secondary-color);
+    }
+
+    /* Modal styling */
+    .modal-content {
+        border-radius: var(--border-radius-lg);
+        border: none;
+        box-shadow: var(--shadow-heavy);
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        border: none;
+    }
+
+    .modal-title {
+        font-weight: 700;
+    }
+
+    .modal-header .close {
+        color: white;
+        opacity: 0.8;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal-header .close:hover {
+        opacity: 1;
+    }
+
+    /* Pagination */
+    .card-footer {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-top: 1px solid var(--border-color);
+        padding: 1.5rem 2rem;
+    }
+
+    .pagination .page-link {
+        border: none;
+        color: var(--primary-color);
+        font-weight: 600;
+        padding: 0.75rem 1rem;
+        margin: 0 0.25rem;
+        border-radius: var(--border-radius);
+        transition: all 0.3s ease;
+    }
+
+    .pagination .page-link:hover {
+        background: var(--accent-color);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-light);
+    }
+
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, var(--accent-color) 0%, #2980b9 100%);
+        color: white;
+        box-shadow: var(--shadow-light);
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-muted);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+        opacity: 0.5;
+    }
+
+    .empty-state p {
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 1rem;
+        }
+        
+        .page-header {
+            margin: -1rem -1rem 1.5rem -1rem;
+            padding: 1.5rem 0;
+        }
+        
+        .page-header h1 {
+            font-size: 1.8rem;
+        }
+        
+        .stats-card {
+            margin-bottom: 1rem;
+        }
+        
+        .filter-card {
+            padding: 1.5rem;
+        }
+        
+        .results-header {
+            padding: 1rem 1.5rem;
+        }
+        
+        .table tbody td {
+            padding: 1rem;
+        }
+    }
+
+    /* Loading animation */
+    .loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    .loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        margin: -10px 0 0 -10px;
+        border: 2px solid var(--accent-color);
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Professional Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1>
+                    <i class="fas fa-project-diagram icon"></i>
+                    تغییرات پروژه‌ها
+                </h1>
+                <p>مشاهده تمام تغییرات انجام شده در پروژه‌ها با جزئیات مقادیر قبلی و جدید</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'activity_monitor:dashboard' %}" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left"></i> بازگشت به داشبورد
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    {% if stats %}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card text-center">
+                <div class="stats-number">{{ stats.total_changes }}</div>
+                <div class="stats-label">کل تغییرات</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card text-center">
+                <div class="stats-number">{{ stats.changes_today }}</div>
+                <div class="stats-label">تغییرات امروز</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card text-center">
+                <div class="stats-number">{{ stats.changes_this_week }}</div>
+                <div class="stats-label">تغییرات این هفته</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card text-center">
+                <div class="stats-number">{{ page_obj.paginator.count }}</div>
+                <div class="stats-label">نتایج جاری</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Professional Filters -->
+    <div class="filter-card">
+        <div class="row mb-3">
+            <div class="col-12">
+                <h5 class="mb-0">
+                    <i class="fas fa-filter text-primary"></i>
+                    فیلترهای جستجو
+                </h5>
+            </div>
+        </div>
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="related_object_type" class="form-label">نوع شیء</label>
+                <select name="related_object_type" id="related_object_type" class="form-control">
+                    <option value="">همه انواع</option>
+                    {% for value, label in related_object_types %}
+                    <option value="{{ value }}" {% if filters.related_object_type == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="province" class="form-label">استان</label>
+                <select name="province" id="province" class="form-control">
+                    <option value="">همه استان‌ها</option>
+                    {% for value, label in province_choices %}
+                    <option value="{{ value }}" {% if filters.province == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="date_from" class="form-label">از تاریخ</label>
+                <div class="input-group">
+                    <input type="text" name="date_from" id="date_from" class="form-control persian-date" 
+                           value="{{ filters.date_from }}" placeholder="انتخاب تاریخ">
+                    <span class="input-group-text calendar-icon-container" data-input="date_from">
+                        <img src="/staticfiles/admin/img/icon-calendar.svg" alt="calendar">
+                    </span>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <label for="date_to" class="form-label">تا تاریخ</label>
+                <div class="input-group">
+                    <input type="text" name="date_to" id="date_to" class="form-control persian-date" 
+                           value="{{ filters.date_to }}" placeholder="انتخاب تاریخ">
+                    <span class="input-group-text calendar-icon-container" data-input="date_to">
+                        <img src="/staticfiles/admin/img/icon-calendar.svg" alt="calendar">
+                    </span>
+                </div>
+            </div>
+            
+            <div class="col-12">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> اعمال فیلتر
+                    </button>
+                    <a href="{% url 'activity_monitor:project_changes' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> پاک کردن فیلترها
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Professional Results -->
+    <div class="results-card">
+        <div class="results-header d-flex flex-row align-items-center justify-content-between">
+            <h6>
+                <i class="fas fa-list"></i> لیست تغییرات پروژه‌ها
+                {% if page_obj %}
+                <span class="badge ms-2">{{ page_obj.paginator.count }} مورد</span>
+                {% endif %}
+            </h6>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>تاریخ و زمان</th>
+                        <th>کاربر</th>
+                        <th>پروژه / شیء</th>
+                        <th>نوع تغییر</th>
+                        <th>فیلد</th>
+                        <th>مقادیر</th>
+                        <th>توضیحات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if page_obj %}
+                        {% for change in page_obj %}
+                        <tr class="change-row">
+                            <td>
+                                <div class="timestamp-info">
+                                    <strong>{{ change.timestamp|date:"Y/m/d" }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ change.timestamp|date:"H:i:s" }}</small>
+                                    <br>
+                                    <small class="text-muted">{{ change.timestamp|timesince }} پیش</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="user-info">
+                                    {% if change.user %}
+                                        <strong>{{ change.user.username }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ change.user.email }}</small>
+                                        {% if change.user.first_name or change.user.last_name %}
+                                        <br>
+                                        <small class="text-muted">{{ change.user.first_name }} {{ change.user.last_name }}</small>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">سیستم</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>{{ change.project_name }}</strong>
+                                    {% if change.related_object_type %}
+                                    <br>
+                                    <span class="badge object-type-badge badge-info">
+                                        {{ change.related_object_type }}
+                                    </span>
+                                    {% endif %}
+                                    <br>
+                                    <small class="text-muted">ID: {{ change.project_id }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge change-type-badge badge-{% if change.change_type == 'STATUS' %}warning{% elif change.change_type == 'FINANCIAL' %}success{% elif change.change_type == 'PROGRESS' %}info{% elif change.change_type == 'ASSIGNMENT' %}primary{% elif change.change_type == 'REVIEW' %}secondary{% elif change.change_type == 'FUNDING' %}danger{% elif change.change_type == 'DOCUMENT' %}dark{% elif change.change_type == 'CREATE' %}success{% elif change.change_type == 'UPDATE' %}info{% elif change.change_type == 'DELETE' %}danger{% else %}light{% endif %}">
+                                    {{ change.get_change_type_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if change.field_name %}
+                                    <span class="field-name">{{ change.field_name }}</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if change.old_value or change.new_value %}
+                                    <div class="value-change">
+                                        {% if change.old_value %}
+                                            <div class="old-value">{{ change.old_value|truncatechars:50 }}</div>
+                                        {% endif %}
+                                        {% if change.new_value %}
+                                            <div class="new-value">{{ change.new_value|truncatechars:50 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    {% if change.old_value|length > 50 or change.new_value|length > 50 %}
+                                        <button class="btn btn-sm btn-outline-info mt-1" data-toggle="modal" data-target="#valuesModal{{ change.id }}">
+                                            <i class="fas fa-eye"></i> مشاهده کامل
+                                        </button>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="change-description" style="max-width: 300px;">
+                                    {{ change.change_description|truncatechars:100 }}
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Values Modal -->
+                        {% if change.old_value or change.new_value %}
+                        <div class="modal fade" id="valuesModal{{ change.id }}" tabindex="-1" role="dialog">
+                            <div class="modal-dialog modal-lg" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">مقادیر تغییر - {{ change.project_name }}</h5>
+                                        <button type="button" class="close" data-dismiss="modal">
+                                            <span>&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            {% if change.field_name %}
+                                            <div class="col-12 mb-3">
+                                                <strong>فیلد:</strong> {{ change.field_name }}
+                                            </div>
+                                            {% endif %}
+                                            {% if change.old_value %}
+                                            <div class="col-6">
+                                                <h6 class="text-danger">مقدار قبلی:</h6>
+                                                <pre class="bg-light p-3 rounded">{{ change.old_value }}</pre>
+                                            </div>
+                                            {% endif %}
+                                            {% if change.new_value %}
+                                            <div class="col-6">
+                                                <h6 class="text-success">مقدار جدید:</h6>
+                                                <pre class="bg-light p-3 rounded">{{ change.new_value }}</pre>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        {% if change.change_description %}
+                                        <div class="row mt-3">
+                                            <div class="col-12">
+                                                <h6>توضیحات:</h6>
+                                                <p>{{ change.change_description }}</p>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        <div class="row mt-3">
+                                            <div class="col-12">
+                                                <small class="text-muted">
+                                                    <strong>کاربر:</strong> {% if change.user %}{{ change.user.username }}{% else %}سیستم{% endif %} |
+                                                    <strong>تاریخ:</strong> {{ change.timestamp|date:"Y/m/d H:i:s" }} |
+                                                    <strong>نوع:</strong> {{ change.get_change_type_display }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p>هیچ تغییر پروژه‌ای یافت نشد.</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Professional Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="card-footer">
+            <nav aria-label="Project changes pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Persian Datepicker -->
+<script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+
+<script>
+    function initializePersianDatepickers() {
+        $('.persian-date').each(function() {
+            var $input = $(this);
+            var $container = $input.closest('.input-group');
+            var $icon = $container.find('.calendar-icon-container');
+            var datepickerInstance = null;
+            var isOpen = false;
+
+            // Initialize datepicker
+            $input.persianDatepicker({
+                format: 'YYYY/MM/DD',
+                autoClose: true,
+                initialValueType: 'persian',
+                persianDigit: true,
+                observer: true,
+                calendar: {
+                    persian: {
+                        locale: 'fa'
+                    }
+                },
+                onSelect: function() {
+                    isOpen = false;
+                },
+                onHide: function() {
+                    isOpen = false;
+                },
+                onShow: function() {
+                    isOpen = true;
+                }
+            });
+            
+            // Store datepicker instance for later use
+            datepickerInstance = $input.data('datepicker');
+
+            // Toggle datepicker on input click
+            $input.on('click', function(e) {
+                if (!isOpen) {
+                    datepickerInstance.show();
+                    isOpen = true;
+                }
+            });
+
+            // Toggle datepicker on icon click
+            $icon.on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (isOpen) {
+                    datepickerInstance.hide();
+                    isOpen = false;
+                } else {
+                    datepickerInstance.show();
+                    isOpen = true;
+                }
+            });
+
+            // Close datepicker when clicking outside
+            $(document).on('click', function(e) {
+                if (isOpen && 
+                    !$(e.target).closest('.datepicker-plot-area').length && 
+                    !$(e.target).closest('.input-group').is($container)) {
+                    datepickerInstance.hide();
+                    isOpen = false;
+                }
+            });
+        });
+    }
+
+    // Initialize when document is ready
+    $(document).ready(function() {
+        initializePersianDatepickers();
+        
+        // Add loading animation to form submission
+        $('form').on('submit', function() {
+            $(this).addClass('loading');
+        });
+    });
+
+    // Auto-submit form when filters change (excluding date inputs to prevent conflicts)
+    document.querySelectorAll('select').forEach(function(element) {
+        element.addEventListener('change', function() {
+            this.closest('form').submit();
+        });
+    });
+</script>
+{% endblock %}
