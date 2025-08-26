@@ -971,7 +971,11 @@
                                         آنلاین
                                     </div>
                                     <small class="text-muted">
-                                        {{ user_data.active_session.last_activity|timesince }} پیش
+                                        {% if user_data.time_since_last_activity %}
+                                            {{ user_data.time_since_last_activity|timesince }} پیش
+                                        {% else %}
+                                            فعال
+                                        {% endif %}
                                     </small>
                                 {% else %}
                                     <div class="text-sm">
@@ -1099,6 +1103,94 @@
     setTimeout(function() {
         location.reload();
     }, 30000);
+    
+    // Real-time online status updates
+    function updateOnlineStatus() {
+        fetch('{% url "activity_monitor:api_online_status" %}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateOnlineIndicators(data.online_users);
+                    updateSummaryStats(data.total_online);
+                }
+            })
+            .catch(error => {
+                console.error('Error updating online status:', error);
+            });
+    }
+    
+    function updateOnlineIndicators(onlineUsers) {
+        const table = document.getElementById('userActivityTable');
+        const rows = table.querySelectorAll('tbody tr');
+        
+        // Create a set of online user IDs for quick lookup
+        const onlineUserIds = new Set(onlineUsers.map(u => u.user_id));
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length > 0) {
+                const usernameCell = cells[1]; // Username is in second column
+                const statusCell = cells[0]; // Status is in first column
+                
+                // Extract username from the cell
+                const usernameElement = usernameCell.querySelector('strong');
+                if (usernameElement) {
+                    const username = usernameElement.textContent.trim();
+                    
+                    // Find corresponding online user data
+                    const onlineUser = onlineUsers.find(u => u.username === username);
+                    
+                    if (onlineUser) {
+                        // User is online
+                        updateStatusCell(statusCell, true, onlineUser.time_since_last_activity);
+                    } else {
+                        // User is offline
+                        updateStatusCell(statusCell, false, null);
+                    }
+                }
+            }
+        });
+    }
+    
+    function updateStatusCell(statusCell, isOnline, timeSinceLastActivity) {
+        const indicator = statusCell.querySelector('.online-indicator');
+        const statusText = statusCell.querySelector('.text-sm');
+        const timeText = statusCell.querySelector('small');
+        
+        if (isOnline) {
+            indicator.className = 'online-indicator online';
+            statusText.innerHTML = '<span class="online-indicator online"></span> آنلاین';
+            if (timeSinceLastActivity) {
+                timeText.textContent = `${timeSinceLastActivity} پیش`;
+            } else {
+                timeText.textContent = 'فعال';
+            }
+        } else {
+            indicator.className = 'online-indicator offline';
+            statusText.innerHTML = '<span class="online-indicator offline"></span> آفلاین';
+            timeText.textContent = 'آفلاین';
+        }
+    }
+    
+    function updateSummaryStats(onlineCount) {
+        // Update the online users count in the summary cards
+        const onlineUsersCard = document.querySelector('.border-left-success .h5');
+        if (onlineUsersCard) {
+            onlineUsersCard.textContent = onlineCount;
+        }
+        
+        // Update the active sessions card
+        const activeSessionsCard = document.querySelector('.border-left-warning .h5');
+        if (activeSessionsCard) {
+            activeSessionsCard.textContent = onlineCount;
+        }
+    }
+    
+    // Update online status every 30 seconds
+    setInterval(updateOnlineStatus, 30000);
+    
+    // Initial update
+    updateOnlineStatus();
     
     // Export table to CSV
     function exportTableToCSV() {

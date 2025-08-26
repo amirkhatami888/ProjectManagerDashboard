@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.core.serializers.json import DjangoJSONEncoder
 import json
 import uuid
+from datetime import timedelta
 
 
 class ActivityLog(models.Model):
@@ -137,11 +138,37 @@ class UserSession(models.Model):
     page_views = models.PositiveIntegerField(default=0)
     last_activity = models.DateTimeField(default=timezone.now)
     
+    # Session timeout (15 minutes default)
+    SESSION_TIMEOUT_MINUTES = 15
+    
     class Meta:
         ordering = ['-login_time']
     
     def __str__(self):
         return f"Session {self.session_key} for {self.user}"
+    
+    @property
+    def is_online(self):
+        """Check if user is currently online based on session timeout"""
+        if not self.is_active:
+            return False
+        
+        # Check if session has timed out (15 minutes of inactivity)
+        timeout_threshold = timezone.now() - timedelta(minutes=self.SESSION_TIMEOUT_MINUTES)
+        return self.last_activity > timeout_threshold
+    
+    @property
+    def session_duration(self):
+        """Get current session duration"""
+        if self.logout_time:
+            return self.logout_time - self.login_time
+        else:
+            return timezone.now() - self.login_time
+    
+    @property
+    def time_since_last_activity(self):
+        """Get time since last activity"""
+        return timezone.now() - self.last_activity
 
 
 class SystemEvent(models.Model):

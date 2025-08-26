@@ -27,7 +27,18 @@ class ActivityTrackingMiddleware(MiddlewareMixin):
         if request.user.is_authenticated and hasattr(request, 'session'):
             session_key = request.session.session_key
             if session_key:
+                # Update session activity
+                from .utils import update_session_activity, cleanup_expired_sessions
                 update_session_activity(session_key)
+                
+                # Periodically clean up expired sessions (every 100 requests)
+                if hasattr(request, '_request_count'):
+                    request._request_count += 1
+                else:
+                    request._request_count = 1
+                
+                if request._request_count % 100 == 0:
+                    cleanup_expired_sessions()
         
         # Store request start time for performance tracking
         request._activity_start_time = timezone.now()

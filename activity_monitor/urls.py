@@ -40,4 +40,6 @@ urlpatterns = [
     # API endpoints
     path('api/summary/', views.api_activity_summary, name='api_summary'),
     path('api/recent-activities/', views.api_recent_activities, name='api_recent_activities'),
+    path('api/online-status/', views.api_online_status, name='api_online_status'),
+    path('api/user-activity-summary/', views.api_user_activity_summary, name='api_user_activity_summary'),
 ]

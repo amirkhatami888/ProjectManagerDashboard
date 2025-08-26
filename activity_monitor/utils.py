@@ -362,6 +362,104 @@ def end_user_session(session_key: str) -> bool:
         return False
 
 
+def cleanup_expired_sessions() -> int:
+    """
+    Clean up expired sessions (sessions that have timed out)
+    Returns the number of sessions cleaned up
+    """
+    try:
+        from datetime import timedelta
+        
+        # Get timeout threshold (15 minutes)
+        timeout_threshold = timezone.now() - timedelta(minutes=UserSession.SESSION_TIMEOUT_MINUTES)
+        
+        # Find expired sessions
+        expired_sessions = UserSession.objects.filter(
+            is_active=True,
+            last_activity__lt=timeout_threshold
+        )
+        
+        # Mark them as inactive
+        count = expired_sessions.count()
+        expired_sessions.update(
+            is_active=False,
+            logout_time=timezone.now()
+        )
+        
+        return count
+    
+    except Exception as e:
+        print(f"Error cleaning up expired sessions: {e}")
+        return 0
+
+
+def get_user_online_status(user) -> dict:
+    """
+    Get detailed online status for a user
+    """
+    try:
+        active_session = UserSession.objects.filter(
+            user=user,
+            is_active=True
+        ).first()
+        
+        if not active_session:
+            return {
+                'is_online': False,
+                'last_activity': None,
+                'session_duration': None,
+                'time_since_last_activity': None
+            }
+        
+        return {
+            'is_online': active_session.is_online,
+            'last_activity': active_session.last_activity,
+            'session_duration': active_session.session_duration,
+            'time_since_last_activity': active_session.time_since_last_activity,
+            'session': active_session
+        }
+    
+    except Exception as e:
+        print(f"Error getting user online status: {e}")
+        return {
+            'is_online': False,
+            'last_activity': None,
+            'session_duration': None,
+            'time_since_last_activity': None
+        }
+
+
+def get_all_online_users() -> list:
+    """
+    Get all currently online users
+    """
+    try:
+        # Clean up expired sessions first
+        cleanup_expired_sessions()
+        
+        # Get all active sessions that are still online
+        online_sessions = UserSession.objects.filter(
+            is_active=True
+        ).select_related('user')
+        
+        online_users = []
+        for session in online_sessions:
+            if session.is_online:
+                online_users.append({
+                    'user': session.user,
+                    'session': session,
+                    'last_activity': session.last_activity,
+                    'session_duration': session.session_duration,
+                    'time_since_last_activity': session.time_since_last_activity
+                })
+        
+        return online_users
+    
+    except Exception as e:
+        print(f"Error getting online users: {e}")
+        return []
+
+
 def create_audit_trail(
     operation: str,
     resource_type: str,

@@ -176,6 +176,10 @@ def activity_logs(request):
 def user_activity_report(request):
     """Detailed user activity report showing login times, session duration, etc."""
     
+    # Clean up expired sessions first
+    from .utils import cleanup_expired_sessions, get_user_online_status
+    cleanup_expired_sessions()
+    
     # Get all users with their activity information
     users_with_activity = []
     
@@ -231,8 +235,9 @@ def user_activity_report(request):
             timestamp__gte=year_ago
         ).count()
         
-        # Get current active session
-        active_session = user_sessions.filter(is_active=True).first()
+        # Get current online status using improved detection
+        online_status = get_user_online_status(user)
+        active_session = online_status.get('session')
         
         users_with_activity.append({
             'user': user,
@@ -245,7 +250,9 @@ def user_activity_report(request):
             'logins_month': logins_month,
             'logins_year': logins_year,
             'active_session': active_session,
-            'is_online': active_session is not None,
+            'is_online': online_status['is_online'],
+            'time_since_last_activity': online_status['time_since_last_activity'],
+            'session_duration': online_status['session_duration'],
         })
     
     # Sort by last activity (most recent first)
@@ -814,6 +821,82 @@ def api_recent_activities(request):
         })
     
     return JsonResponse({'activities': data})
+
+
+@login_required
+@user_passes_test(is_admin_or_monitor)
+def api_online_status(request):
+    """API endpoint for real-time online status updates"""
+    try:
+        from .utils import get_all_online_users, cleanup_expired_sessions
+        
+        # Clean up expired sessions
+        cleanup_expired_sessions()
+        
+        # Get all online users
+        online_users = get_all_online_users()
+        
+        # Format response
+        online_data = []
+        for user_data in online_users:
+            online_data.append({
+                'user_id': user_data['user'].id,
+                'username': user_data['user'].username,
+                'last_activity': user_data['last_activity'].isoformat() if user_data['last_activity'] else None,
+                'session_duration': str(user_data['session_duration']),
+                'time_since_last_activity': str(user_data['time_since_last_activity']),
+                'is_online': True
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'online_users': online_data,
+            'total_online': len(online_data),
+            'timestamp': timezone.now().isoformat()
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@user_passes_test(is_admin_or_monitor)
+def api_user_activity_summary(request):
+    """API endpoint for user activity summary"""
+    try:
+        from .utils import get_all_online_users, cleanup_expired_sessions
+        
+        # Clean up expired sessions
+        cleanup_expired_sessions()
+        
+        # Get online users
+        online_users = get_all_online_users()
+        
+        # Get today's activities
+        today = timezone.now().date()
+        today_activities = ActivityLog.objects.filter(
+            timestamp__date=today
+        ).count()
+        
+        # Get total users
+        total_users = User.objects.filter(is_active=True).count()
+        
+        return JsonResponse({
+            'success': True,
+            'total_users': total_users,
+            'online_users': len(online_users),
+            'today_activities': today_activities,
+            'timestamp': timezone.now().isoformat()
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 
 class ActivityLogDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
