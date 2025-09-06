@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}گزارش فعالیت‌های کاربران - نظارت بر فعالیت‌ها{% endblock %}
 
@@ -971,11 +972,7 @@
                                         آنلاین
                                     </div>
                                     <small class="text-muted">
-                                        {% if user_data.time_since_last_activity %}
-                                            {{ user_data.time_since_last_activity|timesince }} پیش
-                                        {% else %}
-                                            فعال
-                                        {% endif %}
+                                        {{ user_data.time_since_last_activity|timesince_timedelta }}
                                     </small>
                                 {% else %}
                                     <div class="text-sm">
