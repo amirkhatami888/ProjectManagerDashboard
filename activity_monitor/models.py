@@ -299,3 +299,116 @@ class AuditTrail(models.Model):
     
     def __str__(self):
         return f"{self.operation} on {self.resource_type}:{self.resource_id} by {self.user}"
+
+
+class GallerySettings(models.Model):
+    """
+    Settings for project gallery configuration
+    """
+    # Gallery display settings
+    max_images_per_page = models.PositiveIntegerField(
+        default=12,
+        verbose_name="حداکثر تعداد تصاویر در هر صفحه",
+        help_text="تعداد تصاویری که در هر صفحه گالری نمایش داده می‌شود"
+    )
+    
+    max_image_size_mb = models.PositiveIntegerField(
+        default=5,
+        verbose_name="حداکثر حجم تصویر (مگابایت)",
+        help_text="حداکثر حجم مجاز برای هر تصویر در مگابایت"
+    )
+    
+    thumbnail_size = models.PositiveIntegerField(
+        default=200,
+        verbose_name="اندازه تصاویر کوچک (پیکسل)",
+        help_text="اندازه تصاویر کوچک در پیکسل"
+    )
+    
+    # Gallery behavior settings
+    enable_image_compression = models.BooleanField(
+        default=True,
+        verbose_name="فشرده‌سازی خودکار تصاویر",
+        help_text="تصاویر به صورت خودکار فشرده می‌شوند"
+    )
+    
+    allowed_image_formats = models.JSONField(
+        default=list,
+        verbose_name="فرمت‌های مجاز تصاویر",
+        help_text="لیست فرمت‌های مجاز برای آپلود تصاویر"
+    )
+    
+    # Gallery display options
+    show_image_titles = models.BooleanField(
+        default=True,
+        verbose_name="نمایش عنوان تصاویر",
+        help_text="عنوان تصاویر در گالری نمایش داده می‌شود"
+    )
+    
+    show_image_descriptions = models.BooleanField(
+        default=True,
+        verbose_name="نمایش توضیحات تصاویر",
+        help_text="توضیحات تصاویر در گالری نمایش داده می‌شود"
+    )
+    
+    show_upload_dates = models.BooleanField(
+        default=True,
+        verbose_name="نمایش تاریخ آپلود",
+        help_text="تاریخ آپلود تصاویر نمایش داده می‌شود"
+    )
+    
+    # Gallery layout settings
+    images_per_row = models.PositiveIntegerField(
+        default=4,
+        verbose_name="تعداد تصاویر در هر ردیف",
+        help_text="تعداد تصاویری که در هر ردیف نمایش داده می‌شود"
+    )
+    
+    enable_lightbox = models.BooleanField(
+        default=True,
+        verbose_name="فعال‌سازی نمایش بزرگ تصاویر",
+        help_text="امکان نمایش تصاویر در اندازه بزرگ فعال است"
+    )
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        verbose_name="آخرین بروزرسانی توسط"
+    )
+    
+    class Meta:
+        verbose_name = "تنظیمات گالری"
+        verbose_name_plural = "تنظیمات گالری"
+    
+    def __str__(self):
+        return f"تنظیمات گالری - {self.max_images_per_page} تصویر در صفحه"
+    
+    def save(self, *args, **kwargs):
+        # Set default allowed formats if not provided
+        if not self.allowed_image_formats:
+            self.allowed_image_formats = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+        super().save(*args, **kwargs)
+    
+    @classmethod
+    def get_settings(cls):
+        """Get the current gallery settings, create default if not exists"""
+        settings_obj, created = cls.objects.get_or_create(
+            id=1,
+            defaults={
+                'max_images_per_page': 12,
+                'max_image_size_mb': 5,
+                'thumbnail_size': 200,
+                'enable_image_compression': True,
+                'allowed_image_formats': ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+                'show_image_titles': True,
+                'show_image_descriptions': True,
+                'show_upload_dates': True,
+                'images_per_row': 4,
+                'enable_lightbox': True,
+            }
+        )
+        return settings_obj

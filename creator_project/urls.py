@@ -55,4 +55,9 @@ urlpatterns = [
     
     # AJAX views
     path('get-program-details/', views.get_program_details, name='get_program_details'),
+    
+    # Gallery URLs
+    path('<int:pk>/gallery/', views.project_gallery, name='project_gallery'),
+    path('<int:project_id>/gallery/upload/', views.upload_gallery_image, name='upload_gallery_image'),
+    path('gallery/delete/<int:image_id>/', views.delete_gallery_image, name='delete_gallery_image'),
 ] 

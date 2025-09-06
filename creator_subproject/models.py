@@ -1051,29 +1051,6 @@ def update_dependent_subprojects(sender, instance, created, **kwargs):
         related.save(update_fields=['updated_at'])
 
 
-class SubProjectGalleryImage(models.Model):
-    """Model for storing gallery images for subprojects directly in database."""
-    subproject = models.ForeignKey(SubProject, on_delete=models.CASCADE, related_name='gallery_images')
-    
-    # Replace ImageField with BinaryField
-    image = models.BinaryField(verbose_name="تصویر")
-    
-    # Optional: Add mime type to help with image rendering
-    image_mime_type = models.CharField(max_length=100, default='image/jpeg')
-    
-    title = models.CharField(max_length=255, blank=True, null=True, verbose_name="عنوان")
-    description = models.TextField(blank=True, null=True, verbose_name="توضیحات")
-    upload_date = models.DateTimeField(auto_now_add=True, verbose_name="تاریخ آپلود")
-    
-    class Meta:
-        verbose_name = "تصویر گالری زیرپروژه"
-        verbose_name_plural = "تصاویر گالری زیرپروژه"
-        ordering = ['-upload_date']  # Newest images first
-    
-    def __str__(self):
-        if self.title:
-            return f"{self.title} - {self.subproject}"
-        return f"تصویر {self.id} - {self.subproject}"
 
 
 class FinancialDocument(models.Model):

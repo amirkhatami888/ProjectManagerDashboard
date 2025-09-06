@@ -37,6 +37,9 @@ urlpatterns = [
     path('audit-trail/<uuid:pk>/', views.AuditTrailDetailView.as_view(), name='audit_trail_detail'),
     path('audit-trail/<uuid:audit_id>/approve/', views.approve_audit_trail, name='approve_audit_trail'),
     
+    # Gallery settings
+    path('gallery-settings/', views.gallery_settings, name='gallery_settings'),
+    
     # API endpoints
     path('api/summary/', views.api_activity_summary, name='api_summary'),
     path('api/recent-activities/', views.api_recent_activities, name='api_recent_activities'),

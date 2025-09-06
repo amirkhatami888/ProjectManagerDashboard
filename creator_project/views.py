@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.http import HttpResponseForbidden, JsonResponse, HttpResponse
-from .models import Project, ALL_Project, ProjectRejectionComment, ProjectFinancialAllocation, FundingRequest
-from .forms import ProjectForm, FundingRequestForm, ExpertFundingReviewForm, ChiefFundingReviewForm, ProjectRejectionForm, ProjectFinancialAllocationForm
+from .models import Project, ALL_Project, ProjectRejectionComment, ProjectFinancialAllocation, FundingRequest, ProjectGalleryImage
+from .forms import ProjectForm, FundingRequestForm, ExpertFundingReviewForm, ChiefFundingReviewForm, ProjectRejectionForm, ProjectFinancialAllocationForm, ProjectGalleryImageForm
 from creator_program.models import Program
 import jdatetime
 from datetime import datetime
@@ -139,10 +139,31 @@ def project_detail(request, pk):
     subprojects = project.get_all_subprojects()
     allocations = project.allocations.all().order_by('-allocation_date')
     
+    # Get gallery images for dashboard display
+    gallery_images = project.gallery_images.all()[:6]  # Show only first 6 images
+    gallery_images_data = []
+    for img in gallery_images:
+        try:
+            if img.image and isinstance(img.image, bytes):
+                import base64
+                base64_image = base64.b64encode(img.image).decode('utf-8')
+                gallery_images_data.append({
+                    'id': img.id,
+                    'title': img.title or f'تصویر {img.id}',
+                    'description': img.description or '',
+                    'mime_type': img.image_mime_type or 'image/jpeg',
+                    'base64_image': base64_image,
+                    'upload_date': img.upload_date
+                })
+        except Exception as e:
+            print(f"Error processing gallery image {img.id}: {e}")
+    
     context = {
         'project': project,
         'subprojects': subprojects,
         'allocations': allocations,
+        'gallery_images': gallery_images_data,
+        'gallery_count': project.gallery_images.count(),
     }
     
     return render(request, 'creator_project/project_detail.html', context)
@@ -1409,4 +1430,138 @@ def subproject_delete(request, subproject_id):
         'update_history_count': update_history_count,
         'expected_confirmation': f"{subproject.sub_project_type} #{subproject.sub_project_number}",
     }
-    return render(request, 'creator_project/subproject_delete_confirm.html', context) 
+    return render(request, 'creator_project/subproject_delete_confirm.html', context)
+
+
+@login_required
+def project_gallery(request, pk):
+    """View gallery images for a project."""
+    from activity_monitor.models import GallerySettings
+    
+    project = get_object_or_404(Project, id=pk)
+    
+    # Get gallery settings
+    gallery_settings = GallerySettings.get_settings()
+    
+    # Get page number for pagination
+    page_number = request.GET.get('page', 1)
+    
+    # Get all images
+    all_images = project.gallery_images.all()
+    
+    # Apply pagination based on settings
+    from django.core.paginator import Paginator
+    paginator = Paginator(all_images, gallery_settings.max_images_per_page)
+    page_obj = paginator.get_page(page_number)
+    
+    # Convert binary images to base64 for HTML rendering
+    image_data = []
+    for img in page_obj:
+        try:
+            # Validate image data
+            if not img.image:
+                print(f"Warning: No image data for image ID {img.id}")
+                continue
+            
+            # Ensure image is bytes
+            if not isinstance(img.image, bytes):
+                print(f"Warning: Image data for ID {img.id} is not in bytes format")
+                continue
+            
+            # Convert binary to base64 for HTML img tag
+            import base64
+            base64_image = base64.b64encode(img.image).decode('utf-8')
+            
+            # Validate base64 encoding
+            if not base64_image:
+                print(f"Warning: Failed to encode image ID {img.id}")
+                continue
+            
+            image_data.append({
+                'id': img.id,
+                'title': img.title or f'تصویر {img.id}',
+                'description': img.description or '',
+                'mime_type': img.image_mime_type or 'image/jpeg',
+                'base64_image': base64_image,
+                'upload_date': img.upload_date
+            })
+        except Exception as e:
+            print(f"Error processing image {img.id}: {e}")
+    
+    # Log total images processed
+    print(f"Total images processed: {len(image_data)}")
+    
+    context = {
+        'project': project,
+        'images': image_data,
+        'page_obj': page_obj,
+        'gallery_settings': gallery_settings,
+        'total_images': all_images.count(),
+    }
+    
+    return render(request, 'creator_project/project_gallery.html', context)
+
+
+@login_required
+def upload_gallery_image(request, project_id):
+    """Upload a new image to the project gallery."""
+    project = get_object_or_404(Project, id=project_id)
+    
+    # Check if user has permission to edit this project
+    if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
+            request.user.is_expert or project.created_by == request.user or
+            (request.user.is_province_manager and project.province in request.user.get_assigned_provinces())):
+        messages.error(request, 'شما اجازه دسترسی به این بخش را ندارید.')
+        return redirect('creator_project:project_detail', pk=project.id)
+    
+    if request.method == 'POST':
+        form = ProjectGalleryImageForm(request.POST, request.FILES)
+        if form.is_valid():
+            # Read the uploaded file as binary
+            uploaded_file = request.FILES['image']
+            binary_data = uploaded_file.read()
+            
+            gallery_image = ProjectGalleryImage(
+                project=project,
+                image=binary_data,
+                image_mime_type=uploaded_file.content_type or 'image/jpeg',
+                title=form.cleaned_data.get('title'),
+                description=form.cleaned_data.get('description')
+            )
+            gallery_image.save()
+            
+            messages.success(request, 'تصویر با موفقیت آپلود شد.')
+            return redirect('creator_project:project_gallery', pk=project.id)
+    else:
+        form = ProjectGalleryImageForm()
+    
+    context = {
+        'project': project,
+        'form': form,
+    }
+    return render(request, 'creator_project/upload_gallery_image.html', context)
+
+
+@login_required
+def delete_gallery_image(request, image_id):
+    """Delete a gallery image."""
+    gallery_image = get_object_or_404(ProjectGalleryImage, id=image_id)
+    project = gallery_image.project
+    
+    # Check if user has permission to delete this image
+    if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
+            request.user.is_expert or project.created_by == request.user or
+            (request.user.is_province_manager and project.province in request.user.get_assigned_provinces())):
+        messages.error(request, 'شما اجازه حذف این تصویر را ندارید.')
+        return redirect('creator_project:project_gallery', pk=project.id)
+    
+    if request.method == 'POST':
+        gallery_image.delete()
+        messages.success(request, 'تصویر با موفقیت حذف شد.')
+        return redirect('creator_project:project_gallery', pk=project.id)
+    
+    context = {
+        'gallery_image': gallery_image,
+        'project': project,
+    }
+    return render(request, 'creator_project/delete_gallery_image_confirm.html', context) 

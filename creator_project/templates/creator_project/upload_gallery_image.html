@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}آپلود تصویر جدید - {{ project.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Professional Upload Page Styling */
+    .upload-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        border-radius: 0;
+        padding: 2.5rem 2rem;
+        border-bottom: 4px solid #3498db;
+    }
+    
+    .project-info-upload {
+        background: #ffffff;
+        color: #2c3e50;
+        border: 1px solid #e0e6ed;
+        border-radius: 0;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border-left: 4px solid #3498db;
+    }
+    
+    .upload-form-card {
+        border: 1px solid #e0e6ed;
+        border-radius: 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .btn-upload {
+        border-radius: 0;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        text-transform: none;
+        letter-spacing: 0;
+        transition: all 0.2s ease;
+        border: 1px solid #3498db;
+    }
+    
+    .btn-upload:hover {
+        transform: none;
+        box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+    }
+    
+    /* Professional Typography */
+    .upload-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    
+    .upload-subtitle {
+        color: #7f8c8d;
+        font-size: 0.95rem;
+    }
+    
+    .project-name-upload {
+        font-weight: 700;
+        color: #2c3e50;
+        font-size: 1.4rem;
+    }
+    
+    .project-details-upload {
+        color: #5d6d7e;
+        font-size: 0.9rem;
+    }
+    
+    .upload-stats {
+        background: #f8f9fa;
+        color: #2c3e50;
+        border: 1px solid #e0e6ed;
+        border-radius: 0;
+        padding: 1.5rem;
+        text-align: center;
+        border-top: 3px solid #3498db;
+    }
+    
+    .stats-number-upload {
+        font-weight: 700;
+        color: #2c3e50;
+        font-size: 1.8rem;
+    }
+    
+    .stats-label-upload {
+        color: #7f8c8d;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Professional Form Styling */
+    .form-label-upload {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.75rem;
+    }
+    
+    .form-control-upload {
+        border: 1px solid #e0e6ed;
+        border-radius: 0;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+    
+    .form-control-upload:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+    }
+    
+    /* Professional Help Card */
+    .help-card {
+        background: #f8f9fa;
+        border: 1px solid #e0e6ed;
+        border-radius: 0;
+        border-top: 3px solid #95a5a6;
+    }
+    
+    .help-title {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 1rem;
+    }
+    
+    .help-list {
+        color: #5d6d7e;
+        font-size: 0.9rem;
+    }
+    
+    .help-list li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .help-list i {
+        color: #27ae60;
+        margin-left: 0.5rem;
+    }
+    
+    /* Professional Card Headers */
+    .card-header-upload {
+        background: #f8f9fa;
+        border-bottom: 1px solid #e0e6ed;
+        padding: 1.25rem 1.5rem;
+        border-radius: 0;
+    }
+    
+    .card-body-upload {
+        padding: 1.5rem;
+    }
+    
+    /* Responsive Professional Design */
+    @media (max-width: 768px) {
+        .upload-header {
+            padding: 1.5rem 1rem;
+        }
+        
+        .project-info-upload {
+            padding: 1.5rem 1rem;
+        }
+        
+        .card-body-upload {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Professional Upload Header -->
+    <div class="upload-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="upload-title mb-2">
+                    <i class="bi bi-cloud-upload me-3"></i>آپلود تصویر جدید
+                </h1>
+                <p class="upload-subtitle mb-0">افزودن تصویر به گالری پروژه</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'creator_project:project_gallery' project.id %}" class="btn btn-outline-light btn-upload">
+                    <i class="bi bi-arrow-right me-2"></i>بازگشت به گالری
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Professional Project Information -->
+    <div class="project-info-upload">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h3 class="project-name-upload mb-3">
+                    <i class="bi bi-building me-3"></i>{{ project.name }}
+                </h3>
+                <div class="row">
+                    <div class="col-md-4">
+                        <p class="project-details-upload mb-2">
+                            <strong>استان:</strong> {{ project.province }}
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="project-details-upload mb-2">
+                            <strong>شهر:</strong> {{ project.city }}
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="project-details-upload mb-0">
+                            <strong>نوع پروژه:</strong> {{ project.project_type }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="upload-stats">
+                    <div class="stats-number-upload">{{ project.gallery_images.count }}</div>
+                    <div class="stats-label-upload">تصویر موجود</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Professional Upload Form -->
+    <div class="upload-form-card">
+        <div class="card-header-upload">
+            <h5 class="help-title mb-0">
+                <i class="bi bi-upload me-2"></i>فرم آپلود تصویر
+            </h5>
+        </div>
+        <div class="card-body-upload">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="form-group mb-4">
+                            <label class="form-label-upload">
+                                <i class="bi bi-image me-2" style="color: #3498db;"></i>انتخاب تصویر
+                            </label>
+                            <input type="file" name="image" class="form-control form-control-upload" accept="image/*" required>
+                            <small class="form-text text-muted">لطفاً یک فایل تصویری انتخاب کنید</small>
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label class="form-label-upload">
+                                <i class="bi bi-tag me-2" style="color: #3498db;"></i>عنوان تصویر (اختیاری)
+                            </label>
+                            <input type="text" name="title" class="form-control form-control-upload" placeholder="عنوان تصویر (اختیاری)">
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label class="form-label-upload">
+                                <i class="bi bi-text-paragraph me-2" style="color: #3498db;"></i>توضیحات (اختیاری)
+                            </label>
+                            <textarea name="description" class="form-control form-control-upload" rows="3" placeholder="توضیحات تصویر (اختیاری)"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-upload">
+                                <i class="bi bi-cloud-upload me-2"></i>آپلود تصویر
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="help-card">
+                            <div class="card-body">
+                                <h6 class="help-title mb-3">
+                                    <i class="bi bi-info-circle me-2"></i>راهنمای آپلود
+                                </h6>
+                                <ul class="help-list list-unstyled">
+                                    <li><i class="bi bi-check-circle"></i>فرمت‌های مجاز: JPEG, PNG, GIF</li>
+                                    <li><i class="bi bi-check-circle"></i>حداکثر حجم: 5 مگابایت</li>
+                                    <li><i class="bi bi-check-circle"></i>کیفیت تصویر: حداقل 800x600 پیکسل</li>
+                                    <li><i class="bi bi-check-circle"></i>تصاویر به صورت خودکار بهینه می‌شوند</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const imageInput = document.querySelector('input[name="image"]');
+        const filePreview = document.createElement('div');
+        filePreview.className = 'mt-3';
+        filePreview.style.cssText = 'border: 1px solid #e0e6ed; border-radius: 0; background: #f8f9fa; padding: 1rem;';
+        imageInput.parentNode.appendChild(filePreview);
+        
+        imageInput.addEventListener('change', function() {
+            filePreview.innerHTML = '';
+            
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                const fileSize = (file.size / 1024 / 1024).toFixed(2); // Size in MB
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    filePreview.innerHTML = `
+                        <div style="text-align: center;">
+                            <h6 style="color: #2c3e50; font-weight: 600; margin-bottom: 1rem;">
+                                <i class="bi bi-image me-2"></i>پیش‌نمایش تصویر
+                            </h6>
+                            <img src="${e.target.result}" style="max-height: 200px; object-fit: contain; border: 1px solid #e0e6ed; border-radius: 0; margin-bottom: 1rem;">
+                            <div style="background: white; padding: 1rem; border: 1px solid #e0e6ed; border-radius: 0;">
+                                <p style="color: #2c3e50; margin-bottom: 0.5rem; font-weight: 500;">
+                                    <i class="bi bi-file-earmark me-2"></i>نام فایل: ${file.name}
+                                </p>
+                                <p style="color: #7f8c8d; margin-bottom: 0; font-size: 0.9rem;">
+                                    <i class="bi bi-hdd me-2"></i>حجم فایل: ${fileSize} مگابایت
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    });
+</script>
+{% endblock %}

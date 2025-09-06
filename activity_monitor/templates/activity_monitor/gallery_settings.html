@@ -1,0 +1,353 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تنظیمات گالری تصاویر{% endblock %}
+
+{% block extra_head %}
+<style>
+    .settings-card {
+        border: 1px solid #e0e6ed;
+        border-radius: 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .settings-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        border-radius: 0;
+        padding: 2rem;
+        border-bottom: 4px solid #3498db;
+    }
+    
+    .settings-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    
+    .settings-subtitle {
+        color: #7f8c8d;
+        font-size: 0.95rem;
+    }
+    
+    .form-section {
+        background: #ffffff;
+        border: 1px solid #e0e6ed;
+        border-radius: 0;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .section-title {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 1.2rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #3498db;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.75rem;
+    }
+    
+    .form-control {
+        border: 1px solid #e0e6ed;
+        border-radius: 0;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #3498db;
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+    }
+    
+    .form-check-input {
+        margin-top: 0.25rem;
+    }
+    
+    .form-check-label {
+        color: #2c3e50;
+        font-weight: 500;
+    }
+    
+    .help-text {
+        color: #7f8c8d;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+    }
+    
+    .btn-save {
+        background: #3498db;
+        border: 1px solid #3498db;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 0;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-save:hover {
+        background: #2980b9;
+        border-color: #2980b9;
+        color: white;
+    }
+    
+    .btn-cancel {
+        background: #95a5a6;
+        border: 1px solid #95a5a6;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 0;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-cancel:hover {
+        background: #7f8c8d;
+        border-color: #7f8c8d;
+        color: white;
+    }
+    
+    .current-settings {
+        background: #f8f9fa;
+        border: 1px solid #e0e6ed;
+        border-radius: 0;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .settings-info {
+        color: #5d6d7e;
+        font-size: 0.9rem;
+    }
+    
+    .checkbox-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Settings Header -->
+    <div class="settings-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="settings-title mb-2">
+                    <i class="bi bi-gear me-3"></i>تنظیمات گالری تصاویر
+                </h1>
+                <p class="settings-subtitle mb-0">پیکربندی تنظیمات نمایش و مدیریت گالری تصاویر پروژه‌ها</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'activity_monitor:dashboard' %}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-right me-2"></i>بازگشت به داشبورد
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Current Settings Info -->
+    <div class="current-settings">
+        <h5 class="settings-title mb-3">
+            <i class="bi bi-info-circle me-2"></i>تنظیمات فعلی
+        </h5>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="settings-info">
+                    <strong>تصاویر در هر صفحه:</strong> {{ settings.max_images_per_page }}
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="settings-info">
+                    <strong>حداکثر حجم:</strong> {{ settings.max_image_size_mb }} مگابایت
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="settings-info">
+                    <strong>اندازه تصاویر کوچک:</strong> {{ settings.thumbnail_size }} پیکسل
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="settings-info">
+                    <strong>تصاویر در هر ردیف:</strong> {{ settings.images_per_row }}
+                </div>
+            </div>
+        </div>
+        {% if settings.updated_by %}
+        <div class="mt-2">
+            <small class="text-muted">
+                آخرین بروزرسانی: {{ settings.updated_at|date:"Y/m/d H:i" }} توسط {{ settings.updated_by.get_full_name|default:settings.updated_by.username }}
+            </small>
+        </div>
+        {% endif %}
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <!-- Display Settings -->
+        <div class="form-section">
+            <h4 class="section-title">
+                <i class="bi bi-eye me-2"></i>تنظیمات نمایش
+            </h4>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">{{ form.max_images_per_page.label }}</label>
+                        {{ form.max_images_per_page }}
+                        <div class="help-text">{{ form.max_images_per_page.help_text }}</div>
+                        {% if form.max_images_per_page.errors %}
+                        <div class="text-danger">
+                            {% for error in form.max_images_per_page.errors %}{{ error }}{% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">{{ form.images_per_row.label }}</label>
+                        {{ form.images_per_row }}
+                        <div class="help-text">{{ form.images_per_row.help_text }}</div>
+                        {% if form.images_per_row.errors %}
+                        <div class="text-danger">
+                            {% for error in form.images_per_row.errors %}{{ error }}{% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">{{ form.thumbnail_size.label }}</label>
+                        {{ form.thumbnail_size }}
+                        <div class="help-text">{{ form.thumbnail_size.help_text }}</div>
+                        {% if form.thumbnail_size.errors %}
+                        <div class="text-danger">
+                            {% for error in form.thumbnail_size.errors %}{{ error }}{% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">{{ form.max_image_size_mb.label }}</label>
+                        {{ form.max_image_size_mb }}
+                        <div class="help-text">{{ form.max_image_size_mb.help_text }}</div>
+                        {% if form.max_image_size_mb.errors %}
+                        <div class="text-danger">
+                            {% for error in form.max_image_size_mb.errors %}{{ error }}{% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Display Options -->
+        <div class="form-section">
+            <h4 class="section-title">
+                <i class="bi bi-toggle-on me-2"></i>گزینه‌های نمایش
+            </h4>
+            
+            <div class="checkbox-group">
+                <div class="form-check">
+                    {{ form.show_image_titles }}
+                    <label class="form-check-label" for="{{ form.show_image_titles.id_for_label }}">
+                        {{ form.show_image_titles.label }}
+                    </label>
+                    <div class="help-text">{{ form.show_image_titles.help_text }}</div>
+                </div>
+                
+                <div class="form-check">
+                    {{ form.show_image_descriptions }}
+                    <label class="form-check-label" for="{{ form.show_image_descriptions.id_for_label }}">
+                        {{ form.show_image_descriptions.label }}
+                    </label>
+                    <div class="help-text">{{ form.show_image_descriptions.help_text }}</div>
+                </div>
+                
+                <div class="form-check">
+                    {{ form.show_upload_dates }}
+                    <label class="form-check-label" for="{{ form.show_upload_dates.id_for_label }}">
+                        {{ form.show_upload_dates.label }}
+                    </label>
+                    <div class="help-text">{{ form.show_upload_dates.help_text }}</div>
+                </div>
+                
+                <div class="form-check">
+                    {{ form.enable_lightbox }}
+                    <label class="form-check-label" for="{{ form.enable_lightbox.id_for_label }}">
+                        {{ form.enable_lightbox.label }}
+                    </label>
+                    <div class="help-text">{{ form.enable_lightbox.help_text }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- File Settings -->
+        <div class="form-section">
+            <h4 class="section-title">
+                <i class="bi bi-file-earmark-image me-2"></i>تنظیمات فایل
+            </h4>
+            
+            <div class="form-group">
+                <label class="form-label">{{ form.enable_image_compression.label }}</label>
+                <div class="form-check">
+                    {{ form.enable_image_compression }}
+                    <label class="form-check-label" for="{{ form.enable_image_compression.id_for_label }}">
+                        {{ form.enable_image_compression.label }}
+                    </label>
+                </div>
+                <div class="help-text">{{ form.enable_image_compression.help_text }}</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">{{ form.allowed_image_formats.label }}</label>
+                <div class="checkbox-group">
+                    {% for choice in form.allowed_image_formats %}
+                    <div class="form-check">
+                        {{ choice.tag }}
+                        <label class="form-check-label" for="{{ choice.id_for_label }}">
+                            {{ choice.choice_label }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="help-text">{{ form.allowed_image_formats.help_text }}</div>
+                {% if form.allowed_image_formats.errors %}
+                <div class="text-danger">
+                    {% for error in form.allowed_image_formats.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'activity_monitor:dashboard' %}" class="btn btn-cancel">
+                <i class="bi bi-arrow-left me-2"></i>بازگشت
+            </a>
+            <button type="submit" class="btn btn-save">
+                <i class="bi bi-check-circle me-2"></i>ذخیره تنظیمات
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

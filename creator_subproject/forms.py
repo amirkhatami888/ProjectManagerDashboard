@@ -2,7 +2,7 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 from .models import (
     SubProject, SubProjectRejectionComment, SituationReport, 
-    ProjectSituation, AdjustmentSituationReport, SubProjectGalleryImage,
+    ProjectSituation, AdjustmentSituationReport,
     FinancialDocument, Payment, DocumentFile, FINANCIAL_DOCUMENT_TYPES
 )
 from .utils import jalali_to_gregorian
@@ -340,36 +340,6 @@ class AdjustmentSituationReportForm(forms.ModelForm):
         except ValueError:
             raise forms.ValidationError('تاریخ نامعتبر است.') 
 
-class SubProjectGalleryImageForm(forms.ModelForm):
-    """Form for uploading gallery images for subprojects."""
-    image = forms.ImageField(
-        label="تصویر",
-        help_text="لطفاً یک تصویر انتخاب کنید",
-        widget=forms.FileInput(attrs={'class': 'form-control'})
-    )
-
-    class Meta:
-        model = SubProjectGalleryImage
-        fields = ['title', 'description']
-        widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'عنوان تصویر (اختیاری)'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'توضیحات تصویر (اختیاری)', 'rows': 3}),
-        }
-
-    def clean_image(self):
-        """Validate image file."""
-        image = self.cleaned_data.get('image')
-        if image:
-            # Optional: Add image validation
-            if image.size > 5 * 1024 * 1024:  # 5MB limit
-                raise forms.ValidationError("حجم تصویر نباید بیشتر از 5 مگابایت باشد.")
-            
-            # Optional: Check image type
-            valid_types = ['image/jpeg', 'image/png', 'image/gif']
-            if image.content_type not in valid_types:
-                raise forms.ValidationError("فقط فایل های تصویری با فرمت JPEG, PNG و GIF مجاز هستند.")
-        
-        return image
 
 class FinancialDocumentForm(forms.ModelForm):
     # Persian date pickers for dates
@@ -403,15 +373,15 @@ class FinancialDocumentForm(forms.ModelForm):
         })
     )
     
-    # Multiple file upload field
-    files = MultipleFileField(
-        label=_('مدارک'),
-        required=False,
-        widget=MultipleFileInput(attrs={
-            'class': 'form-control',
-            'accept': '.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif'
-        })
-    )
+    # Multiple file upload field - DISABLED
+    # files = MultipleFileField(
+    #     label=_('مدارک'),
+    #     required=False,
+    #     widget=MultipleFileInput(attrs={
+    #         'class': 'form-control',
+    #         'accept': '.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif'
+    #     })
+    # )
     
     class Meta:
         model = FinancialDocument

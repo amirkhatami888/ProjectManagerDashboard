@@ -14,9 +14,10 @@ import jdatetime
 
 from .models import (
     ActivityLog, ProjectChangeLog, UserSession, SystemEvent, 
-    ActivityDashboard, AuditTrail
+    ActivityDashboard, AuditTrail, GallerySettings
 )
 from .utils import get_activity_summary, update_daily_dashboard
+from .forms import GallerySettingsForm
 
 # Import the custom user model
 from django.apps import apps
@@ -927,3 +928,43 @@ class AuditTrailDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     
     def test_func(self):
         return is_admin_or_monitor(self.request.user)
+
+
+@login_required
+@user_passes_test(is_admin_or_monitor)
+def gallery_settings(request):
+    """View for configuring gallery settings"""
+    settings_obj = GallerySettings.get_settings()
+    
+    if request.method == 'POST':
+        form = GallerySettingsForm(request.POST, instance=settings_obj)
+        if form.is_valid():
+            settings_obj = form.save(commit=False)
+            settings_obj.updated_by = request.user
+            settings_obj.save()
+            
+            # Log the settings change
+            ActivityLog.objects.create(
+                user=request.user,
+                activity_type='UPDATE',
+                description='تنظیمات گالری بروزرسانی شد',
+                details={
+                    'settings_changed': list(form.changed_data),
+                    'new_values': {field: form.cleaned_data[field] for field in form.changed_data}
+                },
+                is_system_event=True,
+                severity='LOW'
+            )
+            
+            messages.success(request, 'تنظیمات گالری با موفقیت بروزرسانی شد.')
+            return redirect('activity_monitor:gallery_settings')
+    else:
+        form = GallerySettingsForm(instance=settings_obj)
+    
+    context = {
+        'form': form,
+        'settings': settings_obj,
+        'title': 'تنظیمات گالری تصاویر',
+    }
+    
+    return render(request, 'activity_monitor/gallery_settings.html', context)

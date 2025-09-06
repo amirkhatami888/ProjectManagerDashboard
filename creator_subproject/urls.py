@@ -40,11 +40,6 @@ urlpatterns = [
     path('subproject/<int:subproject_id>/adjustment-allocations/', views.payments, name='adjustment_allocations'),
     path('subproject/<int:subproject_id>/adjustment-allocation/add/', views.add_payment, name='add_adjustment_allocation'),
     
-    # Gallery related URLs
-    path('subproject/<int:pk>/gallery/', views.subproject_gallery, name='subproject_gallery'),
-    path('subproject/<int:subproject_id>/gallery/upload/', views.upload_gallery_image, name='upload_gallery_image'),
-    path('gallery/image/<int:image_id>/delete/', views.delete_gallery_image, name='delete_gallery_image'),
-    
     # Project situation URLs
     path('project/<int:project_id>/situations/', views.project_situations_list, name='project_situations_list'),
     path('project/<int:project_id>/situation/create/', views.project_situation_create, name='project_situation_create'),

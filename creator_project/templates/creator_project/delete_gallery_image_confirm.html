@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load gallery_tags %}
+
+{% block title %}حذف تصویر{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h2>حذف تصویر</h2>
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3>پروژه: {{ project.name }}</h3>
+                <a href="{% url 'creator_project:project_gallery' project.id %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-right"></i> بازگشت به گالری
+                </a>
+            </div>
+            <hr>
+            
+            <div class="alert alert-warning">
+                <h4>هشدار!</h4>
+                <p>آیا از حذف این تصویر اطمینان دارید؟ این عمل قابل بازگشت نیست.</p>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>جزئیات تصویر:</h5>
+                    <p><strong>عنوان:</strong> {{ gallery_image.title|default:'بدون عنوان' }}</p>
+                    {% if gallery_image.description %}
+                        <p><strong>توضیحات:</strong> {{ gallery_image.description }}</p>
+                    {% endif %}
+                    <p><strong>تاریخ آپلود:</strong> {{ gallery_image.upload_date|date:"Y/m/d" }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>پیش‌نمایش تصویر:</h5>
+                    <img src="data:{{ gallery_image.image_mime_type }};base64,{{ gallery_image.image|project_base64_encode }}" 
+                         class="img-fluid" style="max-height: 200px; object-fit: contain;" 
+                         alt="{{ gallery_image.title|default:'تصویر پروژه' }}">
+                </div>
+            </div>
+            
+            <hr>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> حذف تصویر
+                    </button>
+                    <a href="{% url 'creator_project:project_gallery' project.id %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> انصراف
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

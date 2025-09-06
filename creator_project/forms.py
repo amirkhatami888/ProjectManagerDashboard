@@ -1,5 +1,5 @@
 from django import forms
-from .models import Project, FundingRequest
+from .models import Project, FundingRequest, ProjectGalleryImage
 from creator_program.models import Program
 from .models import ProjectFinancialAllocation
 
@@ -383,3 +383,35 @@ class ProjectFinancialAllocationForm(forms.ModelForm):
             except (ValueError, TypeError):
                 raise forms.ValidationError('تاریخ تخصیص نامعتبر است.')
         return None
+
+
+class ProjectGalleryImageForm(forms.ModelForm):
+    """Form for uploading gallery images for projects."""
+    image = forms.ImageField(
+        label="تصویر",
+        help_text="لطفاً یک تصویر انتخاب کنید",
+        widget=forms.FileInput(attrs={'class': 'form-control'})
+    )
+
+    class Meta:
+        model = ProjectGalleryImage
+        fields = ['title', 'description']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'عنوان تصویر (اختیاری)'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'توضیحات تصویر (اختیاری)', 'rows': 3}),
+        }
+
+    def clean_image(self):
+        """Validate image file."""
+        image = self.cleaned_data.get('image')
+        if image:
+            # Optional: Add image validation
+            if image.size > 5 * 1024 * 1024:  # 5MB limit
+                raise forms.ValidationError("حجم تصویر نباید بیشتر از 5 مگابایت باشد.")
+            
+            # Optional: Check image type
+            valid_types = ['image/jpeg', 'image/png', 'image/gif']
+            if image.content_type not in valid_types:
+                raise forms.ValidationError("فقط فایل های تصویری با فرمت JPEG, PNG و GIF مجاز هستند.")
+        
+        return image

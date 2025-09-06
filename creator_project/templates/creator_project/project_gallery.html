@@ -1,0 +1,521 @@
+{% extends 'base.html' %}
+{% load jalali_tags %}
+{% load static %}
+
+{% block title %}گالری تصاویر پروژه {{ project.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Professional Business Styling */
+    .project-gallery-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        border-radius: 0;
+        padding: 2.5rem 2rem;
+        margin-bottom: 0;
+        border-bottom: 4px solid #3498db;
+    }
+    
+    .project-info-card {
+        background: #ffffff;
+        color: #2c3e50;
+        border: 1px solid #e0e6ed;
+        border-radius: 0;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border-left: 4px solid #3498db;
+    }
+    
+    .gallery-image-card {
+        border: 1px solid #e0e6ed;
+        border-radius: 0;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        transition: all 0.2s ease;
+        background: white;
+    }
+    
+    .gallery-image-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+        border-color: #3498db;
+    }
+    
+    .gallery-image-card img {
+        transition: all 0.2s ease;
+    }
+    
+    .gallery-image-card:hover img {
+        transform: scale(1.02);
+    }
+    
+    .image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(44, 62, 80, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: all 0.2s ease;
+    }
+    
+    .gallery-image-card:hover .image-overlay {
+        opacity: 1;
+    }
+    
+    .image-overlay i {
+        font-size: 2.5rem;
+        color: white;
+    }
+    
+    .project-stats {
+        background: #f8f9fa;
+        color: #2c3e50;
+        border: 1px solid #e0e6ed;
+        border-radius: 0;
+        padding: 1.5rem;
+        text-align: center;
+        margin-bottom: 2rem;
+        border-top: 3px solid #3498db;
+    }
+    
+    .btn-gallery {
+        border-radius: 0;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        text-transform: none;
+        letter-spacing: 0;
+        transition: all 0.2s ease;
+        border: 1px solid #3498db;
+    }
+    
+    .btn-gallery:hover {
+        transform: none;
+        box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+    }
+    
+    .empty-gallery {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: #f8f9fa;
+        border: 1px solid #e0e6ed;
+        border-radius: 0;
+        margin: 2rem 0;
+        border-top: 3px solid #95a5a6;
+    }
+    
+    .empty-gallery i {
+        font-size: 3rem;
+        color: #95a5a6;
+        margin-bottom: 1rem;
+    }
+    
+    /* Professional Typography */
+    .gallery-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    
+    .gallery-subtitle {
+        color: #7f8c8d;
+        font-size: 0.95rem;
+    }
+    
+    .project-name {
+        font-weight: 700;
+        color: #2c3e50;
+        font-size: 1.4rem;
+    }
+    
+    .project-details {
+        color: #5d6d7e;
+        font-size: 0.9rem;
+    }
+    
+    .stats-number {
+        font-weight: 700;
+        color: #2c3e50;
+        font-size: 1.8rem;
+    }
+    
+    .stats-label {
+        color: #7f8c8d;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Professional Card Styling */
+    .professional-card {
+        border: 1px solid #e0e6ed;
+        border-radius: 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    
+    .professional-card-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #e0e6ed;
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .professional-card-body {
+        padding: 1.5rem;
+    }
+    
+    /* Image Info Styling */
+    .image-title {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.95rem;
+    }
+    
+    .image-description {
+        color: #7f8c8d;
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+    
+    .image-date {
+        color: #95a5a6;
+        font-size: 0.8rem;
+    }
+    
+    /* Professional Footer */
+    .gallery-footer {
+        background: #f8f9fa;
+        border-top: 1px solid #e0e6ed;
+        padding: 1.5rem;
+    }
+    
+    .footer-title {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 1rem;
+    }
+    
+    .footer-detail {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+    }
+    
+    /* Responsive Professional Design */
+    @media (max-width: 768px) {
+        .project-gallery-header {
+            padding: 1.5rem 1rem;
+        }
+        
+        .project-info-card {
+            padding: 1.5rem 1rem;
+        }
+        
+        .professional-card-body {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Professional Gallery Header -->
+    <div class="project-gallery-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="gallery-title mb-2">
+                    <i class="bi bi-images me-3"></i>گالری تصاویر پروژه
+                </h1>
+                <p class="gallery-subtitle mb-0">مدیریت و مشاهده تصاویر پروژه</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'creator_project:upload_gallery_image' project.id %}" class="btn btn-primary btn-gallery me-2">
+                    <i class="bi bi-cloud-upload me-2"></i>آپلود تصویر
+                </a>
+                <a href="{% url 'creator_project:project_detail' project.id %}" class="btn btn-outline-light btn-gallery">
+                    <i class="bi bi-arrow-right me-2"></i>بازگشت
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Professional Project Information -->
+    <div class="project-info-card">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h3 class="project-name mb-3">
+                    <i class="bi bi-building me-3"></i>{{ project.name }}
+                </h3>
+                <div class="row">
+                    <div class="col-md-4">
+                        <p class="project-details mb-2">
+                            <strong>استان:</strong> {{ project.province }}
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="project-details mb-2">
+                            <strong>شهر:</strong> {{ project.city }}
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="project-details mb-0">
+                            <strong>نوع پروژه:</strong> {{ project.project_type }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="project-stats">
+                    <div class="stats-number">{{ images|length }}</div>
+                    <div class="stats-label">تصویر آپلود شده</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Professional Gallery Container -->
+    <div class="professional-card">
+        <div class="professional-card-header">
+            <h5 class="footer-title mb-0">
+                <i class="bi bi-images me-2"></i>تصاویر پروژه
+            </h5>
+        </div>
+        <div class="professional-card-body">
+            {% if images %}
+                <div class="row">
+                    {% for image in images %}
+                        <div class="col-lg-{% if gallery_settings.images_per_row == 1 %}12{% elif gallery_settings.images_per_row == 2 %}6{% elif gallery_settings.images_per_row == 3 %}4{% elif gallery_settings.images_per_row == 4 %}3{% elif gallery_settings.images_per_row == 5 %}2{% else %}3{% endif %} col-md-6 mb-4">
+                            <div class="gallery-image-card position-relative">
+                                <div class="position-relative">
+                                    <img src="data:{{ image.mime_type }};base64,{{ image.base64_image }}" 
+                                         class="card-img-top" 
+                                         alt="{{ image.title|default:'تصویر پروژه' }}" 
+                                         style="height: 250px; object-fit: cover; cursor: pointer;">
+                                    <div class="image-overlay">
+                                        <i class="bi bi-zoom-in"></i>
+                                    </div>
+                                </div>
+                                <div class="card-body p-3">
+                                    <h6 class="image-title mb-2">
+                                        <i class="bi bi-image me-2"></i>{{ image.title|default:'بدون عنوان' }}
+                                    </h6>
+                                    {% if image.description %}
+                                        <p class="image-description mb-2">{{ image.description|truncatechars:80 }}</p>
+                                    {% endif %}
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="image-date">
+                                            <i class="bi bi-calendar me-1"></i>{{ image.upload_date|to_jalali:"%Y/%m/%d" }}
+                                        </small>
+                                        <form method="post" action="{% url 'creator_project:delete_gallery_image' image.id %}" 
+                                              onsubmit="return confirm('آیا از حذف این تصویر اطمینان دارید؟');" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <div class="d-flex justify-content-center mt-4">
+                    <nav aria-label="صفحه‌بندی گالری">
+                        <ul class="pagination">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1" aria-label="صفحه اول">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="صفحه قبلی">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="صفحه بعدی">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="صفحه آخر">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                
+                <!-- Pagination Info -->
+                <div class="text-center mt-3">
+                    <p class="text-muted">
+                        نمایش {{ page_obj.start_index }} تا {{ page_obj.end_index }} از {{ total_images }} تصویر
+                    </p>
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="empty-gallery">
+                    <i class="bi bi-image"></i>
+                    <h4 class="text-muted mb-3">هنوز تصویری آپلود نشده است</h4>
+                    <p class="text-muted mb-4">برای شروع، اولین تصویر پروژه خود را آپلود کنید</p>
+                    <a href="{% url 'creator_project:upload_gallery_image' project.id %}" class="btn btn-primary btn-gallery">
+                        <i class="bi bi-cloud-upload me-2"></i>آپلود اولین تصویر
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Professional Gallery Footer -->
+    <div class="gallery-footer">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="professional-card">
+                    <div class="professional-card-header">
+                        <h6 class="footer-title mb-0">
+                            <i class="bi bi-info-circle me-2"></i>اطلاعات پروژه
+                        </h6>
+                    </div>
+                    <div class="professional-card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <p class="footer-detail mb-2">
+                                    <strong>وضعیت:</strong>
+                                </p>
+                                <p class="mb-0">
+                                    {% if project.is_approved %}
+                                        <span class="badge bg-success">تایید شده</span>
+                                    {% elif project.is_submitted %}
+                                        <span class="badge bg-warning">در انتظار تایید</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">پیش‌نویس</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="col-6">
+                                <p class="footer-detail mb-2">
+                                    <strong>پیشرفت فیزیکی:</strong>
+                                </p>
+                                <p class="mb-0">
+                                    <span class="badge bg-primary">{{ project.physical_progress }}%</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="professional-card">
+                    <div class="professional-card-header">
+                        <h6 class="footer-title mb-0">
+                            <i class="bi bi-images me-2"></i>آمار گالری
+                        </h6>
+                    </div>
+                    <div class="professional-card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <p class="footer-detail mb-2">
+                                    <strong>تعداد تصاویر:</strong>
+                                </p>
+                                <p class="mb-0">
+                                    <span class="badge bg-info">{{ images|length }}</span>
+                                </p>
+                            </div>
+                            <div class="col-6">
+                                <p class="footer-detail mb-2">
+                                    <strong>آخرین آپلود:</strong>
+                                </p>
+                                <p class="mb-0">
+                                    {% if images %}
+                                        <span class="badge bg-secondary">{{ images.0.upload_date|to_jalali:"%Y/%m/%d" }}</span>
+                                    {% else %}
+                                        <span class="badge bg-light text-dark">-</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Professional Image Lightbox Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius: 0; border: 1px solid #e0e6ed;">
+            <div class="modal-header" style="background: #f8f9fa; border-bottom: 1px solid #e0e6ed;">
+                <h5 class="modal-title" id="imageModalLabel" style="color: #2c3e50; font-weight: 600;">
+                    <i class="bi bi-image me-2"></i>نمایش تصویر
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <img src="" id="modalImage" class="img-fluid rounded" alt="تصویر پروژه" style="max-height: 500px; border: 1px solid #e0e6ed;">
+                <div class="mt-4">
+                    <h5 id="modalTitle" style="color: #2c3e50; font-weight: 600;"></h5>
+                    <p id="modalDescription" style="color: #7f8c8d; font-size: 0.95rem;"></p>
+                    <small id="modalDate" style="color: #95a5a6; font-size: 0.85rem;"></small>
+                </div>
+            </div>
+            <div class="modal-footer" style="background: #f8f9fa; border-top: 1px solid #e0e6ed;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 0;">
+                    <i class="bi bi-x-circle me-2"></i>بستن
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add click event to all gallery images
+        const galleryImages = document.querySelectorAll('.card-img-top');
+        const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+        
+        galleryImages.forEach(image => {
+            image.addEventListener('click', function() {
+                const card = this.closest('.card');
+                const title = card.querySelector('.card-title').textContent;
+                const description = card.querySelector('.card-text')?.textContent || '';
+                const date = card.querySelector('small.text-muted').textContent;
+                const imgSrc = this.src;
+                
+                document.getElementById('modalImage').src = imgSrc;
+                document.getElementById('modalTitle').textContent = title;
+                document.getElementById('modalDescription').textContent = description.replace('تاریخ آپلود:', '').trim();
+                document.getElementById('modalDate').textContent = date;
+                
+                imageModal.show();
+            });
+        });
+    });
+</script>
+{% endblock %}

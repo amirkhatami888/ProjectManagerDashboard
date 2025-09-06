@@ -23,12 +23,12 @@ from creator_project.models import Project, ALL_Project
 from accounts.models import User
 from .models import (
     SubProject, SituationReport, SubProjectRejectionComment, 
-    ProjectSituation, SubProjectUpdateHistory, AdjustmentSituationReport, SubProjectGalleryImage,
+    ProjectSituation, SubProjectUpdateHistory, AdjustmentSituationReport,
     FinancialDocument, Payment, DocumentFile, FINANCIAL_DOCUMENT_TYPES
 )
 from .forms import (
     SubProjectForm, SubProjectRejectionForm, SituationReportForm, 
-    ProjectSituationForm, AdjustmentSituationReportForm, SubProjectGalleryImageForm,
+    ProjectSituationForm, AdjustmentSituationReportForm,
     FinancialDocumentForm, PaymentForm, DocumentFileForm
 )
 from .utils import jalali_to_gregorian, gregorian_to_jalali
@@ -1499,111 +1499,6 @@ def calculate_dynamic_dates_backend(subprojects, today):
     
     return processed_subprojects
 
-@login_required
-def subproject_gallery(request, pk):
-    """View gallery images for a subproject."""
-    subproject = get_object_or_404(SubProject, id=pk)
-    images = subproject.gallery_images.all()
-    
-    # Convert binary images to base64 for HTML rendering
-    image_data = []
-    for img in images:
-        try:
-            # Validate image data
-            if not img.image:
-                print(f"Warning: No image data for image ID {img.id}")
-                continue
-            
-            # Ensure image is bytes
-            if not isinstance(img.image, bytes):
-                print(f"Warning: Image data for ID {img.id} is not in bytes format")
-                continue
-            
-            # Convert binary to base64 for HTML img tag
-            base64_image = base64.b64encode(img.image).decode('utf-8')
-            
-            # Validate base64 encoding
-            if not base64_image:
-                print(f"Warning: Failed to encode image ID {img.id}")
-                continue
-            
-            image_data.append({
-                'id': img.id,
-                'title': img.title or f'تصویر {img.id}',
-                'description': img.description or '',
-                'mime_type': img.image_mime_type or 'image/jpeg',
-                'base64_image': base64_image
-            })
-        except Exception as e:
-            print(f"Error processing image {img.id}: {e}")
-    
-    # Log total images processed
-    print(f"Total images processed: {len(image_data)}")
-    
-    context = {
-        'subproject': subproject,
-        'images': image_data,
-    }
-    
-    return render(request, 'creator_subproject/subproject_gallery.html', context)
-
-@login_required
-def upload_gallery_image(request, subproject_id):
-    """Upload a new image to the subproject gallery."""
-    subproject = get_object_or_404(SubProject, id=subproject_id)
-    
-    # Check if user has permission to edit this subproject
-    if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
-            request.user.is_expert or subproject.created_by == request.user or
-            (request.user.is_province_manager and subproject.project.province in request.user.get_assigned_provinces())):
-        messages.error(request, 'شما اجازه دسترسی به این بخش را ندارید.')
-        return redirect('creator_subproject:subproject_detail', pk=subproject.id)
-    
-    if request.method == 'POST':
-        form = SubProjectGalleryImageForm(request.POST, request.FILES)
-        if form.is_valid():
-            # Read the uploaded file as binary
-            uploaded_file = request.FILES['image']
-            binary_data = uploaded_file.read()
-            
-            gallery_image = SubProjectGalleryImage(
-                subproject=subproject,
-                image=binary_data,
-                image_mime_type=uploaded_file.content_type or 'image/jpeg',
-                title=form.cleaned_data.get('title'),
-                description=form.cleaned_data.get('description')
-            )
-            gallery_image.save()
-            
-            messages.success(request, 'تصویر با موفقیت آپلود شد.')
-            return redirect('creator_subproject:subproject_gallery', pk=subproject.id)
-    else:
-        form = SubProjectGalleryImageForm()
-    
-    context = {
-        'subproject': subproject,
-        'form': form,
-    }
-    return render(request, 'creator_subproject/upload_gallery_image.html', context)
-
-@login_required
-def delete_gallery_image(request, image_id):
-    """Delete a gallery image."""
-    image = get_object_or_404(SubProjectGalleryImage, id=image_id)
-    subproject = image.subproject
-    
-    # Check if user has permission to delete this image
-    if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
-            request.user.is_expert or subproject.created_by == request.user or
-            (request.user.is_province_manager and subproject.project.province in request.user.get_assigned_provinces())):
-        messages.error(request, 'شما اجازه دسترسی به این بخش را ندارید.')
-        return redirect('creator_subproject:subproject_gallery', pk=subproject.id)
-    
-    if request.method == 'POST':
-        image.delete()
-        messages.success(request, 'تصویر با موفقیت حذف شد.')
-    
-    return redirect('creator_subproject:subproject_gallery', pk=subproject.id)
 
 @login_required
 def financial_documents(request, subproject_id):
@@ -1657,15 +1552,15 @@ def add_financial_document(request, subproject_id):
             document.created_by = request.user
             document.save()
 
-            # Handle multiple file uploads
-            files = request.FILES.getlist('files')
-            for file_obj in files:
-                DocumentFile.objects.create(
-                    document=document,
-                    file=file_obj.read(), # Read binary content
-                    filename=file_obj.name,
-                    file_mime_type=file_obj.content_type # Store MIME type
-                )
+            # File uploads disabled - no longer handling file uploads
+            # files = request.FILES.getlist('files')
+            # for file_obj in files:
+            #     DocumentFile.objects.create(
+            #         document=document,
+            #         file=file_obj.read(), # Read binary content
+            #         filename=file_obj.name,
+            #         file_mime_type=file_obj.content_type # Store MIME type
+            #     )
 
             # Reset project approval status if user is province manager
             if request.user.is_province_manager:

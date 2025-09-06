@@ -102,6 +102,26 @@
         color: #28a745;
     }
     
+    /* Gallery Thumbnails Styling */
+    .gallery-thumbnail {
+        transition: all 0.3s ease;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .gallery-thumbnail:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .gallery-thumbnail img {
+        transition: all 0.3s ease;
+    }
+    
+    .gallery-thumbnail:hover img {
+        transform: scale(1.05);
+    }
+    
     /* Responsive adjustments */
     @media (max-width: 768px) {
         .financial-table tbody td {
@@ -111,6 +131,10 @@
         
         .currency-amount {
             font-size: 1.1em !important;
+        }
+        
+        .gallery-thumbnail {
+            margin-bottom: 1rem;
         }
     }
     
@@ -353,6 +377,10 @@
                 <i class="bi bi-currency-dollar"></i> درخواست اعتبار
             </a>
             {% endif %}
+            
+            <a href="{% url 'creator_project:project_gallery' project.id %}" class="btn btn-warning">
+                <i class="bi bi-images"></i> گالری تصاویر
+            </a>
             
             {% if project.program %}
             <a href="{% url 'creator_program:program_detail' project.program.id %}" class="btn btn-secondary">
@@ -1077,6 +1105,66 @@
             </div>
             {% endif %}
             
+            <!-- Gallery Images Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-images me-2"></i>
+                        گالری تصاویر پروژه
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'creator_project:project_gallery' project.id %}" class="btn btn-sm btn-dark">
+                            <i class="bi bi-eye"></i> مشاهده همه
+                        </a>
+                        {% if user.is_admin or user.is_ceo or user.is_chief_executive or user.is_expert or project.created_by == user or user.is_province_manager and project.province in user.get_assigned_provinces %}
+                        <a href="{% url 'creator_project:upload_gallery_image' project.id %}" class="btn btn-sm btn-success">
+                            <i class="bi bi-plus-circle"></i> آپلود تصویر
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if gallery_images %}
+                        <div class="row">
+                            {% for image in gallery_images %}
+                                <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
+                                    <div class="card border-0 shadow-sm gallery-thumbnail" style="cursor: pointer;" onclick="openImageModal('{{ image.id }}', '{{ image.title }}', '{{ image.description }}', 'data:{{ image.mime_type }};base64,{{ image.base64_image }}', '{{ image.upload_date|to_jalali:"%Y/%m/%d" }}')">
+                                        <img src="data:{{ image.mime_type }};base64,{{ image.base64_image }}" 
+                                             class="card-img-top" 
+                                             alt="{{ image.title }}" 
+                                             style="height: 120px; object-fit: cover; border-radius: 8px;">
+                                        <div class="card-body p-2">
+                                            <h6 class="card-title text-truncate mb-1" style="font-size: 0.8rem;">{{ image.title }}</h6>
+                                            <small class="text-muted">{{ image.upload_date|to_jalali:"%Y/%m/%d" }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% if gallery_count > 6 %}
+                            <div class="text-center mt-3">
+                                <p class="text-muted mb-2">نمایش 6 تصویر از {{ gallery_count }} تصویر</p>
+                                <a href="{% url 'creator_project:project_gallery' project.id %}" class="btn btn-outline-primary">
+                                    <i class="bi bi-images"></i> مشاهده همه تصاویر
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                            <h6 class="text-muted mt-2">هنوز تصویری آپلود نشده است</h6>
+                            <p class="text-muted small">برای شروع، اولین تصویر پروژه خود را آپلود کنید</p>
+                            {% if user.is_admin or user.is_ceo or user.is_chief_executive or user.is_expert or project.created_by == user or user.is_province_manager and project.province in user.get_assigned_provinces %}
+                            <a href="{% url 'creator_project:upload_gallery_image' project.id %}" class="btn btn-primary btn-sm">
+                                <i class="bi bi-cloud-upload"></i> آپلود اولین تصویر
+                            </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
             <!-- Allocations Card -->
             <div class="card mb-4">
                 <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
@@ -1614,5 +1702,44 @@
 
         tryInitManager();
     });
+    
+    // Gallery Image Modal Functions
+    function openImageModal(id, title, description, imageSrc, uploadDate) {
+        document.getElementById('galleryModalImage').src = imageSrc;
+        document.getElementById('galleryModalTitle').textContent = title;
+        document.getElementById('galleryModalDescription').textContent = description || 'بدون توضیحات';
+        document.getElementById('galleryModalDate').textContent = uploadDate;
+        
+        const galleryModal = new bootstrap.Modal(document.getElementById('galleryImageModal'));
+        galleryModal.show();
+    }
 </script>
+
+<!-- Gallery Image Modal -->
+<div class="modal fade" id="galleryImageModal" tabindex="-1" aria-labelledby="galleryImageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="galleryImageModalLabel">
+                    <i class="bi bi-image me-2"></i> مشاهده تصویر
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="" id="galleryModalImage" class="img-fluid rounded" alt="تصویر پروژه" style="max-height: 500px;">
+                <div class="mt-3">
+                    <h5 id="galleryModalTitle" class="text-primary"></h5>
+                    <p id="galleryModalDescription" class="text-muted"></p>
+                    <small id="galleryModalDate" class="text-muted"></small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+                <a href="{% url 'creator_project:project_gallery' project.id %}" class="btn btn-primary">
+                    <i class="bi bi-images"></i> مشاهده گالری کامل
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %} 
