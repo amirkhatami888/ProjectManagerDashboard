@@ -875,6 +875,38 @@ def save_subproject_updates(sender, instance, created, **kwargs):
             break
 
 
+@receiver(post_save, sender=SubProject)
+def trigger_gantt_refresh_on_subproject_change(sender, instance, created, **kwargs):
+    """
+    Signal to trigger Gantt chart refresh when subproject is updated.
+    This ensures the Gantt chart is always up-to-date with subproject changes.
+    """
+    # Skip for new instances (they don't need refresh yet)
+    if created:
+        return
+    
+    # Check if this is a significant change that affects Gantt chart
+    significant_fields = [
+        'sub_project_type', 'name', 'start_date', 'end_date', 
+        'physical_progress', 'contract_start_date', 'contract_end_date',
+        'relationship_type', 'related_subproject', 'relationship_delay',
+        'imagenary_duration', 'contract_amount'
+    ]
+    
+    # Check if any significant field was updated
+    if hasattr(instance, '_updates'):
+        updates = instance._updates
+        if updates and any(update['field_name'] in significant_fields for update in updates):
+            # Mark the project for Gantt refresh
+            project = instance.project
+            if project:
+                # Store a flag in the project model or use cache to indicate refresh needed
+                from django.core.cache import cache
+                cache_key = f"gantt_refresh_needed_{project.id}"
+                cache.set(cache_key, True, timeout=300)  # 5 minutes timeout
+                print(f"DEBUG: Gantt refresh flag set for project {project.id} due to subproject {instance.id} changes")
+
+
 class SubProjectRejectionComment(models.Model):
     subproject = models.ForeignKey(SubProject, on_delete=models.CASCADE, related_name='rejection_comments')
     expert = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='subproject_rejection_comments')

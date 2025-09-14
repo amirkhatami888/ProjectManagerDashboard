@@ -1401,9 +1401,18 @@ def get_project_gantt_data(request, project_id):
         # Calculate dynamic dates
         processed_subprojects = calculate_dynamic_dates_backend(subproject_list, today)
         
+        # Check if Gantt refresh was triggered by backend signals
+        from django.core.cache import cache
+        cache_key = f"gantt_refresh_needed_{project_id}"
+        refresh_triggered = cache.get(cache_key, False)
+        if refresh_triggered:
+            cache.delete(cache_key)  # Clear the flag after checking
+        
         return JsonResponse({
             'success': True,
-            'subprojects': processed_subprojects
+            'subprojects': processed_subprojects,
+            'refresh_triggered': refresh_triggered,
+            'timestamp': timezone.now().isoformat()
         })
     except Project.DoesNotExist:
         return JsonResponse({

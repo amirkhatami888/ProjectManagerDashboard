@@ -1126,12 +1126,11 @@ const form = document.querySelector('form');
 if (form) {
     form.addEventListener('submit', function(e) {
         // Allow normal form submission
-        if (relationshipChanged) {
-            console.log('Relationship changed, will trigger Gantt chart refresh after save');
-            // Store in sessionStorage to trigger refresh after redirect
-            sessionStorage.setItem('triggerGanttRefresh', 'true');
-            sessionStorage.setItem('projectId', '{{ subproject.project.id }}');
-        }
+        console.log('Subproject update form submitted, will trigger Gantt chart refresh after save');
+        // Store in sessionStorage to trigger refresh after redirect for ANY subproject change
+        sessionStorage.setItem('triggerGanttRefresh', 'true');
+        sessionStorage.setItem('projectId', '{{ subproject.project.id }}');
+        sessionStorage.setItem('lastUpdateTime', Date.now().toString());
     });
 }
 </script>
