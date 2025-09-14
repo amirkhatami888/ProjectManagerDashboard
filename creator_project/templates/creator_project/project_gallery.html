@@ -6,48 +6,49 @@
 
 {% block extra_head %}
 <style>
-    /* Professional Business Styling */
+    /* Professional Corporate Styling */
     .project-gallery-header {
-        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
         color: white;
         border-radius: 0;
-        padding: 2.5rem 2rem;
+        padding: 3rem 2rem;
         margin-bottom: 0;
-        border-bottom: 4px solid #3498db;
+        border-bottom: 3px solid #34495e;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     
     .project-info-card {
         background: #ffffff;
         color: #2c3e50;
-        border: 1px solid #e0e6ed;
+        border: 1px solid #d1d5db;
         border-radius: 0;
-        padding: 2rem;
+        padding: 2.5rem;
         margin-bottom: 2rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        border-left: 4px solid #3498db;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border-left: 4px solid #374151;
     }
     
     .gallery-image-card {
-        border: 1px solid #e0e6ed;
+        border: 1px solid #d1d5db;
         border-radius: 0;
         overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        transition: all 0.2s ease;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
         background: white;
     }
     
     .gallery-image-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.12);
-        border-color: #3498db;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border-color: #374151;
     }
     
     .gallery-image-card img {
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
     }
     
     .gallery-image-card:hover img {
-        transform: scale(1.02);
+        transform: scale(1.05);
     }
     
     .image-overlay {
@@ -56,12 +57,15 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(44, 62, 80, 0.8);
+        background: rgba(26, 37, 47, 0.85);
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         opacity: 0;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
+        text-align: center;
+        padding: 1rem;
     }
     
     .gallery-image-card:hover .image-overlay {
@@ -69,121 +73,166 @@
     }
     
     .image-overlay i {
-        font-size: 2.5rem;
+        font-size: 2.8rem;
         color: white;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        margin-bottom: 0.5rem;
+    }
+    
+    .overlay-text {
+        color: white;
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        display: block;
+        margin-top: 0.5rem;
     }
     
     .project-stats {
         background: #f8f9fa;
-        color: #2c3e50;
-        border: 1px solid #e0e6ed;
+        color: #374151;
+        border: 1px solid #d1d5db;
         border-radius: 0;
-        padding: 1.5rem;
+        padding: 2rem;
         text-align: center;
         margin-bottom: 2rem;
-        border-top: 3px solid #3498db;
+        border-top: 3px solid #374151;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     
     .btn-gallery {
         border-radius: 0;
-        padding: 0.75rem 1.5rem;
-        font-weight: 500;
+        padding: 0.875rem 2rem;
+        font-weight: 600;
         text-transform: none;
-        letter-spacing: 0;
-        transition: all 0.2s ease;
-        border: 1px solid #3498db;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        border: 1px solid #374151;
+        font-size: 0.95rem;
     }
     
     .btn-gallery:hover {
-        transform: none;
-        box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(55, 65, 81, 0.3);
+    }
+    
+    .btn-primary.btn-gallery {
+        background: #374151;
+        border-color: #374151;
+    }
+    
+    .btn-primary.btn-gallery:hover {
+        background: #1f2937;
+        border-color: #1f2937;
     }
     
     .empty-gallery {
         text-align: center;
-        padding: 4rem 2rem;
-        background: #f8f9fa;
-        border: 1px solid #e0e6ed;
+        padding: 5rem 2rem;
+        background: #f9fafb;
+        border: 2px dashed #d1d5db;
         border-radius: 0;
         margin: 2rem 0;
-        border-top: 3px solid #95a5a6;
     }
     
     .empty-gallery i {
-        font-size: 3rem;
-        color: #95a5a6;
+        font-size: 5rem;
+        color: #9ca3af;
+        margin-bottom: 1.5rem;
+    }
+    
+    .empty-gallery h4 {
+        color: #374151;
+        font-weight: 600;
         margin-bottom: 1rem;
+    }
+    
+    .empty-gallery p {
+        color: #6b7280;
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
     }
     
     /* Professional Typography */
     .gallery-title {
-        font-weight: 600;
-        color: #2c3e50;
+        font-weight: 700;
+        font-size: 2.2rem;
+        letter-spacing: -0.5px;
         margin-bottom: 0.5rem;
+        color: white;
     }
     
     .gallery-subtitle {
-        color: #7f8c8d;
-        font-size: 0.95rem;
+        font-size: 1.1rem;
+        opacity: 0.9;
+        font-weight: 400;
+        color: white;
     }
     
     .project-name {
         font-weight: 700;
-        color: #2c3e50;
-        font-size: 1.4rem;
+        font-size: 1.6rem;
+        color: #1a252f;
+        margin-bottom: 1rem;
     }
     
     .project-details {
-        color: #5d6d7e;
-        font-size: 0.9rem;
+        color: #4b5563;
+        font-size: 0.95rem;
+        font-weight: 500;
     }
     
     .stats-number {
-        font-weight: 700;
-        color: #2c3e50;
-        font-size: 1.8rem;
+        font-weight: 800;
+        font-size: 2.5rem;
+        color: #1a252f;
+        line-height: 1;
     }
     
     .stats-label {
-        color: #7f8c8d;
-        font-size: 0.85rem;
+        color: #6b7280;
+        font-size: 0.9rem;
+        font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
+        margin-top: 0.5rem;
     }
     
     /* Professional Card Styling */
     .professional-card {
-        border: 1px solid #e0e6ed;
+        border: 1px solid #d1d5db;
         border-radius: 0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     }
     
     .professional-card-header {
         background: #f8f9fa;
-        border-bottom: 1px solid #e0e6ed;
-        padding: 1.25rem 1.5rem;
+        border-bottom: 2px solid #e5e7eb;
+        padding: 1.5rem 2rem;
     }
     
     .professional-card-body {
-        padding: 1.5rem;
+        padding: 2rem;
+        background: white;
     }
     
     /* Image Info Styling */
     .image-title {
         font-weight: 600;
-        color: #2c3e50;
-        font-size: 0.95rem;
+        color: #1a252f;
+        font-size: 1rem;
     }
     
     .image-description {
-        color: #7f8c8d;
-        font-size: 0.85rem;
-        line-height: 1.4;
+        color: #6b7280;
+        font-size: 0.9rem;
+        line-height: 1.5;
     }
     
     .image-date {
-        color: #95a5a6;
-        font-size: 0.8rem;
+        color: #9ca3af;
+        font-size: 0.85rem;
+        font-weight: 500;
     }
     
     /* Professional Footer */
@@ -204,6 +253,42 @@
         font-size: 0.9rem;
     }
     
+    
+    /* Professional Pagination */
+    .pagination .page-link {
+        border-radius: 0;
+        border: 1px solid #d1d5db;
+        color: #374151;
+        font-weight: 500;
+        padding: 0.75rem 1rem;
+    }
+    
+    .pagination .page-link:hover {
+        background-color: #f3f4f6;
+        border-color: #9ca3af;
+        color: #1f2937;
+    }
+    
+    .pagination .page-item.active .page-link {
+        background-color: #374151;
+        border-color: #374151;
+        color: white;
+    }
+    
+    /* Professional Delete Button */
+    .btn-outline-danger {
+        border-radius: 0;
+        border-width: 1px;
+        font-weight: 500;
+        padding: 0.5rem 0.75rem;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-outline-danger:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+    }
+    
     /* Responsive Professional Design */
     @media (max-width: 768px) {
         .project-gallery-header {
@@ -217,6 +302,7 @@
         .professional-card-body {
             padding: 1rem;
         }
+        
     }
 </style>
 {% endblock %}
@@ -292,11 +378,17 @@
                             <div class="gallery-image-card position-relative">
                                 <div class="position-relative">
                                     <img src="data:{{ image.mime_type }};base64,{{ image.base64_image }}" 
-                                         class="card-img-top" 
+                                         class="card-img-top gallery-image" 
                                          alt="{{ image.title|default:'تصویر پروژه' }}" 
-                                         style="height: 250px; object-fit: cover; cursor: pointer;">
+                                         style="height: 250px; object-fit: cover; cursor: pointer;"
+                                         onclick="openImagePopup(this)"
+                                         data-image-src="data:{{ image.mime_type }};base64,{{ image.base64_image }}"
+                                         data-image-title="{{ image.title|default:'بدون عنوان' }}"
+                                         data-image-description="{{ image.description|default:'' }}"
+                                         data-image-date="{{ image.upload_date|to_jalali:'%Y/%m/%d' }}">
                                     <div class="image-overlay">
                                         <i class="bi bi-zoom-in"></i>
+                                        <span class="overlay-text">کلیک برای مشاهده تصویر بزرگ</span>
                                     </div>
                                 </div>
                                 <div class="card-body p-3">
@@ -465,57 +557,64 @@
     </div>
 </div>
 
-<!-- Professional Image Lightbox Modal -->
-<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content" style="border-radius: 0; border: 1px solid #e0e6ed;">
-            <div class="modal-header" style="background: #f8f9fa; border-bottom: 1px solid #e0e6ed;">
-                <h5 class="modal-title" id="imageModalLabel" style="color: #2c3e50; font-weight: 600;">
-                    <i class="bi bi-image me-2"></i>نمایش تصویر
+
+{% endblock %}
+
+<!-- Simple Image Popup Modal -->
+<div class="modal fade" id="imagePopupModal" tabindex="-1" aria-labelledby="imagePopupLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imagePopupLabel">
+                    <i class="bi bi-image me-2"></i>مشاهده تصویر
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center p-4">
-                <img src="" id="modalImage" class="img-fluid rounded" alt="تصویر پروژه" style="max-height: 500px; border: 1px solid #e0e6ed;">
-                <div class="mt-4">
-                    <h5 id="modalTitle" style="color: #2c3e50; font-weight: 600;"></h5>
-                    <p id="modalDescription" style="color: #7f8c8d; font-size: 0.95rem;"></p>
-                    <small id="modalDate" style="color: #95a5a6; font-size: 0.85rem;"></small>
+                <div class="image-container position-relative">
+                    <img src="" id="popupImage" class="img-fluid" alt="تصویر پروژه" style="max-height: 70vh; object-fit: contain; border: 1px solid #e0e6ed;">
+                </div>
+                <div class="mt-3">
+                    <h6 id="popupTitle" class="text-muted"></h6>
+                    <p id="popupDescription" class="text-muted"></p>
+                    <small id="popupDate" class="text-muted">
+                        <i class="bi bi-calendar me-1"></i>
+                    </small>
                 </div>
             </div>
-            <div class="modal-footer" style="background: #f8f9fa; border-top: 1px solid #e0e6ed;">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 0;">
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="bi bi-x-circle me-2"></i>بستن
                 </button>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Add click event to all gallery images
-        const galleryImages = document.querySelectorAll('.card-img-top');
-        const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+    // Function to open image in popup modal
+    function openImagePopup(imgElement) {
+        const imageSrc = imgElement.dataset.imageSrc;
+        const imageTitle = imgElement.dataset.imageTitle;
+        const imageDescription = imgElement.dataset.imageDescription;
+        const imageDate = imgElement.dataset.imageDate;
         
-        galleryImages.forEach(image => {
-            image.addEventListener('click', function() {
-                const card = this.closest('.card');
-                const title = card.querySelector('.card-title').textContent;
-                const description = card.querySelector('.card-text')?.textContent || '';
-                const date = card.querySelector('small.text-muted').textContent;
-                const imgSrc = this.src;
-                
-                document.getElementById('modalImage').src = imgSrc;
-                document.getElementById('modalTitle').textContent = title;
-                document.getElementById('modalDescription').textContent = description.replace('تاریخ آپلود:', '').trim();
-                document.getElementById('modalDate').textContent = date;
-                
-                imageModal.show();
-            });
-        });
+        // Set modal content
+        document.getElementById('popupImage').src = imageSrc;
+        document.getElementById('popupImage').alt = imageTitle;
+        document.getElementById('popupTitle').textContent = imageTitle;
+        document.getElementById('popupDescription').textContent = imageDescription || '';
+        document.getElementById('popupDate').innerHTML = '<i class="bi bi-calendar me-1"></i>' + imageDate;
+        
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('imagePopupModal'));
+        modal.show();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gallery is now ready - images will open in popup modal when clicked
+        console.log('Gallery loaded - click any image to open in popup modal');
     });
 </script>
 {% endblock %}

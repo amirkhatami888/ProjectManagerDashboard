@@ -167,6 +167,42 @@
             padding: 1rem;
         }
     }
+    
+    /* Limits Information Styling */
+    .limits-info {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 0;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .limits-title {
+        color: #2c3e50;
+        font-weight: 600;
+        font-size: 1rem;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 0.5rem;
+    }
+    
+    .limit-item {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0.75rem;
+    }
+    
+    .limit-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+    
+    .limit-value {
+        font-size: 0.9rem;
+        color: #2c3e50;
+        font-weight: 600;
+    }
 </style>
 {% endblock %}
 
@@ -221,6 +257,53 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Gallery Limits Information -->
+        {% if gallery_settings %}
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="limits-info">
+                    <h6 class="limits-title mb-3">
+                        <i class="bi bi-info-circle me-2"></i>محدودیت‌های آپلود
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="limit-item">
+                                <span class="limit-label">حداکثر حجم هر تصویر:</span>
+                                <span class="limit-value">{{ gallery_settings.max_image_size_mb }} مگابایت</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="limit-item">
+                                <span class="limit-label">حداکثر تعداد تصاویر:</span>
+                                <span class="limit-value">{{ project.gallery_images.count }}/{{ gallery_settings.max_upload_images }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="limit-item">
+                                <span class="limit-label">حداکثر حجم کل:</span>
+                                <span class="limit-value">
+                                    {{ current_total_size_mb }}/{{ gallery_settings.max_total_size_mb }} مگابایت
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="limit-item">
+                                <span class="limit-label">فشرده‌سازی:</span>
+                                <span class="limit-value">
+                                    {% if gallery_settings.enable_image_compression %}
+                                        <span class="text-success">فعال</span>
+                                    {% else %}
+                                        <span class="text-warning">غیرفعال</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
     
     <!-- Professional Upload Form -->
@@ -272,10 +355,13 @@
                                     <i class="bi bi-info-circle me-2"></i>راهنمای آپلود
                                 </h6>
                                 <ul class="help-list list-unstyled">
-                                    <li><i class="bi bi-check-circle"></i>فرمت‌های مجاز: JPEG, PNG, GIF</li>
-                                    <li><i class="bi bi-check-circle"></i>حداکثر حجم: 5 مگابایت</li>
-                                    <li><i class="bi bi-check-circle"></i>کیفیت تصویر: حداقل 800x600 پیکسل</li>
-                                    <li><i class="bi bi-check-circle"></i>تصاویر به صورت خودکار بهینه می‌شوند</li>
+                                    <li><i class="bi bi-check-circle"></i>فرمت‌های مجاز: JPEG, PNG, GIF, WebP</li>
+                                    <li><i class="bi bi-check-circle"></i>حداکثر حجم هر تصویر: {{ gallery_settings.max_image_size_mb }} مگابایت</li>
+                                    <li><i class="bi bi-check-circle"></i>حداکثر تعداد تصاویر: {{ gallery_settings.max_upload_images }} تصویر</li>
+                                    <li><i class="bi bi-check-circle"></i>حداکثر حجم کل: {{ gallery_settings.max_total_size_mb }} مگابایت</li>
+                                    {% if gallery_settings.enable_image_compression %}
+                                    <li><i class="bi bi-check-circle"></i>تصاویر به صورت خودکار فشرده می‌شوند</li>
+                                    {% endif %}
                                 </ul>
                             </div>
                         </div>
@@ -296,12 +382,65 @@
         filePreview.style.cssText = 'border: 1px solid #e0e6ed; border-radius: 0; background: #f8f9fa; padding: 1rem;';
         imageInput.parentNode.appendChild(filePreview);
         
+        // Gallery settings from template
+        const maxImageSize = {{ gallery_settings.max_image_size_mb }};
+        const maxUploadImages = {{ gallery_settings.max_upload_images }};
+        const maxTotalSize = {{ gallery_settings.max_total_size_mb }};
+        const currentImageCount = {{ project.gallery_images.count }};
+        const currentTotalSize = {{ current_total_size_mb }};
+        
         imageInput.addEventListener('change', function() {
             filePreview.innerHTML = '';
             
             if (this.files && this.files[0]) {
                 const file = this.files[0];
                 const fileSize = (file.size / 1024 / 1024).toFixed(2); // Size in MB
+                
+                // Validate file size
+                if (fileSize > maxImageSize) {
+                    filePreview.innerHTML = `
+                        <div style="text-align: center; background: #f8d7da; border: 1px solid #f5c6cb; padding: 1rem; border-radius: 0;">
+                            <h6 style="color: #721c24; font-weight: 600; margin-bottom: 0.5rem;">
+                                <i class="bi bi-exclamation-triangle me-2"></i>خطا در حجم فایل
+                            </h6>
+                            <p style="color: #721c24; margin-bottom: 0; font-size: 0.9rem;">
+                                حجم فایل (${fileSize} مگابایت) از حد مجاز (${maxImageSize} مگابایت) بیشتر است.
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Validate total image count
+                if (currentImageCount >= maxUploadImages) {
+                    filePreview.innerHTML = `
+                        <div style="text-align: center; background: #f8d7da; border: 1px solid #f5c6cb; padding: 1rem; border-radius: 0;">
+                            <h6 style="color: #721c24; font-weight: 600; margin-bottom: 0.5rem;">
+                                <i class="bi bi-exclamation-triangle me-2"></i>حداکثر تعداد تصاویر رسیده
+                            </h6>
+                            <p style="color: #721c24; margin-bottom: 0; font-size: 0.9rem;">
+                                تعداد تصاویر فعلی (${currentImageCount}) به حد مجاز (${maxUploadImages}) رسیده است.
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Validate total size
+                const newTotalSize = parseFloat(currentTotalSize) + parseFloat(fileSize);
+                if (newTotalSize > maxTotalSize) {
+                    filePreview.innerHTML = `
+                        <div style="text-align: center; background: #f8d7da; border: 1px solid #f5c6cb; padding: 1rem; border-radius: 0;">
+                            <h6 style="color: #721c24; font-weight: 600; margin-bottom: 0.5rem;">
+                                <i class="bi bi-exclamation-triangle me-2"></i>حداکثر حجم کل رسیده
+                            </h6>
+                            <p style="color: #721c24; margin-bottom: 0; font-size: 0.9rem;">
+                                حجم کل تصاویر (${newTotalSize.toFixed(1)} مگابایت) از حد مجاز (${maxTotalSize} مگابایت) بیشتر خواهد شد.
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
                 
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -318,6 +457,11 @@
                                 <p style="color: #7f8c8d; margin-bottom: 0; font-size: 0.9rem;">
                                     <i class="bi bi-hdd me-2"></i>حجم فایل: ${fileSize} مگابایت
                                 </p>
+                                <div style="margin-top: 0.5rem; padding: 0.5rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 0;">
+                                    <small style="color: #155724;">
+                                        <i class="bi bi-check-circle me-1"></i>فایل آماده آپلود است
+                                    </small>
+                                </div>
                             </div>
                         </div>
                     `;

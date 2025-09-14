@@ -171,17 +171,17 @@
             </div>
             <div class="col-md-3">
                 <div class="settings-info">
-                    <strong>حداکثر حجم:</strong> {{ settings.max_image_size_mb }} مگابایت
+                    <strong>حداکثر حجم هر تصویر:</strong> {{ settings.max_image_size_mb }} مگابایت
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="settings-info">
-                    <strong>اندازه تصاویر کوچک:</strong> {{ settings.thumbnail_size }} پیکسل
+                    <strong>حداکثر تعداد آپلود:</strong> {{ settings.max_upload_images }}
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="settings-info">
-                    <strong>تصاویر در هر ردیف:</strong> {{ settings.images_per_row }}
+                    <strong>حداکثر حجم کل:</strong> {{ settings.max_total_size_mb }} مگابایت
                 </div>
             </div>
         </div>
@@ -197,10 +197,10 @@
     <form method="post">
         {% csrf_token %}
         
-        <!-- Display Settings -->
+        <!-- Gallery Settings -->
         <div class="form-section">
             <h4 class="section-title">
-                <i class="bi bi-eye me-2"></i>تنظیمات نمایش
+                <i class="bi bi-gear me-2"></i>تنظیمات گالری
             </h4>
             
             <div class="row">
@@ -219,34 +219,6 @@
                 
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label class="form-label">{{ form.images_per_row.label }}</label>
-                        {{ form.images_per_row }}
-                        <div class="help-text">{{ form.images_per_row.help_text }}</div>
-                        {% if form.images_per_row.errors %}
-                        <div class="text-danger">
-                            {% for error in form.images_per_row.errors %}{{ error }}{% endfor %}
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="form-label">{{ form.thumbnail_size.label }}</label>
-                        {{ form.thumbnail_size }}
-                        <div class="help-text">{{ form.thumbnail_size.help_text }}</div>
-                        {% if form.thumbnail_size.errors %}
-                        <div class="text-danger">
-                            {% for error in form.thumbnail_size.errors %}{{ error }}{% endfor %}
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <div class="form-group">
                         <label class="form-label">{{ form.max_image_size_mb.label }}</label>
                         {{ form.max_image_size_mb }}
                         <div class="help-text">{{ form.max_image_size_mb.help_text }}</div>
@@ -258,84 +230,47 @@
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Display Options -->
-        <div class="form-section">
-            <h4 class="section-title">
-                <i class="bi bi-toggle-on me-2"></i>گزینه‌های نمایش
-            </h4>
             
-            <div class="checkbox-group">
-                <div class="form-check">
-                    {{ form.show_image_titles }}
-                    <label class="form-check-label" for="{{ form.show_image_titles.id_for_label }}">
-                        {{ form.show_image_titles.label }}
-                    </label>
-                    <div class="help-text">{{ form.show_image_titles.help_text }}</div>
-                </div>
-                
-                <div class="form-check">
-                    {{ form.show_image_descriptions }}
-                    <label class="form-check-label" for="{{ form.show_image_descriptions.id_for_label }}">
-                        {{ form.show_image_descriptions.label }}
-                    </label>
-                    <div class="help-text">{{ form.show_image_descriptions.help_text }}</div>
-                </div>
-                
-                <div class="form-check">
-                    {{ form.show_upload_dates }}
-                    <label class="form-check-label" for="{{ form.show_upload_dates.id_for_label }}">
-                        {{ form.show_upload_dates.label }}
-                    </label>
-                    <div class="help-text">{{ form.show_upload_dates.help_text }}</div>
-                </div>
-                
-                <div class="form-check">
-                    {{ form.enable_lightbox }}
-                    <label class="form-check-label" for="{{ form.enable_lightbox.id_for_label }}">
-                        {{ form.enable_lightbox.label }}
-                    </label>
-                    <div class="help-text">{{ form.enable_lightbox.help_text }}</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- File Settings -->
-        <div class="form-section">
-            <h4 class="section-title">
-                <i class="bi bi-file-earmark-image me-2"></i>تنظیمات فایل
-            </h4>
-            
-            <div class="form-group">
-                <label class="form-label">{{ form.enable_image_compression.label }}</label>
-                <div class="form-check">
-                    {{ form.enable_image_compression }}
-                    <label class="form-check-label" for="{{ form.enable_image_compression.id_for_label }}">
-                        {{ form.enable_image_compression.label }}
-                    </label>
-                </div>
-                <div class="help-text">{{ form.enable_image_compression.help_text }}</div>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">{{ form.allowed_image_formats.label }}</label>
-                <div class="checkbox-group">
-                    {% for choice in form.allowed_image_formats %}
-                    <div class="form-check">
-                        {{ choice.tag }}
-                        <label class="form-check-label" for="{{ choice.id_for_label }}">
-                            {{ choice.choice_label }}
-                        </label>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">{{ form.max_upload_images.label }}</label>
+                        {{ form.max_upload_images }}
+                        <div class="help-text">{{ form.max_upload_images.help_text }}</div>
+                        {% if form.max_upload_images.errors %}
+                        <div class="text-danger">
+                            {% for error in form.max_upload_images.errors %}{{ error }}{% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endfor %}
                 </div>
-                <div class="help-text">{{ form.allowed_image_formats.help_text }}</div>
-                {% if form.allowed_image_formats.errors %}
-                <div class="text-danger">
-                    {% for error in form.allowed_image_formats.errors %}{{ error }}{% endfor %}
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">{{ form.max_total_size_mb.label }}</label>
+                        {{ form.max_total_size_mb }}
+                        <div class="help-text">{{ form.max_total_size_mb.help_text }}</div>
+                        {% if form.max_total_size_mb.errors %}
+                        <div class="text-danger">
+                            {% for error in form.max_total_size_mb.errors %}{{ error }}{% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
-                {% endif %}
+            </div>
+            
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <div class="form-check">
+                            {{ form.enable_image_compression }}
+                            <label class="form-check-label" for="{{ form.enable_image_compression.id_for_label }}">
+                                {{ form.enable_image_compression.label }}
+                            </label>
+                        </div>
+                        <div class="help-text">{{ form.enable_image_compression.help_text }}</div>
+                    </div>
+                </div>
             </div>
         </div>
         

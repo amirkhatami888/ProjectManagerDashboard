@@ -1505,6 +1505,8 @@ def project_gallery(request, pk):
 @login_required
 def upload_gallery_image(request, project_id):
     """Upload a new image to the project gallery."""
+    from activity_monitor.models import GallerySettings
+    
     project = get_object_or_404(Project, id=project_id)
     
     # Check if user has permission to edit this project
@@ -1514,12 +1516,45 @@ def upload_gallery_image(request, project_id):
         messages.error(request, 'شما اجازه دسترسی به این بخش را ندارید.')
         return redirect('creator_project:project_detail', pk=project.id)
     
+    # Get gallery settings
+    gallery_settings = GallerySettings.get_settings()
+    
     if request.method == 'POST':
         form = ProjectGalleryImageForm(request.POST, request.FILES)
         if form.is_valid():
             # Read the uploaded file as binary
             uploaded_file = request.FILES['image']
             binary_data = uploaded_file.read()
+            
+            # Validate file size
+            file_size_mb = len(binary_data) / (1024 * 1024)
+            if file_size_mb > gallery_settings.max_image_size_mb:
+                messages.error(request, f'حجم تصویر ({file_size_mb:.1f} مگابایت) از حد مجاز ({gallery_settings.max_image_size_mb} مگابایت) بیشتر است.')
+                return render(request, 'creator_project/upload_gallery_image.html', {
+                    'project': project,
+                    'form': form,
+                    'gallery_settings': gallery_settings,
+                })
+            
+            # Check maximum number of images
+            current_image_count = project.gallery_images.count()
+            if current_image_count >= gallery_settings.max_upload_images:
+                messages.error(request, f'حداکثر تعداد تصاویر مجاز ({gallery_settings.max_upload_images}) رسیده است.')
+                return render(request, 'creator_project/upload_gallery_image.html', {
+                    'project': project,
+                    'form': form,
+                    'gallery_settings': gallery_settings,
+                })
+            
+            # Check total size limit
+            total_size_mb = sum(len(img.image) for img in project.gallery_images.all()) / (1024 * 1024)
+            if total_size_mb + file_size_mb > gallery_settings.max_total_size_mb:
+                messages.error(request, f'حجم کل تصاویر ({total_size_mb + file_size_mb:.1f} مگابایت) از حد مجاز ({gallery_settings.max_total_size_mb} مگابایت) بیشتر خواهد شد.')
+                return render(request, 'creator_project/upload_gallery_image.html', {
+                    'project': project,
+                    'form': form,
+                    'gallery_settings': gallery_settings,
+                })
             
             gallery_image = ProjectGalleryImage(
                 project=project,
@@ -1535,9 +1570,14 @@ def upload_gallery_image(request, project_id):
     else:
         form = ProjectGalleryImageForm()
     
+    # Calculate current total size
+    total_size_mb = sum(len(img.image) for img in project.gallery_images.all()) / (1024 * 1024)
+    
     context = {
         'project': project,
         'form': form,
+        'gallery_settings': gallery_settings,
+        'current_total_size_mb': round(total_size_mb, 1),
     }
     return render(request, 'creator_project/upload_gallery_image.html', context)
 
