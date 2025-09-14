@@ -33,3 +33,19 @@ ALTER DATABASE amirho10_project_manager_db CHARACTER SET utf8mb4 COLLATE utf8mb4
  ALTER TABLE django_admin_log CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
  ALTER TABLE django_content_type CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
  ALTER TABLE django_migrations CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+
+
+
+
+
+
+
+
+
+
+%%%%%%%%%5
+CREATE DATABASE project_manager_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'amirkhatatmi888'@'localhost' IDENTIFIED BY 'Amir137667318@!';
+GRANT ALL PRIVILEGES ON project_manager_db.* TO 'amirkhatatmi888'@'localhost';
+FLUSH PRIVILEGES;
