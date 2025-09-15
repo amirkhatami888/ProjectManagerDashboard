@@ -82,13 +82,15 @@ if not exist "C:\Windows\System32\nssm.exe" (
 
 :: Test NSSM installation with better error handling
 echo Testing NSSM installation...
-"%NSSM_DIR%\win64\nssm.exe" version >nul 2>&1
-if %errorLevel% neq 0 (
+"%NSSM_DIR%\win64\nssm.exe" >nul 2>&1
+if %errorLevel% equ 0 (
+    echo NSSM is working correctly
+) else (
     echo ERROR: NSSM is not working properly
     echo.
     echo Troubleshooting steps:
     echo 1. Check if nssm.exe exists at: %NSSM_DIR%\win64\nssm.exe
-    echo 2. Try running NSSM manually: "%NSSM_DIR%\win64\nssm.exe" version
+    echo 2. Try running NSSM manually: "%NSSM_DIR%\win64\nssm.exe"
     echo 3. Check if the file is corrupted or blocked by antivirus
     echo.
     echo Attempting to continue with local NSSM copy...
@@ -96,8 +98,8 @@ if %errorLevel% neq 0 (
     
     :: Try to run NSSM directly to see the actual error
     echo.
-    echo Running NSSM version command to see error details:
-    "%NSSM_DIR%\win64\nssm.exe" version
+    echo Running NSSM to see error details:
+    "%NSSM_DIR%\win64\nssm.exe"
     echo.
     
     set /p CONTINUE="Do you want to continue anyway? (y/n): "
@@ -105,8 +107,6 @@ if %errorLevel% neq 0 (
         pause
         exit /b 1
     )
-) else (
-    echo NSSM is working correctly
 )
 
 :: Step 3: Install required tools

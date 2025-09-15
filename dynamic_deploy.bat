@@ -81,9 +81,9 @@ if not exist "C:\Windows\System32\nssm.exe" (
 )
 
 :: Test NSSM installation
-"%NSSM_DIR%\win64\nssm.exe" version >nul 2>&1
+"%NSSM_DIR%\win64\nssm.exe" >nul 2>&1
 if %errorLevel% equ 0 (
-    echo ✓ NSSM is working correctly
+    echo NSSM is working correctly
 ) else (
     echo ERROR: NSSM is not working properly
     pause
