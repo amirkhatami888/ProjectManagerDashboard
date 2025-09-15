@@ -80,21 +80,14 @@ if not exist "C:\Windows\System32\nssm.exe" (
     echo ✓ NSSM already available in system directory
 )
 
-:: Test NSSM installation with proper detection
-echo Testing NSSM installation...
-"%NSSM_DIR%\win64\nssm.exe" help >nul 2>&1
+:: Test NSSM installation
+"%NSSM_DIR%\win64\nssm.exe" version >nul 2>&1
 if %errorLevel% equ 0 (
-    echo NSSM is working correctly
+    echo ✓ NSSM is working correctly
 ) else (
-    :: Try alternative test - NSSM shows usage when run without parameters
-    "%NSSM_DIR%\win64\nssm.exe" >nul 2>&1
-    if %errorLevel% equ 1 (
-        echo NSSM is working correctly (shows usage when run without parameters)
-    ) else (
-        echo ERROR: NSSM is not working properly
-        pause
-        exit /b 1
-    )
+    echo ERROR: NSSM is not working properly
+    pause
+    exit /b 1
 )
 
 :: Step 3: Install required tools
