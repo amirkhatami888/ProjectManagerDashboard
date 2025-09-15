@@ -172,4 +172,3 @@ echo - Admin: http://projecthelal.rcs.ir/admin/
 echo.
 pause
 exit /b 0
-
