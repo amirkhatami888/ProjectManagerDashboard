@@ -73,12 +73,14 @@ if not exist "C:\Windows\System32\nssm.exe" (
     copy "%NSSM_DIR%\win64\nssm.exe" "C:\Windows\System32\" >nul 2>&1
     if %errorLevel% equ 0 (
         echo ✓ NSSM installed to system directory
-    ) else (
-        echo Warning: Could not install NSSM to system directory, using local copy
+        goto nssm_copy_done
     )
-) else (
-    echo ✓ NSSM already available in system directory
+    echo Warning: Could not install NSSM to system directory, using local copy
+    goto nssm_copy_done
 )
+echo ✓ NSSM already available in system directory
+
+:nssm_copy_done
 
 :: Test NSSM installation with proper detection
 echo Testing NSSM installation...
