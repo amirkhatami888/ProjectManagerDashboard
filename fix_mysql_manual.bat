@@ -34,6 +34,21 @@ if not exist "%MYSQL_PATH%\mysqld.exe" (
 
 echo ✓ MySQL found
 
+:: Check if data directory exists
+if not exist "%MYSQL_DATA%" (
+    echo Creating MySQL data directory...
+    mkdir "%MYSQL_DATA%" 2>nul
+    if not exist "%MYSQL_DATA%" (
+        echo ERROR: Cannot create data directory: %MYSQL_DATA%
+        echo Please check permissions or create manually
+        pause
+        exit /b 1
+    )
+    echo ✓ Data directory created
+) else (
+    echo ✓ Data directory exists
+)
+
 echo.
 echo [2/4] Starting MySQL manually in safe mode...
 
@@ -45,7 +60,7 @@ timeout /t 2 /nobreak >nul
 :: Start MySQL manually in safe mode
 echo Starting MySQL in safe mode...
 cd /d "%MYSQL_PATH%"
-start /b mysqld.exe --skip-grant-tables --skip-networking --console
+start /b mysqld.exe --skip-grant-tables --skip-networking --datadir="%MYSQL_DATA%" --console
 
 echo Waiting for MySQL to start...
 timeout /t 15 /nobreak >nul
@@ -105,7 +120,7 @@ timeout /t 3 /nobreak >nul
 
 :: Start MySQL normally
 echo Starting MySQL normally...
-start /b mysqld.exe --console
+start /b mysqld.exe --datadir="%MYSQL_DATA%" --console
 
 echo Waiting for MySQL to start normally...
 timeout /t 15 /nobreak >nul
@@ -144,7 +159,7 @@ echo If MySQL is still not working, try these manual steps:
 echo.
 echo 1. Open Command Prompt as Administrator
 echo 2. Navigate to: %MYSQL_PATH%
-echo 3. Run: mysqld.exe --skip-grant-tables --skip-networking --console
+echo 3. Run: mysqld.exe --skip-grant-tables --skip-networking --datadir="%MYSQL_DATA%" --console
 echo 4. Open another Command Prompt
 echo 5. Navigate to: %MYSQL_PATH%
 echo 6. Run: mysql.exe -u root
@@ -154,7 +169,7 @@ echo    ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '
 echo    FLUSH PRIVILEGES;
 echo    EXIT;
 echo 8. Stop the first Command Prompt (Ctrl+C)
-echo 9. Start MySQL normally: mysqld.exe --console
+echo 9. Start MySQL normally: mysqld.exe --datadir="%MYSQL_DATA%" --console
 echo.
 pause
 exit /b 0
