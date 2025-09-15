@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo MySQL Authentication Fix Script
+echo Direct MySQL Authentication Fix
 echo ========================================
 
 :: Check if running as administrator
@@ -13,19 +13,18 @@ if %errorLevel% neq 0 (
 )
 
 echo.
-echo The error indicates a MySQL authentication plugin issue.
-echo This script will fix the authentication problem.
+echo This script will fix MySQL authentication using a direct approach.
 echo.
 
 set /p CONFIRM="Do you want to fix MySQL authentication? (y/n): "
 if /i not "%CONFIRM%"=="y" (
     echo Operation cancelled.
     pause
-    exit /b 0
+    exit /b 1
 )
 
 echo.
-echo [1/6] Stopping MySQL service...
+echo [1/3] Stopping MySQL service...
 
 :: Stop MySQL service
 sc stop MySQL80
@@ -40,65 +39,64 @@ echo Waiting for MySQL to stop...
 timeout /t 5 /nobreak >nul
 
 echo.
-echo [2/6] Starting MySQL with skip-grant-tables...
+echo [2/3] Starting MySQL in safe mode using service...
 
 :: Set MySQL path
 set MYSQL_PATH=C:\Program Files\MySQL\MySQL Server 8.0\bin
 
-:: Start MySQL with skip-grant-tables
+:: Create a batch file to start MySQL in safe mode
+(
+echo @echo off
+echo cd /d "%MYSQL_PATH%"
+echo mysqld.exe --skip-grant-tables --skip-networking --console
+) > "%TEMP%\start_mysql_safe.bat"
+
+:: Start MySQL in safe mode
 echo Starting MySQL in safe mode...
-start /b "%MYSQL_PATH%\mysqld.exe" --skip-grant-tables --skip-networking --console
+start /b cmd /c "%TEMP%\start_mysql_safe.bat"
 
 echo Waiting for MySQL to start in safe mode...
-timeout /t 10 /nobreak >nul
+timeout /t 15 /nobreak >nul
 
 echo.
-echo [3/6] Connecting to MySQL without password...
+echo [3/3] Fixing authentication...
 
-:: Test connection without password
-"%MYSQL_PATH%\mysql.exe" -u root -e "SELECT 1;" >nul 2>&1
-if %errorLevel% neq 0 (
-    echo ERROR: Cannot connect to MySQL even in safe mode
-    echo Please check MySQL installation
-    goto cleanup
-)
-
-echo ✓ Connected to MySQL in safe mode
-
-echo.
-echo [4/6] Fixing authentication plugin...
-
-:: Create SQL commands to fix authentication
-(
-echo USE mysql;
-echo ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root123';
-echo FLUSH PRIVILEGES;
-echo EXIT;
-) > fix_auth.sql
-
-:: Execute authentication fix
-echo Fixing authentication plugin...
-"%MYSQL_PATH%\mysql.exe" -u root < fix_auth.sql
+:: Test connection and fix authentication
+echo Testing connection and fixing authentication...
+"%MYSQL_PATH%\mysql.exe" -u root -e "USE mysql; ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root123'; FLUSH PRIVILEGES; SELECT 'Authentication fixed' as result;"
 
 if %errorLevel% equ 0 (
-    echo ✓ Authentication plugin fixed successfully!
+    echo ✓ Authentication fixed successfully!
     echo New password set to: root123
 ) else (
     echo ✗ Authentication fix failed
-    goto cleanup
+    echo Trying alternative method...
+    
+    :: Try alternative method
+    echo Trying alternative authentication fix...
+    "%MYSQL_PATH%\mysql.exe" -u root -e "UPDATE mysql.user SET authentication_string=PASSWORD('root123'), plugin='mysql_native_password' WHERE User='root' AND Host='localhost'; FLUSH PRIVILEGES; SELECT 'Alternative fix applied' as result;"
+    
+    if %errorLevel% equ 0 (
+        echo ✓ Alternative authentication fix successful!
+    ) else (
+        echo ✗ All authentication fixes failed
+        echo.
+        echo Manual steps required:
+        echo 1. Open MySQL Workbench
+        echo 2. Connect to localhost:3306
+        echo 3. Run: ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root123';
+        echo 4. Run: FLUSH PRIVILEGES;
+        goto cleanup
+    )
 )
 
-echo.
-echo [5/6] Stopping MySQL safe mode...
-
 :: Stop MySQL safe mode
+echo Stopping MySQL safe mode...
 taskkill /f /im mysqld.exe >nul 2>&1
 timeout /t 3 /nobreak >nul
 
-echo.
-echo [6/6] Starting MySQL service normally...
-
 :: Start MySQL service normally
+echo Starting MySQL service normally...
 sc start MySQL80
 if %errorLevel% neq 0 (
     sc start mysql
@@ -136,7 +134,7 @@ if %errorLevel% equ 0 (
 
 :: Cleanup
 :cleanup
-if exist fix_auth.sql del fix_auth.sql
+if exist "%TEMP%\start_mysql_safe.bat" del "%TEMP%\start_mysql_safe.bat"
 
 echo.
 pause
