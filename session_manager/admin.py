@@ -25,6 +25,7 @@ class SessionAdmin(admin.ModelAdmin):
     is_expired.boolean = True
     is_expired.short_description = 'Expired'
 
-# Unregister the default Session admin and register our custom one
-admin.site.unregister(Session)
+# Check if Session is already registered before unregistering
+if admin.site.is_registered(Session):
+    admin.site.unregister(Session)
 admin.site.register(Session, SessionAdmin)
