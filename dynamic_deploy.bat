@@ -227,16 +227,71 @@ if "%MYSQL_ROOT_PASSWORD%"=="" (
 
 :: Create database and user
 echo Creating database and user...
-mysql -u root -p%MYSQL_ROOT_PASSWORD% -e "CREATE DATABASE IF NOT EXISTS project_manager_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>nul
-mysql -u root -p%MYSQL_ROOT_PASSWORD% -e "CREATE USER IF NOT EXISTS 'django_user'@'localhost' IDENTIFIED BY 'django_password_2024';" 2>nul
-mysql -u root -p%MYSQL_ROOT_PASSWORD% -e "GRANT ALL PRIVILEGES ON project_manager_db.* TO 'django_user'@'localhost';" 2>nul
-mysql -u root -p%MYSQL_ROOT_PASSWORD% -e "FLUSH PRIVILEGES;" 2>nul
 
+:: Test MySQL connection first
+echo Testing MySQL connection...
+mysql -u root -p%MYSQL_ROOT_PASSWORD% -e "SELECT 1;" >nul 2>&1
 if %errorLevel% neq 0 (
-    echo ERROR: Failed to create database or user
+    echo ERROR: Cannot connect to MySQL with provided credentials
+    echo Please check:
+    echo 1. MySQL server is running
+    echo 2. Root password is correct
+    echo 3. MySQL is accessible from command line
     pause
     exit /b 1
 )
+echo ✓ MySQL connection successful
+
+:: Create database
+echo Creating database...
+mysql -u root -p%MYSQL_ROOT_PASSWORD% -e "CREATE DATABASE IF NOT EXISTS project_manager_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>mysql_error.log
+if %errorLevel% neq 0 (
+    echo ERROR: Failed to create database
+    echo Check mysql_error.log for details
+    type mysql_error.log
+    pause
+    exit /b 1
+)
+echo ✓ Database created successfully
+
+:: Create user
+echo Creating database user...
+mysql -u root -p%MYSQL_ROOT_PASSWORD% -e "CREATE USER IF NOT EXISTS 'django_user'@'localhost' IDENTIFIED BY 'django_password_2024';" 2>mysql_error.log
+if %errorLevel% neq 0 (
+    echo ERROR: Failed to create user
+    echo Check mysql_error.log for details
+    type mysql_error.log
+    pause
+    exit /b 1
+)
+echo ✓ Database user created successfully
+
+:: Grant privileges
+echo Granting privileges...
+mysql -u root -p%MYSQL_ROOT_PASSWORD% -e "GRANT ALL PRIVILEGES ON project_manager_db.* TO 'django_user'@'localhost';" 2>mysql_error.log
+if %errorLevel% neq 0 (
+    echo ERROR: Failed to grant privileges
+    echo Check mysql_error.log for details
+    type mysql_error.log
+    pause
+    exit /b 1
+)
+echo ✓ Privileges granted successfully
+
+:: Flush privileges
+echo Flushing privileges...
+mysql -u root -p%MYSQL_ROOT_PASSWORD% -e "FLUSH PRIVILEGES;" 2>mysql_error.log
+if %errorLevel% neq 0 (
+    echo ERROR: Failed to flush privileges
+    echo Check mysql_error.log for details
+    type mysql_error.log
+    pause
+    exit /b 1
+)
+echo ✓ Privileges flushed successfully
+
+:: Clean up error log
+if exist mysql_error.log del mysql_error.log
 
 echo Database created successfully!
 
