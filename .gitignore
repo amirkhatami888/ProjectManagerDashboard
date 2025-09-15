@@ -4,6 +4,8 @@
 # Database
 db.sqlite3
 *.sqlite3
+nginx/
+nssm/
 
 # Python
 __pycache__/
