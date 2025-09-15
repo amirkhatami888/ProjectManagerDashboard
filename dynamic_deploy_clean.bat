@@ -205,10 +205,31 @@ echo Installing Python packages...
 :: Check if MySQL is installed
 mysql --version >nul 2>&1
 if %errorLevel% neq 0 (
-    echo ERROR: MySQL is not installed or not in PATH
-    echo Please install MySQL Server and add it to PATH
-    pause
-    exit /b 1
+    echo MySQL not found in PATH, trying common installation paths...
+    
+    :: Try common MySQL installation paths
+    set MYSQL_PATH=C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe
+    if exist "%MYSQL_PATH%" (
+        echo ✓ MySQL found at: %MYSQL_PATH%
+        set MYSQL_CMD=%MYSQL_PATH%
+    ) else (
+        set MYSQL_PATH=C:\Program Files\MySQL\MySQL Server 5.7\bin\mysql.exe
+        if exist "%MYSQL_PATH%" (
+            echo ✓ MySQL found at: %MYSQL_PATH%
+            set MYSQL_CMD=%MYSQL_PATH%
+        ) else (
+            echo ERROR: MySQL is not installed or not in PATH
+            echo Please install MySQL Server or add it to PATH
+            echo Common locations:
+            echo - C:\Program Files\MySQL\MySQL Server 8.0\bin\
+            echo - C:\Program Files\MySQL\MySQL Server 5.7\bin\
+            pause
+            exit /b 1
+        )
+    )
+) else (
+    echo ✓ MySQL found in PATH
+    set MYSQL_CMD=mysql
 )
 
 :: Step 4: Create and configure database
@@ -228,7 +249,7 @@ echo Creating database and user...
 
 :: Test MySQL connection first
 echo Testing MySQL connection...
-mysql -u root -p%MYSQL_ROOT_PASSWORD% -e "SELECT 1;" >nul 2>&1
+%MYSQL_CMD% -u root -p%MYSQL_ROOT_PASSWORD% -e "SELECT 1;" >nul 2>&1
 if %errorLevel% neq 0 (
     echo ERROR: Cannot connect to MySQL with provided credentials
     echo Please check:
@@ -242,7 +263,7 @@ echo ✓ MySQL connection successful
 
 :: Create database
 echo Creating database...
-mysql -u root -p%MYSQL_ROOT_PASSWORD% -e "CREATE DATABASE IF NOT EXISTS project_manager_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>mysql_error.log
+%MYSQL_CMD% -u root -p%MYSQL_ROOT_PASSWORD% -e "CREATE DATABASE IF NOT EXISTS project_manager_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>mysql_error.log
 if %errorLevel% neq 0 (
     echo ERROR: Failed to create database
     echo Check mysql_error.log for details
@@ -254,7 +275,7 @@ echo ✓ Database created successfully
 
 :: Create user
 echo Creating database user...
-mysql -u root -p%MYSQL_ROOT_PASSWORD% -e "CREATE USER IF NOT EXISTS 'django_user'@'localhost' IDENTIFIED BY 'django_password_2024';" 2>mysql_error.log
+%MYSQL_CMD% -u root -p%MYSQL_ROOT_PASSWORD% -e "CREATE USER IF NOT EXISTS 'django_user'@'localhost' IDENTIFIED BY 'django_password_2024';" 2>mysql_error.log
 if %errorLevel% neq 0 (
     echo ERROR: Failed to create user
     echo Check mysql_error.log for details
@@ -266,7 +287,7 @@ echo ✓ Database user created successfully
 
 :: Grant privileges
 echo Granting privileges...
-mysql -u root -p%MYSQL_ROOT_PASSWORD% -e "GRANT ALL PRIVILEGES ON project_manager_db.* TO 'django_user'@'localhost';" 2>mysql_error.log
+%MYSQL_CMD% -u root -p%MYSQL_ROOT_PASSWORD% -e "GRANT ALL PRIVILEGES ON project_manager_db.* TO 'django_user'@'localhost';" 2>mysql_error.log
 if %errorLevel% neq 0 (
     echo ERROR: Failed to grant privileges
     echo Check mysql_error.log for details
@@ -278,7 +299,7 @@ echo ✓ Privileges granted successfully
 
 :: Flush privileges
 echo Flushing privileges...
-mysql -u root -p%MYSQL_ROOT_PASSWORD% -e "FLUSH PRIVILEGES;" 2>mysql_error.log
+%MYSQL_CMD% -u root -p%MYSQL_ROOT_PASSWORD% -e "FLUSH PRIVILEGES;" 2>mysql_error.log
 if %errorLevel% neq 0 (
     echo ERROR: Failed to flush privileges
     echo Check mysql_error.log for details
@@ -371,7 +392,7 @@ if /i "%CREATE_SUPERUSER%"=="y" (
     if %errorLevel% equ 0 (
         echo Superuser created with username: admin
         echo Default password: admin123 (change this after first login)
-        mysql -u root -p%MYSQL_ROOT_PASSWORD% -e "UPDATE project_manager_db.auth_user SET password='pbkdf2_sha256\$600000\$dummy\$dummy' WHERE username='admin';" 2>nul
+        %MYSQL_CMD% -u root -p%MYSQL_ROOT_PASSWORD% -e "UPDATE project_manager_db.auth_user SET password='pbkdf2_sha256\$600000\$dummy\$dummy' WHERE username='admin';" 2>nul
     )
 )
 
