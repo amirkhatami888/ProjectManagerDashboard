@@ -131,65 +131,71 @@ set PYTHON_FOUND=0
 if %errorLevel% equ 0 (
     set PYTHON_FOUND=1
     echo ✓ Python found at: %PYTHON_PATH%
-) else (
-    :: Try common Python installation paths
-    echo Searching for Python installation...
-    
-    :: Try Python 3.11
-    set PYTHON_PATH=C:\Python311\python.exe
-    %PYTHON_PATH% --version >nul 2>&1
-    if %errorLevel% equ 0 (
-        set PYTHON_FOUND=1
-        echo ✓ Python found at: %PYTHON_PATH%
-    ) else (
-        :: Try Python 3.10
-        set PYTHON_PATH=C:\Python310\python.exe
-        %PYTHON_PATH% --version >nul 2>&1
-        if %errorLevel% equ 0 (
-            set PYTHON_FOUND=1
-            echo ✓ Python found at: %PYTHON_PATH%
-        ) else (
-            :: Try Python 3.9
-            set PYTHON_PATH=C:\Python39\python.exe
-            %PYTHON_PATH% --version >nul 2>&1
-            if %errorLevel% equ 0 (
-                set PYTHON_FOUND=1
-                echo ✓ Python found at: %PYTHON_PATH%
-            ) else (
-                :: Try Python from PATH
-                python --version >nul 2>&1
-                if %errorLevel% equ 0 (
-                    set PYTHON_PATH=python
-                    set PYTHON_FOUND=1
-                    echo ✓ Python found in PATH: %PYTHON_PATH%
-                ) else (
-                    :: Try py launcher
-                    py --version >nul 2>&1
-                    if %errorLevel% equ 0 (
-                        set PYTHON_PATH=py
-                        set PYTHON_FOUND=1
-                        echo ✓ Python found via py launcher: %PYTHON_PATH%
-                    )
-                )
-            )
-        )
-    )
+    goto python_found
 )
 
-if %PYTHON_FOUND% equ 0 (
-    echo ERROR: Python 3.9+ is required but not found
-    echo.
-    echo Please install Python 3.9+ from https://www.python.org/downloads/
-    echo Or update the PYTHON_PATH variable in this script
-    echo.
-    echo Common installation paths:
-    echo - C:\Python39\python.exe
-    echo - C:\Python310\python.exe
-    echo - C:\Python311\python.exe
-    echo - Or add Python to your system PATH
-    pause
-    exit /b 1
+:: Try common Python installation paths
+echo Searching for Python installation...
+
+:: Try Python 3.11
+set PYTHON_PATH=C:\Python311\python.exe
+%PYTHON_PATH% --version >nul 2>&1
+if %errorLevel% equ 0 (
+    set PYTHON_FOUND=1
+    echo ✓ Python found at: %PYTHON_PATH%
+    goto python_found
 )
+
+:: Try Python 3.10
+set PYTHON_PATH=C:\Python310\python.exe
+%PYTHON_PATH% --version >nul 2>&1
+if %errorLevel% equ 0 (
+    set PYTHON_FOUND=1
+    echo ✓ Python found at: %PYTHON_PATH%
+    goto python_found
+)
+
+:: Try Python 3.9
+set PYTHON_PATH=C:\Python39\python.exe
+%PYTHON_PATH% --version >nul 2>&1
+if %errorLevel% equ 0 (
+    set PYTHON_FOUND=1
+    echo ✓ Python found at: %PYTHON_PATH%
+    goto python_found
+)
+
+:: Try Python from PATH
+python --version >nul 2>&1
+if %errorLevel% equ 0 (
+    set PYTHON_PATH=python
+    set PYTHON_FOUND=1
+    echo ✓ Python found in PATH: %PYTHON_PATH%
+    goto python_found
+)
+
+:: Try py launcher
+py --version >nul 2>&1
+if %errorLevel% equ 0 (
+    set PYTHON_PATH=py
+    set PYTHON_FOUND=1
+    echo ✓ Python found via py launcher: %PYTHON_PATH%
+    goto python_found
+)
+
+echo ERROR: Python 3.9+ is required but not found
+echo.
+echo Please install Python 3.9+ from https://www.python.org/downloads/
+echo Or update the PYTHON_PATH variable in this script
+echo.
+echo Common installation paths:
+echo - C:\Python39\python.exe
+echo - C:\Python310\python.exe
+echo - C:\Python311\python.exe
+echo - Or add Python to your system PATH
+pause
+exit /b 1
+
+:python_found
 
 :: Install required Python packages
 echo Installing Python packages...
