@@ -1,9 +1,9 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
 
 class SessionLog(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     session_key = models.CharField(max_length=40)
     ip_address = models.GenericIPAddressField()
     user_agent = models.TextField()
@@ -20,7 +20,7 @@ class SessionLog(models.Model):
 
 
 class SessionSecurity(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     failed_attempts = models.IntegerField(default=0)
     last_failed_attempt = models.DateTimeField(null=True, blank=True)
     is_locked = models.BooleanField(default=False)
