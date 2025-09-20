@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap5',
     'jalali_date',
+    'django_extensions',
     
     # Custom apps
     'accounts',
