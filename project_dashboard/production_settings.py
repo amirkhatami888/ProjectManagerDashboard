@@ -1,23 +1,23 @@
 """
 Production settings for project_dashboard project.
-This file is used for production deployment.
+Optimized for Windows Server 2025 with IIS deployment.
 """
 
 import os
 from pathlib import Path
 from decouple import config
 
-
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-# BASE_DIR = Path(__file__).resolve().parent.parent
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Security settings for production
+# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this-in-production')
 
-DEBUG = config('DEBUG', default=True, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost').split(',')
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = config('DEBUG', default=False, cast=bool)
+
+# Production ALLOWED_HOSTS
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='amirhoseainkhatami.ir,www.amirhoseainkhatami.ir,localhost,127.0.0.1').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     # Custom apps
     'accounts',
     'dashboard',
+    'creator_program',
     'creator_project',
     'creator_subproject',
     'creator_review',
@@ -44,6 +45,8 @@ INSTALLED_APPS = [
     'notifications',
     'notifications_sms',
     'webhooks',
+    'activity_monitor',
+    'session_manager',
 ]
 
 MIDDLEWARE = [
@@ -55,6 +58,12 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "project_dashboard.middleware.LoginRequiredMiddleware",
+    
+    # Activity monitoring middleware
+    "activity_monitor.middleware.ActivityTrackingMiddleware",
+    "activity_monitor.middleware.LoginLogoutMiddleware",
+    "activity_monitor.middleware.ProjectChangeMiddleware",
+    "activity_monitor.middleware.SecurityMiddleware",
 ]
 
 ROOT_URLCONF = "project_dashboard.urls"
@@ -77,40 +86,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "project_dashboard.wsgi.application"
 
-# Database configuration
-# server
-# DATABASES = {
-#     "default": {
-#         "ENGINE": config('DB_ENGINE', default="django.db.backends.mysql"),
-#         "NAME": config('DB_NAME', default="amirho10_project_manager_db"),
-#         "USER": config('DB_USER', default="	amirho10_amirkhatatmi888"),
-#         "PASSWORD": config('DB_PASSWORD', default="Amir137667318@"),  # Use environment variable for security
-#         "HOST": config('DB_HOST', default="localhost"),
-#         "PORT": config('DB_PORT', default="3306"),
-#         'OPTIONS': {
-#             'charset': 'utf8mb4',
-#             'use_unicode': True,
-#              'init_command': "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'"
-#         },
-#     }
-# }
-# local
+# Database configuration for production
 DATABASES = {
     "default": {
         "ENGINE": config('DB_ENGINE', default="django.db.backends.mysql"),
         "NAME": config('DB_NAME', default="project_manager_db"),
-        "USER": config('DB_USER', default="	root"),
-        "PASSWORD": config('DB_PASSWORD', default="Amir137667318@"),
+        "USER": config('DB_USER', default="root"),
+        "PASSWORD": config('DB_PASSWORD', default=""),
         "HOST": config('DB_HOST', default="localhost"),
-        "PORT": config('DB_PORT', default="3388"),
+        "PORT": config('DB_PORT', default="3306"),
         'OPTIONS': {
             'charset': 'utf8mb4',
             'use_unicode': True,
-            'init_command': "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'"
+            'init_command': "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'",
+            'sql_mode': 'STRICT_TRANS_TABLES',
         },
     }
 }
-
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -134,12 +126,14 @@ TIME_ZONE = "Asia/Tehran"
 USE_I18N = True
 USE_TZ = True
 
-# Static files configuration
+# Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 
-# Media files configuration
+# Media files (User uploaded files)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -158,6 +152,23 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = 'dashboard:dashboard'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
+# Session settings for production
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=True, cast=bool)  # True for HTTPS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Session Security Settings
+SESSION_MAX_FAILED_ATTEMPTS = 5
+SESSION_LOCKOUT_DURATION = 300  # 5 minutes
+SESSION_SECURE_COOKIES = config('SESSION_SECURE_COOKIES', default=True, cast=bool)  # True for HTTPS
+SESSION_CSRF_COOKIE_SECURE = config('SESSION_CSRF_COOKIE_SECURE', default=True, cast=bool)  # True for HTTPS
+SESSION_CSRF_COOKIE_HTTPONLY = True
+SESSION_CSRF_COOKIE_SAMESITE = 'Lax'
+
 # Jalali Date configuration
 JALALI_DATE_DEFAULTS = {
     'LIST_DISPLAY_AUTO_CONVERT': True,
@@ -166,41 +177,108 @@ JALALI_DATE_DEFAULTS = {
         'datetime': '%H:%M:%S _ %y/%m/%d',
     },
     'Static': {
-        'js': ['admin/js/django_jalali.min.js'],
-        'css': {'all': ['admin/css/django_jalali.min.css']}
+        'js': [
+            'admin/js/django_jalali.min.js',
+        ],
+        'css': {
+            'all': [
+              'admin/css/django_jalali.min.css',
+            ]
+        }
     },
 }
 
-# Security settings for production
-MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-# Additional production security settings
+# Production Security Settings
+SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)  # True for HTTPS
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
-SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
+SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
-# Logging configuration
+# Production Logging Configuration
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'file': {
-            'level': 'INFO',
+            'level': 'ERROR',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'logs', 'django.log'),
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['file'],
+            'handlers': ['file', 'console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['file', 'console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'creator_program': {
+            'handlers': ['file', 'console'],
             'level': 'INFO',
             'propagate': True,
         },
     },
 }
 
-# Ensure logs and cache directories exist
-os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
-os.makedirs(os.path.join(BASE_DIR, 'cache'), exist_ok=True) 
+# Ensure proper Unicode handling
+import sys
+import locale
+
+if sys.version_info[0] >= 3:
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
+# Set locale to support UTF-8
+try:
+    locale.setlocale(locale.LC_ALL, 'fa_IR.UTF-8')
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_ALL, 'Persian_Iran.UTF-8')
+    except locale.Error:
+        locale.setlocale(locale.LC_ALL, '')
+
+# Add these settings to ensure proper Unicode handling
+DEFAULT_CHARSET = 'utf-8'
+FILE_CHARSET = 'utf-8'
+
+# Production Cache Configuration (if using Redis or Memcached)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
+
+# Email Configuration for Production
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = config('EMAIL_HOST', default='localhost')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@amirhoseainkhatami.ir')
