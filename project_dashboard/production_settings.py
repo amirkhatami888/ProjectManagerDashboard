@@ -17,7 +17,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this-in-produc
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Production ALLOWED_HOSTS
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='amirhoseainkhatami.ir,www.amirhoseainkhatami.ir,localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='projecthelal.rcs.ir,www.projecthelal.rcs.ir,localhost,127.0.0.1').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -86,21 +86,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "project_dashboard.wsgi.application"
 
-# Database configuration for production
+# Database configuration for production (temporarily using SQLite)
 DATABASES = {
     "default": {
-        "ENGINE": config('DB_ENGINE', default="django.db.backends.mysql"),
-        "NAME": config('DB_NAME', default="project_manager_db"),
-        "USER": config('DB_USER', default="root"),
-        "PASSWORD": config('DB_PASSWORD', default=""),
-        "HOST": config('DB_HOST', default="localhost"),
-        "PORT": config('DB_PORT', default="3306"),
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'use_unicode': True,
-            'init_command': "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'",
-            'sql_mode': 'STRICT_TRANS_TABLES',
-        },
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
@@ -281,4 +271,4 @@ EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@amirhoseainkhatami.ir')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@projecthelal.rcs.ir')

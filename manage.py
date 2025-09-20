@@ -7,8 +7,13 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    # Check if local_settings.py exists and use it, otherwise use default settings
-    settings_module = "project_dashboard.local_settings" if os.path.exists(os.path.join(os.path.dirname(__file__), "project_dashboard", "local_settings.py")) else "project_dashboard.settings"
+    # Check if local_settings.py exists and use it, otherwise use production_settings, then default settings
+    if os.path.exists(os.path.join(os.path.dirname(__file__), "project_dashboard", "local_settings.py")):
+        settings_module = "project_dashboard.local_settings"
+    elif os.path.exists(os.path.join(os.path.dirname(__file__), "project_dashboard", "production_settings.py")):
+        settings_module = "project_dashboard.production_settings"
+    else:
+        settings_module = "project_dashboard.settings"
     
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", settings_module)
     try:

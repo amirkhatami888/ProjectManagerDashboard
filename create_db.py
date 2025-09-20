@@ -1,10 +1,13 @@
 import mysql.connector
 from mysql.connector import Error
 
+connection = None
+cursor = None
+
 try:
     connection = mysql.connector.connect(
         host='localhost',
-        port=3388,
+        port=3306,  # Changed to standard MySQL port
         user='root',
         password='Amir137667318@'
     )
@@ -18,7 +21,8 @@ except Error as e:
     print(f"Error: {e}")
     
 finally:
-    if connection.is_connected():
-        cursor.close()
+    if connection and connection.is_connected():
+        if cursor:
+            cursor.close()
         connection.close()
         print("MySQL connection is closed") 

@@ -28,7 +28,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this-in-produc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='amirhoseainkhatami.ir,www.amirhoseainkhatami.ir,localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='projecthelal.rcs.ir,www.projecthelal.rcs.ir,localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -111,12 +111,12 @@ WSGI_APPLICATION = "project_dashboard.wsgi.application"
 # Windows VPS MySQL Database Configuration (Local MySQL)
 DATABASES = {
     "default": {
-        "ENGINE": config('DB_ENGINE', default="django.db.backends.mysql"),
-        "NAME": config('DB_NAME', default="project_manager_db"),
-        "USER": config('DB_USER', default="amirkhatami888"),
-        "PASSWORD": config('DB_PASSWORD', default="Amir137667318@"),
-        "HOST": config('DB_HOST', default="localhost"),
-        "PORT": config('DB_PORT', default="3306"),
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "project_manager_db",
+        "USER": "amirkhatami888",
+        "PASSWORD": "Amir137667318@",
+        "HOST": "localhost",
+        "PORT": "3306",
         'OPTIONS': {
             'charset': 'utf8mb4',
             'use_unicode': True,
@@ -125,6 +125,11 @@ DATABASES = {
         },
     }
 }
+
+# Debug: Print database configuration
+print(f"Database USER: {DATABASES['default']['USER']}")
+print(f"Database NAME: {DATABASES['default']['NAME']}")
+print(f"Database HOST: {DATABASES['default']['HOST']}")
 
 
 # Password validation

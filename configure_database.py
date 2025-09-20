@@ -20,7 +20,7 @@ DATABASES = {
         "ENGINE": config('DB_ENGINE', default="django.db.backends.mysql"),
         "NAME": config('DB_NAME', default="project_manager_db"),
         "USER": config('DB_USER', default="root"),
-        "PASSWORD": config('DB_PASSWORD', default=""),
+        "PASSWORD": config('DB_PASSWORD', default="Amir137667318@"),
         "HOST": config('DB_HOST', default="localhost"),
         "PORT": config('DB_PORT', default="3306"),
         'OPTIONS': {
