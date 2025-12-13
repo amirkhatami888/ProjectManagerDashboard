@@ -37,7 +37,7 @@ def custom_logout(request):
         messages.success(request, 'شما با موفقیت از سیستم خارج شدید.')
     
     # Redirect to login page
-    return HttpResponseRedirect(reverse('login'))
+    return HttpResponseRedirect(reverse('accounts:login'))
 
 @login_required
 def profile(request):

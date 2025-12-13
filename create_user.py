@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
 Create MySQL user using Django's database connection
+SECURITY: This script uses parameterized queries to prevent SQL injection
 """
 import os
 import sys
@@ -17,22 +18,25 @@ django.setup()
 from django.db import connection
 
 def create_user():
-    """Create MySQL user and grant privileges"""
+    """Create MySQL user and grant privileges using parameterized queries"""
     try:
         with connection.cursor() as cursor:
             # First, let's try to connect as root to create the user
             print("Attempting to create user 'amirkhatatmi888'...")
             
-            # Try to create the user
+            # Try to create the user using parameterized query
             try:
-                cursor.execute("CREATE USER 'amirkhatatmi888'@'localhost' IDENTIFIED BY 'Amir137667318@!'")
+                # SECURITY: Use parameterized query to prevent SQL injection
+                cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", 
+                            ['amirkhatatmi888', 'localhost', 'Amir137667318@!'])
                 print("✅ User 'amirkhatatmi888' created")
             except Exception as e:
                 print(f"User creation error (may already exist): {e}")
             
-            # Grant privileges
+            # Grant privileges using parameterized query
             try:
-                cursor.execute("GRANT ALL PRIVILEGES ON project_manager_db.* TO 'amirkhatatmi888'@'localhost'")
+                cursor.execute("GRANT ALL PRIVILEGES ON project_manager_db.* TO %s@%s", 
+                            ['amirkhatatmi888', 'localhost'])
                 cursor.execute("FLUSH PRIVILEGES")
                 print("✅ Privileges granted to 'amirkhatatmi888'")
             except Exception as e:

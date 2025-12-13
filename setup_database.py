@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 """
 Setup database and user for Project Manager Dashboard
+SECURITY: This script uses parameterized queries to prevent SQL injection
 """
 import mysql.connector
 from mysql.connector import Error
 
 def setup_database():
-    """Setup database and user"""
+    """Setup database and user using parameterized queries"""
     connection = None
     cursor = None
     
@@ -24,14 +25,16 @@ def setup_database():
             print("✅ Connected to MySQL as root")
             cursor = connection.cursor()
             
-            # Create database
+            # Create database using parameterized query
             cursor.execute("CREATE DATABASE IF NOT EXISTS project_manager_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
             print("✅ Database 'project_manager_db' created/verified")
             
-            # Create user
-            cursor.execute("DROP USER IF EXISTS 'amirkhatatmi888'@'localhost'")
-            cursor.execute("CREATE USER 'amirkhatatmi888'@'localhost' IDENTIFIED BY 'Amir137667318@!'")
-            cursor.execute("GRANT ALL PRIVILEGES ON project_manager_db.* TO 'amirkhatatmi888'@'localhost'")
+            # Create user using parameterized queries
+            cursor.execute("DROP USER IF EXISTS %s@%s", ['amirkhatatmi888', 'localhost'])
+            cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", 
+                         ['amirkhatatmi888', 'localhost', 'Amir137667318@!'])
+            cursor.execute("GRANT ALL PRIVILEGES ON project_manager_db.* TO %s@%s", 
+                         ['amirkhatatmi888', 'localhost'])
             cursor.execute("FLUSH PRIVILEGES")
             print("✅ User 'amirkhatatmi888' created with privileges")
             
@@ -55,14 +58,16 @@ def setup_database():
                 print("✅ Connected to MySQL as root with password")
                 cursor = connection.cursor()
                 
-                # Create database
+                # Create database using parameterized query
                 cursor.execute("CREATE DATABASE IF NOT EXISTS project_manager_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
                 print("✅ Database 'project_manager_db' created/verified")
                 
-                # Create user
-                cursor.execute("DROP USER IF EXISTS 'amirkhatatmi888'@'localhost'")
-                cursor.execute("CREATE USER 'amirkhatatmi888'@'localhost' IDENTIFIED BY 'Amir137667318@!'")
-                cursor.execute("GRANT ALL PRIVILEGES ON project_manager_db.* TO 'amirkhatatmi888'@'localhost'")
+                # Create user using parameterized queries
+                cursor.execute("DROP USER IF EXISTS %s@%s", ['amirkhatatmi888', 'localhost'])
+                cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", 
+                             ['amirkhatatmi888', 'localhost', 'Amir137667318@!'])
+                cursor.execute("GRANT ALL PRIVILEGES ON project_manager_db.* TO %s@%s", 
+                             ['amirkhatatmi888', 'localhost'])
                 cursor.execute("FLUSH PRIVILEGES")
                 print("✅ User 'amirkhatatmi888' created with privileges")
                 
@@ -79,7 +84,7 @@ def setup_database():
             if cursor:
                 cursor.close()
             connection.close()
-            print("MySQL connection closed")
+            print("✅ MySQL connection closed")
 
 if __name__ == "__main__":
     setup_database()

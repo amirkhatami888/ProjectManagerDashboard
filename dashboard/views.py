@@ -31,7 +31,7 @@ def dashboard_redirect(request):
     elif user.is_province_manager:
         return redirect('dashboard:province_manager_dashboard')
     else:
-        return redirect('login')
+        return redirect('accounts:login')
 
 
 @login_required

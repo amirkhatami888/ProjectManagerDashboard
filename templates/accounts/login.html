@@ -86,6 +86,32 @@
             font-size: 0.85rem;
             margin-top: 25px;
         }
+        
+        .disclaimer-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #0d6efd;
+            cursor: pointer;
+            text-decoration: none;
+            margin-top: 15px;
+        }
+        
+        .disclaimer-link i {
+            font-size: 1rem;
+        }
+        
+        .modal-content {
+            text-align: right;
+            font-size: 0.92rem;
+            line-height: 1.8;
+        }
+        
+        .modal-content .important {
+            font-weight: bold;
+            color: #c00;
+        }
     </style>
 </head>
 <body class="text-center">
@@ -102,6 +128,26 @@
             </div>
             {% endif %}
             
+            {% if brute_force_message %}
+            <div class="alert alert-warning" role="alert">
+                <i class="fas fa-shield-alt me-2"></i>
+                {{ brute_force_message }}
+                {% if brute_force_blocked %}
+                <br><small>لطفاً {{ lockout_duration|floatformat:0|add:"/"|add:"60"|floatformat:0 }} دقیقه صبر کنید.</small>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+            
             <form method="post">
                 {% csrf_token %}
                 <div class="form-floating mb-3">
@@ -112,12 +158,45 @@
                     <input type="password" name="password" class="form-control" id="id_password" placeholder="رمز عبور" required>
                     <label for="id_password"><i class="fas fa-lock me-2"></i>رمز عبور</label>
                 </div>
+                
+                {% if show_captcha and captcha %}
+                <div class="captcha-section mb-4 p-3 border rounded" style="background-color: #f8f9fa;">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <label class="form-label mb-2">
+                                <i class="fas fa-shield-alt me-2 text-warning"></i>
+                                مسئله امنیتی:
+                            </label>
+                            <div class="captcha-question h5 mb-2 text-center" style="font-family: monospace; color: #495057;">
+                                {{ captcha.question }} = ?
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="refresh-captcha" title="تازه کردن مسئله">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    <div class="form-floating">
+                        <input type="number" name="captcha_answer" class="form-control" id="id_captcha_answer" placeholder="پاسخ" required>
+                        <label for="id_captcha_answer">پاسخ مسئله</label>
+                        <input type="hidden" name="captcha_id" value="{{ captcha.id }}">
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        برای امنیت بیشتر، لطفاً مسئله ریاضی را حل کنید.
+                    </small>
+                </div>
+                {% endif %}
                 <button class="w-100 btn btn-lg btn-primary" type="submit">
                     <i class="fas fa-sign-in-alt me-2"></i>ورود به سیستم
                 </button>
                 
                 <input type="hidden" name="next" value="{{ next }}">
             </form>
+            
+            <a class="disclaimer-link" data-bs-toggle="modal" data-bs-target="#disclaimerModal">
+                <i class="fas fa-info-circle"></i>
+                استفاده از سایت یعنی از قوانین و شرایط پیروی می‌کند (نمایش جزئیات)
+            </a>
             
             <div class="footer-text">
                 <p class="mb-0">برای بازیابی رمز عبور با مدیر سیستم تماس بگیرید</p>
@@ -126,7 +205,100 @@
         </div>
     </div>
     
+    <div class="modal fade" id="disclaimerModal" tabindex="-1" aria-labelledby="disclaimerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="disclaimerModalLabel">توضیح وضعیت سایت – نسخهٔ آزمایشی</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="بستن"></button>
+                </div>
+                <div class="modal-body">
+                    <p>استفاده از سایت یعنی از قوانین و شرایط پیروی می‌کند.</p>
+                    <p>به اطلاع می‌رسد، این سایت با عنوان «<span class="important">سایت مدیریت پروژه</span>»،  و در حال حاضر صرفاً جهت <span class="important">نظرسنجی</span>، <span class="important">ارائه پیش‌نمونه (پروتوتایپ)</span> و <span class="important">آزمون کارکرد</span> راه‌اندازی شده است.</p>
+                    <p>این سایت در وضعیت آزمایشی قرار دارد؛ لذا:</p>
+                    <ul>
+                        <li>هیچ مجوز رسمی برای بهره‌برداری تولیدی یا وارد کردن داده‌های حساس یا نهایی صادر نشده است.</li>
+                        <li>هیچ تضمینی داده نمی‌شود که سایت بدون نقص، بدون توقف یا بدون خطا عمل کند.</li>
+                        <li>مدیر سایت، طراحان، ارائه‌دهندگان هاست یا سایر مسئولان فنی، هیچ مسئولیتی در قبال:</li>
+                        <ul>
+                            <li>از دست رفتن، حذف، تغییر یا افشای داده‌ها</li>
+                            <li>هرگونه خرابی، اختلال یا توقف سرویس</li>
+                            <li>هر نوع خسارت مستقیم یا غیرمستقیم، مالی یا غیرمالی که ممکن است به کاربران یا سازمان وارد شود</li>
+                        </ul>
+                        <li>نمی‌پذیرند.</li>
+                    </ul>
+                    <p>استفاده از این سایت و اطلاعات آن، کاملاً <span class="important">با مسئولیت خود کاربر و سازمان </span> انجام می‌گیرد.</p>
+                    <p>در صورت تصمیم به بهره‌برداری نهایی، وارد کردن داده‌های تولیدی، یا اتصال به سامانه‌های اصلی، لازم است مجوز رسمی توسط ذی‌صلاح صادر شده و شرایط امنیتی و حراستی رعایت شود.</p>
+                    <p>تغییرات، حذف‌ها و ارتقاءهای آتی ممکن است بدون اطلاع قبلی انجام شود و کاربران موظف‌اند قبل از استفاده، وضعیت سایت را بررسی نمایند.</p>
+                    <p>اگرچه نهایت دقت در طراحی به‌کار رفته، اما کاربر می‌پذیرد که امکان خطا، باگ، حمله هکری یا رخدادهای پیش‌بینی‌نشده وجود دارد و ورود و استفاده از سایت به منزلهٔ پذیرش این ریسک‌ها است.</p>
+                    <p>در نهایت: با ورود به این سایت، شما تأیید می‌کنید که این توضیحات را خوانده، متوجه شده و می‌پذیرید و هیچ ادعایی در قبال مسئولان سایت، مدیران یا ارائه‌دهندگان زیرساخت نخواهید داشت.</p>
+                    <p style="text-align: center; margin-top: 20px;">تاریخ: __________&nbsp;&nbsp;&nbsp; امضاء: __________</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">متوجه شدم</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html> 
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // CAPTCHA refresh functionality
+            const refreshCaptchaBtn = document.getElementById('refresh-captcha');
+            if (refreshCaptchaBtn) {
+                refreshCaptchaBtn.addEventListener('click', function() {
+                    fetch('{% url "accounts:refresh_captcha" %}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.captcha_id && data.question) {
+                            document.querySelector('.captcha-question').textContent = data.question + ' = ?';
+                            document.querySelector('[name=captcha_id]').value = data.captcha_id;
+                            document.querySelector('[name=captcha_answer]').value = '';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error refreshing CAPTCHA:', error);
+                    });
+                });
+            }
+            
+            // Form submission with loading state
+            const loginForm = document.querySelector('form');
+            const submitBtn = document.querySelector('button[type="submit"]');
+            
+            if (loginForm && submitBtn) {
+                loginForm.addEventListener('submit', function(e) {
+                    // Add loading state
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>در حال ورود...';
+                    
+                    // Re-enable button after 10 seconds as fallback
+                    setTimeout(function() {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>ورود به سیستم';
+                    }, 10000);
+                });
+            }
+            
+            // Auto-focus on username field
+            const usernameField = document.getElementById('id_username');
+            if (usernameField) {
+                usernameField.focus();
+            }
+            
+            // Show security information
+            {% if max_attempts %}
+            console.log('Security: Maximum {{ max_attempts }} failed attempts allowed per IP');
+            {% endif %}
+        });
+    </script> 

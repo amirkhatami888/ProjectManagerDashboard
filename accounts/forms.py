@@ -2,6 +2,25 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from .models import User
 
+class UserRegistrationForm(UserCreationForm):
+    """Form for user registration"""
+    email = forms.EmailField(required=True)
+    role = forms.ChoiceField(choices=User.ROLE_CHOICES, required=True)
+    province = forms.ChoiceField(choices=User.PROVINCE_CHOICES, required=True)
+    
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'role', 'province', 'password1', 'password2')
+        
+    def __init__(self, *args, **kwargs):
+        super(UserRegistrationForm, self).__init__(*args, **kwargs)
+        self.fields['username'].widget.attrs.update({'class': 'form-control'})
+        self.fields['email'].widget.attrs.update({'class': 'form-control'})
+        self.fields['role'].widget.attrs.update({'class': 'form-control'})
+        self.fields['province'].widget.attrs.update({'class': 'form-control'})
+        self.fields['password1'].widget.attrs.update({'class': 'form-control'})
+        self.fields['password2'].widget.attrs.update({'class': 'form-control'})
+
 class CustomUserCreationForm(UserCreationForm):
     """Custom form for creating new users with our custom fields"""
     class Meta:

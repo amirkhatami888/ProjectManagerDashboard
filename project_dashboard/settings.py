@@ -22,8 +22,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# This is for development only - use environment variables in production
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this-in-production')
+# Generate a strong secret key and store it in environment variables
+SECRET_KEY = config('SECRET_KEY', default='#+x1$zg#=h*^ky!_lzq(=bfg4t7=-$@cm7ln@b(!t#nmb)ue^h')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
@@ -70,6 +70,10 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    
+    # Brute Force Protection Middleware (MUST be before LoginRequiredMiddleware)
+    "accounts.brute_force_middleware.BruteForceProtectionMiddleware",
+    
     "project_dashboard.middleware.LoginRequiredMiddleware",
     
     # Activity monitoring middleware
@@ -108,15 +112,15 @@ WSGI_APPLICATION = "project_dashboard.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Windows VPS MySQL Database Configuration (Local MySQL)
+# Database Configuration - Use environment variables for security
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "project_manager_db",
-        "USER": "amirkhatami888",
-        "PASSWORD": "Amir137667318@",
-        "HOST": "localhost",
-        "PORT": "3306",
+        "ENGINE": config('DB_ENGINE', default="django.db.backends.mysql"),
+        "NAME": config('DB_NAME', default="project_manager_db"),
+        "USER": config('DB_USER', default="root"),
+        "PASSWORD": config('DB_PASSWORD', default=""),
+        "HOST": config('DB_HOST', default="localhost"),
+        "PORT": config('DB_PORT', default="3306"),
         'OPTIONS': {
             'charset': 'utf8mb4',
             'use_unicode': True,
@@ -126,29 +130,10 @@ DATABASES = {
     }
 }
 
-# Debug: Print database configuration
-print(f"Database USER: {DATABASES['default']['USER']}")
-print(f"Database NAME: {DATABASES['default']['NAME']}")
-print(f"Database HOST: {DATABASES['default']['HOST']}")
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
-]
+# (Password validators are defined in the security section above)
 
 
 # Internationalization
@@ -253,7 +238,7 @@ except locale.Error:
         # Fallback to default locale
         locale.setlocale(locale.LC_ALL, '')
 
-# Windows VPS Production Security Settings
+# Production Security Settings
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)  # Set to True when using HTTPS
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -261,6 +246,58 @@ X_FRAME_OPTIONS = 'DENY'
 SECURE_HSTS_SECONDS = 31536000  # 1 year (only when using HTTPS)
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
+
+# Additional Security Headers
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
+
+# CSRF Protection
+CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)  # True for HTTPS
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='').split(',') if config('CSRF_TRUSTED_ORIGINS', default='') else []
+
+# Content Security Policy (CSP) - Basic protection
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com")
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com")
+CSP_IMG_SRC = ("'self'", "data:", "https:")
+CSP_FONT_SRC = ("'self'", "https://cdnjs.cloudflare.com")
+CSP_CONNECT_SRC = ("'self'",)
+
+# File Upload Security
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024  # 5MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
+
+# Password Security
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {
+            "min_length": 8,
+        }
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
+]
+
+# Brute Force Protection Settings
+BRUTE_FORCE_MAX_ATTEMPTS_PER_IP = 10  # Maximum failed attempts per IP
+BRUTE_FORCE_MAX_ATTEMPTS_PER_USER = 5  # Maximum failed attempts per user
+BRUTE_FORCE_LOCKOUT_DURATION = 900  # Lockout duration in seconds (15 minutes)
+BRUTE_FORCE_PROGRESSIVE_DELAY_BASE = 2  # Base delay in seconds
+BRUTE_FORCE_CAPTCHA_THRESHOLD = 3  # Show CAPTCHA after this many failed attempts
+
+# CAPTCHA Settings
+CAPTCHA_CACHE_TIMEOUT = 300  # CAPTCHA expiration time in seconds (5 minutes)
 
 # Windows VPS Static Files Configuration
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
