@@ -2,7 +2,57 @@
 # This migration was recreated to fix the duplicate column issue
 # The file_mime_type column already exists in the database from the initial migration
 
-from django.db import migrations, models
+from django.db import migrations
+
+
+def check_and_add_file_mime_type(apps, schema_editor):
+    """
+    Only add the file_mime_type column if it doesn't already exist.
+    The column was already added in the initial migration, so this is a no-op
+    for databases that were created with the initial migration.
+    """
+    db_alias = schema_editor.connection.alias
+    with schema_editor.connection.cursor() as cursor:
+        # Check if column exists
+        cursor.execute("""
+            SELECT COUNT(*) 
+            FROM information_schema.COLUMNS 
+            WHERE TABLE_SCHEMA = DATABASE()
+            AND TABLE_NAME = 'creator_subproject_documentfile'
+            AND COLUMN_NAME = 'file_mime_type'
+        """)
+        column_exists = cursor.fetchone()[0] > 0
+        
+        if not column_exists:
+            # Add the column if it doesn't exist
+            cursor.execute("""
+                ALTER TABLE creator_subproject_documentfile 
+                ADD COLUMN file_mime_type VARCHAR(100) DEFAULT 'application/octet-stream'
+            """)
+
+
+def reverse_check_and_add_file_mime_type(apps, schema_editor):
+    """
+    Reverse migration - remove the column if it exists.
+    """
+    db_alias = schema_editor.connection.alias
+    with schema_editor.connection.cursor() as cursor:
+        # Check if column exists
+        cursor.execute("""
+            SELECT COUNT(*) 
+            FROM information_schema.COLUMNS 
+            WHERE TABLE_SCHEMA = DATABASE()
+            AND TABLE_NAME = 'creator_subproject_documentfile'
+            AND COLUMN_NAME = 'file_mime_type'
+        """)
+        column_exists = cursor.fetchone()[0] > 0
+        
+        if column_exists:
+            # Remove the column if it exists
+            cursor.execute("""
+                ALTER TABLE creator_subproject_documentfile 
+                DROP COLUMN file_mime_type
+            """)
 
 
 class Migration(migrations.Migration):
@@ -12,11 +62,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # This operation is skipped if the column already exists
-        # The column was already added in the initial migration
-        migrations.AddField(
-            model_name='documentfile',
-            name='file_mime_type',
-            field=models.CharField(default='application/octet-stream', max_length=100, verbose_name='نوع فایل (MIME)'),
+        # Use RunPython to conditionally add the column only if it doesn't exist
+        # The column was already added in the initial migration, so this is a no-op
+        # for databases that were created with the initial migration.
+        migrations.RunPython(
+            check_and_add_file_mime_type,
+            reverse_check_and_add_file_mime_type,
         ),
     ] 

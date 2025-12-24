@@ -139,12 +139,18 @@ DATABASES = {
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "fa"  # Persian/Farsi language code
+
+# Supported languages
+LANGUAGES = [
+    ('fa', 'فارسی'),
+    ('en', 'English'),
+]
 
 TIME_ZONE = "Asia/Tehran"
 
 USE_I18N = True
-
+USE_L10N = True  # Enable localization
 USE_TZ = True
 
 
@@ -214,21 +220,17 @@ JALALI_DATE_DEFAULTS = {
     },
 }
 
-# Set Persian/Farsi locale
+# Set Persian/Farsi locale and ensure proper Unicode handling
 import locale
 import sys
-
-# Ensure proper Unicode handling
-import sys
-import locale
+import io
 
 # Set UTF-8 as the default encoding for the entire application
 if sys.version_info[0] >= 3:
-    import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
-# Set locale to support UTF-8
+# Set locale to support UTF-8 and Persian
 try:
     locale.setlocale(locale.LC_ALL, 'fa_IR.UTF-8')
 except locale.Error:
@@ -236,7 +238,14 @@ except locale.Error:
         locale.setlocale(locale.LC_ALL, 'Persian_Iran.UTF-8')
     except locale.Error:
         # Fallback to default locale
-        locale.setlocale(locale.LC_ALL, '')
+        try:
+            locale.setlocale(locale.LC_ALL, '')
+        except locale.Error:
+            pass  # Continue if locale setting fails
+
+# Ensure UTF-8 encoding for all text handling
+DEFAULT_CHARSET = 'utf-8'
+FILE_CHARSET = 'utf-8'
 
 # Production Security Settings
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)  # Set to True when using HTTPS
