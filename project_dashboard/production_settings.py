@@ -87,7 +87,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "project_dashboard.wsgi.application"
 
-# Database configuration for production - MySQL
+# Database configuration for production - MySQL/MariaDB
 DATABASES = {
     "default": {
         "ENGINE": config('DB_ENGINE', default="django.db.backends.mysql"),
@@ -101,7 +101,14 @@ DATABASES = {
             'use_unicode': True,
             'init_command': "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'",
             'sql_mode': 'STRICT_TRANS_TABLES',
+            'connect_timeout': 10,
+            'read_timeout': 10,
+            'write_timeout': 10,
+            # Fix for decimal.InvalidOperation with MariaDB
+            'isolation_level': None,
         },
+        # Connection pooling settings
+        'CONN_MAX_AGE': 0,  # Disable persistent connections to avoid issues
     }
 }
 

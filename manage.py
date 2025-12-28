@@ -3,6 +3,13 @@
 import os
 import sys
 
+# Use PyMySQL as MySQLdb replacement (better MariaDB compatibility)
+try:
+    import pymysql
+    pymysql.install_as_MySQLdb()
+except ImportError:
+    pass  # MySQLdb will be used if PyMySQL is not available
+
 
 
 def main():

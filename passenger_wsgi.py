@@ -1,6 +1,13 @@
 import sys
 import os
 
+# Use PyMySQL as MySQLdb replacement (better MariaDB compatibility)
+try:
+    import pymysql
+    pymysql.install_as_MySQLdb()
+except ImportError:
+    pass  # MySQLdb will be used if PyMySQL is not available
+
 # Get project root directory (where this file is located)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
