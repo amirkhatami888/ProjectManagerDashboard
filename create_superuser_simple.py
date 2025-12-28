@@ -5,6 +5,13 @@ Create superuser - simple version without django_extensions dependency
 import os
 import sys
 
+# Use PyMySQL as MySQLdb replacement (better MariaDB compatibility)
+try:
+    import pymysql
+    pymysql.install_as_MySQLdb()
+except ImportError:
+    pass  # MySQLdb will be used if PyMySQL is not available
+
 # Setup Django before importing models
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_dashboard.production_settings')
 
