@@ -1,0 +1,63 @@
+BAD REQUEST 3 - QUICK FIX GUIDE
+================================
+
+This error means Passenger cannot find/load your startup file.
+
+IMMEDIATE FIX:
+-------------
+
+1. SSH into your server:
+   ssh username@your-server.com
+
+2. Navigate to project directory:
+   cd ~/public_html/PMD/ProjectManagerDashboard
+
+3. Create/verify passenger_wsgi.py exists in ROOT:
+   ls -la passenger_wsgi.py
+   
+   If it doesn't exist, create it:
+   
+   cat > passenger_wsgi.py << 'EOF'
+   import sys
+   import os
+   BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+   sys.path.insert(0, BASE_DIR)
+   os.chdir(BASE_DIR)
+   os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_dashboard.production_settings')
+   from django.core.wsgi import get_wsgi_application
+   application = get_wsgi_application()
+   EOF
+   
+   chmod 644 passenger_wsgi.py
+
+4. In cPanel "Setup Python App":
+   - Application startup file: passenger_wsgi.py
+   - Application Entry point: application
+   - App Directory: public_html/PMD/ProjectManagerDashboard
+
+5. Click "Restart" in cPanel
+
+VERIFY FILE LOCATION:
+--------------------
+The file MUST be here:
+~/public_html/PMD/ProjectManagerDashboard/passenger_wsgi.py
+
+NOT here:
+~/public_html/PMD/ProjectManagerDashboard/project_dashboard/passenger_wsgi.py  ❌
+
+COMMON MISTAKES:
+---------------
+❌ Using: project_dashboard/passenger_wsgi.py
+✅ Use: passenger_wsgi.py (just filename, no path)
+
+❌ Using full path in cPanel
+✅ Use just the filename
+
+TEST THE FILE:
+-------------
+cd ~/public_html/PMD/ProjectManagerDashboard
+source ~/virtualenv/public_html/PMD/3.10/bin/activate
+python passenger_wsgi.py
+
+If this works, cPanel should work too!
+

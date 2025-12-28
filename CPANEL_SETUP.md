@@ -20,6 +20,7 @@ When setting up your Python application in cPanel's "Setup Python App", use thes
 4. **Application startup file**: 
    - **File name**: `passenger_wsgi.py`
    - **Full path**: `public_html/PMD/ProjectManagerDashboard/passenger_wsgi.py`
+   - **⚠️ IMPORTANT**: The file must be in the ROOT directory (same level as `manage.py`), NOT inside `project_dashboard/` folder!
 
 5. **Application Entry point**: 
    - **Variable name**: `application`
