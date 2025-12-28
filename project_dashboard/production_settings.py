@@ -101,14 +101,19 @@ DATABASES = {
             'use_unicode': True,
             'init_command': "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'",
             'sql_mode': 'STRICT_TRANS_TABLES',
-            'connect_timeout': 10,
-            'read_timeout': 10,
-            'write_timeout': 10,
+            'connect_timeout': 60,
+            'read_timeout': 60,
+            'write_timeout': 60,
             # Fix for decimal.InvalidOperation with MariaDB
             'isolation_level': None,
+            # Prevent "MySQL server has gone away" errors
+            'autocommit': True,
         },
-        # Connection pooling settings
-        'CONN_MAX_AGE': 0,  # Disable persistent connections to avoid issues
+        # Connection pooling settings - use 0 to disable persistent connections
+        # This helps avoid "MySQL server has gone away" errors
+        'CONN_MAX_AGE': 0,
+        # Connection retry settings
+        'ATOMIC_REQUESTS': False,
     }
 }
 
