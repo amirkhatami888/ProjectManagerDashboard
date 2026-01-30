@@ -461,7 +461,7 @@ class SubProject(models.Model):
 
 
 
-            base_amount = base_amount * (1 + adjustment_decimal)
+        base_amount = base_amount * (1 + adjustment_decimal)
             
         # For backwards compatibility, also check the 25% increase field
         if self.has_25_percent_increase == 'دارد' and self.increase_coefficient_25_percent:
