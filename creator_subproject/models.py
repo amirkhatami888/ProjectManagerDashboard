@@ -164,7 +164,7 @@ class SubProject(models.Model):
     # Adjustment fields - updated field names
     has_adjustment = models.CharField(max_length=10, choices=HAS_ADJUSTMENT_CHOICES, default='ندارد', verbose_name="افزایش 25 درصدی قرار داد")
     adjustment_coefficient = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True, verbose_name="درصد افزایش مبلغ قرار داد")
-    
+
     # 25% Increase fields
     has_25_percent_increase = models.CharField(
         max_length=10, 
@@ -441,17 +441,25 @@ class SubProject(models.Model):
         # Base contract amount
         base_amount = self.contract_amount
 
-        # Apply adjustment increase if it exists (as percentage)
-        if self.has_adjustment == 'دارد' and self.adjustment_coefficient:
-            # Convert percentage to decimal (e.g. 25% becomes 0.25)
-            # NEW FIXED CODE
-            try:
-                # Force conversion to float, handling strings like "1000" or empty ""
-                coeff = float(str(self.adjustment_coefficient).replace(',', '') or 0)
-            except (ValueError, TypeError):
-                coeff = 0.0
 
-            adjustment_decimal = coeff / 100
+
+        adjustment_decimal = self.adjustment_coefficient / 100
+
+        # # Apply adjustment increase if it exists (as percentage)
+        # if self.has_adjustment == 'دارد' and self.adjustment_coefficient:
+        #     # Convert percentage to decimal (e.g. 25% becomes 0.25)
+        #     # NEW FIXED CODE
+        #     try:
+        #         # Force conversion to float, handling strings like "1000" or empty ""
+        #         coeff = float(str(self.adjustment_coefficient).replace(',', '') or 0)
+        #     except (ValueError, TypeError):
+        #         coeff = 0.0
+
+        #     adjustment_decimal = coeff / 100
+
+
+
+
 
             base_amount = base_amount * (1 + adjustment_decimal)
             
