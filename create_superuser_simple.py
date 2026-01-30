@@ -63,9 +63,9 @@ def create_superuser():
         print("❌ Passwords don't match!")
         return False
     
-    # Create superuser
+    # Create superuser (use create_superuser so role=ADMIN; create_user would use model default PROVINCE_MANAGER)
     try:
-        user = User.objects.create_user(
+        user = User.objects.create_superuser(
             username=username,
             email=email if email else f"{username}@example.com",
             password=password,
