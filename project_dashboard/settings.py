@@ -116,8 +116,8 @@ WSGI_APPLICATION = "project_dashboard.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": config('DB_ENGINE', default="django.db.backends.mysql"),
-        "NAME": config('DB_NAME', default="project_manager_db"),
-        "USER": config('DB_USER', default="root"),
+        "NAME": config('DB_NAME', default="ufvuikiv_project_manager_db"),
+        "USER": config('DB_USER', default="	ufvuikiv_amirkhatatmi888"),
         "PASSWORD": config('DB_PASSWORD', default="Amir137667318@"),
         "HOST": config('DB_HOST', default="localhost"),
         "PORT": config('DB_PORT', default="3306"),
