@@ -2,10 +2,23 @@
 WSGI configuration for cPanel/Passenger deployment
 This file is used as the "Application startup file" in cPanel Python App setup.
 
-cPanel Configuration:
+cPanel Configuration (avoid double path – use ONE of these):
+
+  Option A – App under public_html/PMD:
+  - Application root: PMD/ProjectManagerDashboard
+    (relative to your home dir; full path = ~/PMD/ProjectManagerDashboard)
+  - Startup file: passenger_wsgi.py
+  - Entry point: application
+
+  Option B – If your app is inside public_html already:
   - Application root: public_html/PMD/ProjectManagerDashboard
-  - Application startup file: passenger_wsgi.py
-  - Application Entry point: application
+    (do NOT set root to "public_html/PMD" and then add "public_html/PMD" again)
+  - Startup file: passenger_wsgi.py
+  - Entry point: application
+
+  The path to this file must be exactly:
+  /home/ufvuikiv/public_html/PMD/ProjectManagerDashboard/passenger_wsgi.py
+  (no duplicate "public_html/PMD" in the path).
 """
 
 import sys
