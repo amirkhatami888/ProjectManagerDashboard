@@ -89,7 +89,10 @@ WSGI_APPLICATION = "project_dashboard.wsgi.application"
 
 
 def _db_options():
-    """DB OPTIONS with PyMySQL decimal fix to avoid decimal.ConversionSyntax (MariaDB)."""
+    """DB OPTIONS with PyMySQL decimal fix to avoid decimal.ConversionSyntax (MariaDB).
+    Use str for DECIMAL/NEWDECIMAL so the driver never calls float() on non-numeric
+    values (e.g. password hashes or version strings) which causes ValueError on login.
+    """
     opts = {
         'charset': 'utf8mb4',
         'use_unicode': True,
@@ -105,15 +108,15 @@ def _db_options():
         import pymysql
         from pymysql.constants import FIELD_TYPE
         from pymysql.converters import conversions
-        
-        # We only want to override DECIMAL types, 
-        # NOT the entire conversion dictionary which includes Datetime.
+
+        # Return DECIMAL/NEWDECIMAL as str to avoid float() on non-numeric values
+        # (e.g. password hash or DB version string) which breaks login and event logging.
         conv = conversions.copy()
-        conv[FIELD_TYPE.DECIMAL] = float  # Use float or decimal.Decimal, not str
-        conv[FIELD_TYPE.NEWDECIMAL] = float
+        conv[FIELD_TYPE.DECIMAL] = str
+        conv[FIELD_TYPE.NEWDECIMAL] = str
         opts['conv'] = conv
     except ImportError:
-            pass
+        pass
     return opts
 
 # Database configuration for production - MySQL/MariaDB
