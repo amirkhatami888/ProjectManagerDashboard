@@ -24,13 +24,22 @@ cPanel Configuration (avoid double path – use ONE of these):
 import sys
 import os
 
-# Use PyMySQL as MySQLdb replacement (better MariaDB compatibility)
-# This is important for cPanel MySQL/MariaDB databases
+# Use PyMySQL as MySQLdb replacement (avoids decimal.InvalidOperation with MariaDB)
 try:
     import pymysql
     pymysql.install_as_MySQLdb()
+    # Make MariaDB/MySQL DECIMAL columns return as str to avoid decimal.ConversionSyntax
+    try:
+        from pymysql.constants import FIELD_TYPE
+        from pymysql.converters import conversions
+        _conv = conversions.copy()
+        _conv[FIELD_TYPE.DECIMAL] = str
+        _conv[FIELD_TYPE.NEWDECIMAL] = str
+        pymysql.converters.conversions = _conv
+    except Exception:
+        pass
 except ImportError:
-    pass  # MySQLdb will be used if PyMySQL is not available
+    pass
 
 # Get project root directory (where this file is located)
 # This ensures the path is correct regardless of where Python is executed from
@@ -48,7 +57,20 @@ os.chdir(BASE_DIR)
 # Use production_settings for cPanel deployment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_dashboard.production_settings')
 
-# Import and create WSGI application
-# This is the entry point that cPanel/Passenger will call
-from django.core.wsgi import get_wsgi_application
-application = get_wsgi_application()
+# Always define 'application' so Passenger never sees "no attribute 'application'"
+# If Django fails to start (e.g. DB/decimal error), expose a minimal error app
+try:
+    from django.core.wsgi import get_wsgi_application
+    application = get_wsgi_application()
+except Exception as e:
+    import traceback
+    _startup_error = traceback.format_exc()
+
+    def application(environ, start_response):
+        status = "500 Internal Server Error"
+        body = (
+            "Application failed to start.\n\n"
+            "Error:\n" + str(e) + "\n\nTraceback:\n" + _startup_error
+        ).encode("utf-8")
+        start_response(status, [("Content-Type", "text/plain; charset=utf-8")])
+        return [body]

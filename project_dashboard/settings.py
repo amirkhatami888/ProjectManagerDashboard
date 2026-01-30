@@ -87,6 +87,33 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "project_dashboard.wsgi.application"
 
+
+def _db_options():
+    """DB OPTIONS with PyMySQL decimal fix to avoid decimal.ConversionSyntax (MariaDB)."""
+    opts = {
+        'charset': 'utf8mb4',
+        'use_unicode': True,
+        'init_command': "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'",
+        'sql_mode': 'STRICT_TRANS_TABLES',
+        'connect_timeout': 60,
+        'read_timeout': 60,
+        'write_timeout': 60,
+        'isolation_level': None,
+        'autocommit': True,
+    }
+    try:
+        import pymysql
+        from pymysql.constants import FIELD_TYPE
+        from pymysql.converters import conversions
+        conv = conversions.copy()
+        conv[FIELD_TYPE.DECIMAL] = str
+        conv[FIELD_TYPE.NEWDECIMAL] = str
+        opts['conv'] = conv
+    except ImportError:
+        pass
+    return opts
+
+
 # Database configuration for production - MySQL/MariaDB
 DATABASES = {
     "default": {
@@ -96,19 +123,7 @@ DATABASES = {
         "PASSWORD": config('DB_PASSWORD', default="Amir137667318@"),
         "HOST": config('DB_HOST', default="localhost"),
         "PORT": config('DB_PORT', default="3306"),
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'use_unicode': True,
-            'init_command': "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'",
-            'sql_mode': 'STRICT_TRANS_TABLES',
-            'connect_timeout': 60,
-            'read_timeout': 60,
-            'write_timeout': 60,
-            # Fix for decimal.InvalidOperation with MariaDB
-            'isolation_level': None,
-            # Prevent "MySQL server has gone away" errors
-            'autocommit': True,
-        },
+        'OPTIONS': _db_options(),
         # Connection pooling settings - use 0 to disable persistent connections
         # This helps avoid "MySQL server has gone away" errors
         'CONN_MAX_AGE': 0,
