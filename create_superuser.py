@@ -42,7 +42,7 @@ def main():
         
         print()
         print_status("Superuser created successfully!", "SUCCESS")
-        print_status("You can now access the admin panel at: http://projecthelal.rcs.ir/admin/", "INFO")
+        print_status("You can now access the admin panel at: http://ocmp.ir/admin/", "INFO")
         print_status("Use the username and password you just created to log in", "INFO")
         
         return True

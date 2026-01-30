@@ -8,7 +8,7 @@ DEBUG=False
 DJANGO_SETTINGS_MODULE=project_dashboard.production_settings
 
 # Domain Configuration
-ALLOWED_HOSTS=projecthelal.rcs.ir,www.projecthelal.rcs.ir,localhost,127.0.0.1
+ALLOWED_HOSTS=ocmp.ir,www.ocmp.ir,localhost,127.0.0.1
 
 # Database Configuration - cPanel MySQL
 DB_ENGINE=django.db.backends.mysql

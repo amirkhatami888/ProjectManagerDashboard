@@ -28,7 +28,7 @@ SECRET_KEY = config('SECRET_KEY', default='#+x1$zg#=h*^ky!_lzq(=bfg4t7=-$@cm7ln@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='projecthelal.rcs.ir,www.projecthelal.rcs.ir,localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='ocmp.ir,www.ocmp.ir,localhost,127.0.0.1').split(',')
 
 
 # Application definition

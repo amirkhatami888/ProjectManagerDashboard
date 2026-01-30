@@ -46,7 +46,7 @@ def create_iis_ssl_certificates():
             x509.NameAttribute(NameOID.LOCALITY_NAME, "Tehran"),
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, "ProjectManager"),
             x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "IT Department"),
-            x509.NameAttribute(NameOID.COMMON_NAME, "projecthelal.rcs.ir"),
+            x509.NameAttribute(NameOID.COMMON_NAME, "ocmp.ir"),
         ])
         
         cert = x509.CertificateBuilder().subject_name(
@@ -63,8 +63,8 @@ def create_iis_ssl_certificates():
             datetime.utcnow() + timedelta(days=365)
         ).add_extension(
             x509.SubjectAlternativeName([
-                x509.DNSName("projecthelal.rcs.ir"),
-                x509.DNSName("www.projecthelal.rcs.ir"),
+                x509.DNSName("ocmp.ir"),
+                x509.DNSName("www.ocmp.ir"),
                 x509.DNSName("localhost"),
                 x509.DNSName("127.0.0.1"),
             ]),
