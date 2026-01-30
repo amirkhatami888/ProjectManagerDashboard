@@ -129,8 +129,7 @@ DATABASES = {
         "HOST": config('DB_HOST', default="localhost"),
         "PORT": config('DB_PORT', default="3306"),
         'OPTIONS':{**_db_options(),
-        # Keep connection alive up to 10 min for long-running commands (e.g. createsuperuser)
-'init_command': "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci', time_zone='+03:30'; SET SESSION wait_timeout=600",},
+        'init_command': "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci', time_zone='+03:30'",},
         # Connection pooling settings - use 0 to disable persistent connections
         # This helps avoid "MySQL server has gone away" errors
         'CONN_MAX_AGE': 0,
