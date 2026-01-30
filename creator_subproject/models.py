@@ -445,17 +445,18 @@ class SubProject(models.Model):
         if self.has_adjustment == 'دارد' and self.adjustment_coefficient:
             # Convert percentage to decimal (e.g. 25% becomes 0.25)
 
-            # NEW FIXED CODE
-            try:
-                # Force conversion to float, handling strings like "1000" or empty ""
-                coeff = float(str(self.adjustment_coefficient).replace(',', '') or 0)
-            except (ValueError, TypeError):
-                coeff = 0.0
+            # # NEW FIXED CODE
+            # try:
+            #     # Force conversion to float, handling strings like "1000" or empty ""
+            #     coeff = float(str(self.adjustment_coefficient).replace(',', '') or 0)
+            # except (ValueError, TypeError):
+            #     coeff = 0.0
 
-            adjustment_decimal = coeff / 100
+            # adjustment_decimal = coeff / 100
 
+            adjustment_decimal = self.adjustment_coefficient / 100
             base_amount = base_amount * (1 + adjustment_decimal)
-            
+                
         # For backwards compatibility, also check the 25% increase field
         if self.has_25_percent_increase == 'دارد' and self.increase_coefficient_25_percent:
             base_amount = base_amount * self.increase_coefficient_25_percent
