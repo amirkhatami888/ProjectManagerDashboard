@@ -19,8 +19,9 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 # Production ALLOWED_HOSTS
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='ocmp.ir,www.ocmp.ir,localhost,127.0.0.1').split(',')
 
-# Application definition
+# Application definition (accounts first so custom createsuperuser is used)
 INSTALLED_APPS = [
+    "accounts",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -36,7 +37,6 @@ INSTALLED_APPS = [
     'django_extensions',
     
     # Custom apps
-    'accounts',
     'dashboard',
     'creator_program',
     'creator_project',
