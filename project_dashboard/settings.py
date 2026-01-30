@@ -125,7 +125,8 @@ DATABASES = {
         "PASSWORD": config('DB_PASSWORD', default="Amir137667318@"),
         "HOST": config('DB_HOST', default="localhost"),
         "PORT": config('DB_PORT', default="3306"),
-        'OPTIONS': _db_options(),
+        'OPTIONS':{**_db_options(),
+        'init_command': "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci', time_zone='+03:30'",},
         # Connection pooling settings - use 0 to disable persistent connections
         # This helps avoid "MySQL server has gone away" errors
         'CONN_MAX_AGE': 0,
@@ -162,7 +163,7 @@ LANGUAGES = [
 TIME_ZONE = "Asia/Tehran"
 USE_I18N = True
 USE_L10N = True  # Enable localization
-USE_TZ = True
+USE_TZ = False
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
