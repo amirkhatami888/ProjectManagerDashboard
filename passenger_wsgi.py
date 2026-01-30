@@ -23,3 +23,6 @@ from project_dashboard.wsgi import application
 
 # Patch Django's MySQL backend after Django is loaded (decimals + datetime-as-string)
 fix_decimal_error.patch_django_mysql_backend()
+
+
+#check it right 
