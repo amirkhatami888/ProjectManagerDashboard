@@ -105,14 +105,16 @@ def _db_options():
         import pymysql
         from pymysql.constants import FIELD_TYPE
         from pymysql.converters import conversions
+        
+        # We only want to override DECIMAL types, 
+        # NOT the entire conversion dictionary which includes Datetime.
         conv = conversions.copy()
-        conv[FIELD_TYPE.DECIMAL] = str
-        conv[FIELD_TYPE.NEWDECIMAL] = str
+        conv[FIELD_TYPE.DECIMAL] = float  # Use float or decimal.Decimal, not str
+        conv[FIELD_TYPE.NEWDECIMAL] = float
         opts['conv'] = conv
     except ImportError:
-        pass
+            pass
     return opts
-
 
 # Database configuration for production - MySQL/MariaDB
 DATABASES = {
