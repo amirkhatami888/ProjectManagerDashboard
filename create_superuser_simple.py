@@ -45,7 +45,12 @@ def create_superuser():
     if User.objects.filter(username=username).exists():
         print(f"❌ User '{username}' already exists!")
         return False
-    
+
+    # Close DB connection so it won't go stale while user types password.
+    # Django will open a fresh connection when we call create_user() below.
+    from django.db import connection
+    connection.close()
+
     email = input("Email (optional): ").strip()
     password = input("Password: ").strip()
     if not password:
