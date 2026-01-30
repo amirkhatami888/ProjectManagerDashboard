@@ -53,9 +53,8 @@ sys.path.insert(0, BASE_DIR)
 # This ensures relative paths in Django settings work correctly
 os.chdir(BASE_DIR)
 
-# Set Django settings module for production
-# Use production_settings for cPanel deployment
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_dashboard.production_settings')
+# Set Django settings module (settings.py is the production config)
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_dashboard.settings')
 
 # Always define 'application' so Passenger never sees "no attribute 'application'"
 # If Django fails to start (e.g. DB/decimal error), expose a minimal error app

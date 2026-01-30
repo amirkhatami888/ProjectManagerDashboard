@@ -14,7 +14,7 @@ except ImportError:
     pass
 
 import django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_dashboard.production_settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_dashboard.settings')
 django.setup()
 
 from django.db import connection
