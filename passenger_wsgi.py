@@ -24,6 +24,11 @@ cPanel Configuration (avoid double path – use ONE of these):
 import sys
 import os
 
+# Define application immediately so Passenger always sees it (even if setup fails later)
+def application(environ, start_response):
+    start_response("500 Internal Server Error", [("Content-Type", "text/plain; charset=utf-8")])
+    return [b"WSGI startup failed. Check server error logs for traceback."]
+
 # Use PyMySQL as MySQLdb replacement (avoids decimal.InvalidOperation with MariaDB)
 try:
     import pymysql
@@ -56,8 +61,7 @@ os.chdir(BASE_DIR)
 # Set Django settings module (settings.py is the production config)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_dashboard.settings')
 
-# Always define 'application' so Passenger never sees "no attribute 'application'"
-# If Django fails to start (e.g. DB/decimal error), expose a minimal error app
+# Replace default application with Django app, or error app with traceback
 try:
     from django.core.wsgi import get_wsgi_application
     application = get_wsgi_application()
@@ -65,7 +69,7 @@ except Exception as e:
     import traceback
     _startup_error = traceback.format_exc()
 
-    def application(environ, start_response):
+    def _error_app(environ, start_response):
         status = "500 Internal Server Error"
         body = (
             "Application failed to start.\n\n"
@@ -73,3 +77,4 @@ except Exception as e:
         ).encode("utf-8")
         start_response(status, [("Content-Type", "text/plain; charset=utf-8")])
         return [body]
+    application = _error_app
