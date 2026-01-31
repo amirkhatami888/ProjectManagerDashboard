@@ -16,7 +16,7 @@ from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
 from creator_project.models import Project
-
+from decimal import Decimal, InvalidOperation
 User = get_user_model()
 
 # Define Financial Document Type choices
@@ -591,11 +591,21 @@ class SubProject(models.Model):
         مبلغ پیشرفت مالی زیرپروژه
         Calculated as: مبلغ پرداختی زیر پروژه - جمع مبلغ صورت وضعیت تعدیل
         """
-        total_payment = self.total_payments or Decimal('0')
-        total_adjustment = self.total_adjustment_amount or Decimal('0')
+        # Defensive casting to Decimal to handle cases where DB returns strings
+        def to_decimal(value):
+            if value is None or value == '':
+                return Decimal('0')
+            try:
+                # Remove any commas if they exist in a string representation
+                clean_value = str(value).replace(',', '').strip()
+                return Decimal(clean_value)
+            except (ValueError, TypeError, decimal.InvalidOperation):
+                return Decimal('0')
+
+        tp = to_decimal(self.total_payments)
+        ta = to_decimal(self.total_adjustment_amount)
         
-        return max(total_payment - total_adjustment, Decimal('0'))
-    
+        return max(tp - ta, Decimal('0'))
     @property
     def financial_progress_percentage(self):
         """
