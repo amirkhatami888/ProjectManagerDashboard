@@ -568,16 +568,16 @@ class SubProject(models.Model):
             return Decimal('0')
             
         # Get advance payments amount
-        advance_payments = self.total_advance_payments or Decimal('0')
+        advance_payments = to_dec(self.total_advance_payments)
         
         # Get situation report amount
-        situation_amount = self.situation_report_amount or Decimal('0')
+        situation_amount = to_dec(self.situation_report_amount)
         
         # Get total adjustment reports amount
-        adjustment_amount = self.total_adjustment_reports or Decimal('0')
+        adjustment_amount = to_dec(self.total_adjustment_reports)
         
         # Get total payments amount
-        total_payments = self.total_payment_amount or Decimal('0')
+        total_payments = to_dec(self.total_payment_amount)
         
         # Calculate debt: advance_payments + situation_amount + adjustment_amount - total_payments
         debt = advance_payments + situation_amount + adjustment_amount - total_payments
