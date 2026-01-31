@@ -435,7 +435,7 @@ class Project(models.Model):
             has_contract_info = (
                 hasattr(subproject, 'contract_amount') and 
                 subproject.contract_amount is not None and 
-                subproject.contract_amount > 0 and
+                float(subproject.contract_amount or 0) > 0 and
                 subproject.contract_start_date is not None and
                 subproject.contract_end_date is not None and
                 subproject.contract_type is not None and
