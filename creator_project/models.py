@@ -1175,6 +1175,39 @@ class FundingRequest(models.Model):
             self.chief_user = chief_user
             self.status = 'ارسال شده به رئیس'
             self.save()
+            
+            # Send SMS notification to chief
+            try:
+                from notifications_sms.utils import IPPanelSMSSender
+                from notifications_sms.models import SMSTemplate
+                from django.utils import timezone as tz
+                
+                if chief_user.phone_number:
+                    # Try to get template
+                    template = SMSTemplate.objects.filter(
+                        type='FUNDING_REQUEST_APPROVED',
+                        is_default=True
+                    ).first()
+                    
+                    if template:
+                        message = template.content.format(
+                            project_name=self.project.name,
+                            amount=self.headquarters_suggested_amount or self.province_suggested_amount,
+                            date=tz.now().strftime('%Y-%m-%d')
+                        )
+                    else:
+                        # Custom message
+                        message = f"درخواست اعتبار پروژه {self.project.name} برای بررسی ارسال شد. مبلغ: {self.headquarters_suggested_amount or self.province_suggested_amount:,.0f} ریال"
+                    
+                    sms_sender = IPPanelSMSSender()
+                    sms_sender.send_sms(
+                        recipient=chief_user.phone_number,
+                        message=message
+                    )
+            except Exception as e:
+                # Log error but don't fail the operation
+                print(f"Error sending SMS to chief for funding request {self.id}: {e}")
+            
             return True
         return False
     

@@ -754,16 +754,12 @@ class FundingRequestCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateVi
     success_url = reverse_lazy('creator_project:funding_request_list')
     
     def test_func(self):
-        # Only province managers and chief executives can create funding requests
-        if (hasattr(self.request.user, 'is_province_manager') and self.request.user.is_province_manager) or \
-           (hasattr(self.request.user, 'is_chief_executive') and self.request.user.is_chief_executive):
+        # Only province managers can create funding requests
+        if hasattr(self.request.user, 'is_province_manager') and self.request.user.is_province_manager:
             project_id = self.request.GET.get('project')
             if project_id:
                 try:
                     project = Project.objects.get(pk=project_id)
-                    # Chief executives can create for any project
-                    if hasattr(self.request.user, 'is_chief_executive') and self.request.user.is_chief_executive:
-                        return True
                     # Allow province managers to create requests for any projects in their province
                     # Not just approved ones
                     user_provinces = self.request.user.get_assigned_provinces()
@@ -818,10 +814,6 @@ class FundingRequestUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateVi
         # Only the creator can update the request, and only if it's in draft or rejected state
         funding_request = self.get_object()
         user = self.request.user
-        
-        # Chief executives can edit any request
-        if user.is_chief_executive:
-            return True
         
         # Province users can only edit their own draft requests or ones rejected by expert or chief
         if user.is_province_manager:
