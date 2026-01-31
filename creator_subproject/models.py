@@ -475,42 +475,36 @@ class SubProject(models.Model):
         """
         Calculate the final contract amount based on the base contract amount and any adjustments
         """
-        # --- 1. SAFE CONVERSION OF BASE AMOUNT ---
-        try:
-            # Convert to string first to use .replace(), then to float
-            raw_contract = str(self.contract_amount or 0).replace(',', '').strip()
-            base_amount = float(raw_contract) if raw_contract else 0.0
-        except (ValueError, TypeError):
-            # Fallback to imaginary_cost if contract_amount is invalid/missing
+        # Helper to safely convert any input to a float
+        def to_float(value):
+            if value is None:
+                return 0.0
             try:
-                raw_imaginary = str(self.imagenrary_cost or 0).replace(',', '').strip()
-                base_amount = float(raw_imaginary)
+                # Remove commas and whitespace, then convert
+                return float(str(value).replace(',', '').strip())
             except (ValueError, TypeError):
-                base_amount = 0.0
+                return 0.0
 
+        # 1. Convert Base Amount
+        base_amount = to_float(self.contract_amount)
+        
+        # Fallback to imaginary cost if base is 0
         if base_amount == 0:
-            return 0
+            base_amount = to_float(getattr(self, 'imagenrary_cost', 0))
 
-        # --- 2. APPLY ADJUSTMENT COEFFICIENT ---
-        if self.has_adjustment == 'دارد' and self.adjustment_coefficient:
-            try:
-                raw_coeff = str(self.adjustment_coefficient).replace(',', '').strip()
-                coeff = float(raw_coeff) if raw_coeff else 0.0
-            except (ValueError, TypeError):
-                coeff = 0.0
-                
-            adjustment_decimal = coeff / 100
+        # 2. Apply adjustment percentage
+        if self.has_adjustment == 'دارد':
+            coeff = to_float(self.adjustment_coefficient)
+            adjustment_decimal = coeff / 100.0
             base_amount = base_amount * (1 + adjustment_decimal)
             
-        # --- 3. APPLY 25% INCREASE ---
-        if self.has_25_percent_increase == 'دارد' and self.increase_coefficient_25_percent:
-            try:
-                raw_25 = str(self.increase_coefficient_25_percent).replace(',', '').strip()
-                increase_val = float(raw_25) if raw_25 else 1.0
-            except (ValueError, TypeError):
-                increase_val = 1.0
-                
-            base_amount = base_amount * increase_val
+        # 3. Apply 25% increase coefficient
+        if self.has_25_percent_increase == 'دارد':
+            increase_coeff = to_float(self.increase_coefficient_25_percent)
+            # If the coefficient is 0 but it 'has' an increase, 
+            # ensure we don't multiply by 0 and wipe out the amount.
+            if increase_coeff > 0:
+                base_amount = base_amount * increase_coeff
 
         return base_amount
     @property
@@ -621,7 +615,17 @@ class SubProject(models.Model):
         # Calculate percentage and round to 2 decimal places
         percentage = (progress_amount / final_amount) * 100
         return min(Decimal('100'), round(percentage, 2))
-    
+
+
+
+
+
+
+
+
+
+
+
     def calculate_subproject_debts(self):
         """
         Calculate the subproject debts (replaces the old calculate_debt method)
