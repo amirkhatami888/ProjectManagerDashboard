@@ -259,14 +259,14 @@ class Project(models.Model):
     
     def get_total_allocation(self):
         """Returns the total allocation amount for this project."""
-        allocations = self.allocations.all()
-        total = sum(allocation.amount for allocation in allocations)
+        from django.db.models import Sum
+        total = self.allocations.aggregate(Sum('amount'))['amount__sum'] or 0
         return total
         
     def get_total_allocation_by_type(self, allocation_type):
         """Returns the total allocation amount for this project by allocation type."""
-        allocations = self.allocations.filter(allocation_type=allocation_type)
-        total = sum(allocation.amount for allocation in allocations)
+        from django.db.models import Sum
+        total = self.allocations.filter(allocation_type=allocation_type).aggregate(Sum('amount'))['amount__sum'] or 0
         return total
     
     def get_total_cash_national(self):
