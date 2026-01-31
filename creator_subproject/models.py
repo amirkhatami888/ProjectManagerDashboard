@@ -430,47 +430,67 @@ class SubProject(models.Model):
         
         return latest_report
     
+    # @property
+    # def final_contract_amount(self):
+    #     """
+    #     Calculate the final contract amount based on the base contract amount and any adjustments
+    #     """
+    #     if not self.contract_amount:
+    #         return self.imagenrary_cost or 0
+            
+    #     # Base contract amount
+    #     base_amount = self.contract_amount
+
+    #     # Apply adjustment increase if it exists (as percentage)
+    #     if self.has_adjustment == 'دارد' and self.adjustment_coefficient:
+
+    #     # FIX: Convert string to float safely before dividing
+    #         try:
+    #             # Handle cases where it might be None or empty string
+    #             val = float(self.adjustment_coefficient) if self.adjustment_coefficient else 0.0
+    #         except (ValueError, TypeError):
+    #             val = 0.0
+                
+    #         adjustment_decimal = val / 100
+
+
+    #         # NEW FIXED CODE
+    #         try:
+    #             # Force conversion to float, handling strings like "1000" or empty ""
+    #             coeff = float(str(self.adjustment_coefficient).replace(',', '') or 0)
+    #         except (ValueError, TypeError):
+    #             coeff = 0.0
+
+    #         adjustment_decimal = coeff / 100
+
+    #         base_amount = base_amount * (1 + adjustment_decimal)
+            
+    #     # For backwards compatibility, also check the 25% increase field
+    #     if self.has_25_percent_increase == 'دارد' and self.increase_coefficient_25_percent:
+    #         base_amount = base_amount * self.increase_coefficient_25_percent
+
+    #     return base_amount
     @property
     def final_contract_amount(self):
-        """
-        Calculate the final contract amount based on the base contract amount and any adjustments
-        """
-        if not self.contract_amount:
-            return self.imagenrary_cost or 0
-            
-        # Base contract amount
-        base_amount = self.contract_amount
+        # 1. Safely get Contract Amount (Handle text, commas, and None)
+        try:
+            c_val = str(self.contract_amount).replace(',', '') if self.contract_amount else "0"
+            amount = float(c_val)
+        except (ValueError, TypeError):
+            amount = 0.0
 
-        # Apply adjustment increase if it exists (as percentage)
-        if self.has_adjustment == 'دارد' and self.adjustment_coefficient:
+        # 2. Safely get Adjustment Coefficient (Handle text and None)
+        try:
+            a_val = str(self.adjustment_coefficient).replace(',', '') if self.adjustment_coefficient else "0"
+            coefficient = float(a_val)
+        except (ValueError, TypeError):
+            coefficient = 0.0
 
-        # FIX: Convert string to float safely before dividing
-            try:
-                # Handle cases where it might be None or empty string
-                val = float(self.adjustment_coefficient) if self.adjustment_coefficient else 0.0
-            except (ValueError, TypeError):
-                val = 0.0
-                
-            adjustment_decimal = val / 100
-
-
-            # NEW FIXED CODE
-            try:
-                # Force conversion to float, handling strings like "1000" or empty ""
-                coeff = float(str(self.adjustment_coefficient).replace(',', '') or 0)
-            except (ValueError, TypeError):
-                coeff = 0.0
-
-            adjustment_decimal = coeff / 100
-
-            base_amount = base_amount * (1 + adjustment_decimal)
-            
-        # For backwards compatibility, also check the 25% increase field
-        if self.has_25_percent_increase == 'دارد' and self.increase_coefficient_25_percent:
-            base_amount = base_amount * self.increase_coefficient_25_percent
-
-        return base_amount
-    
+        # 3. Perform the calculation safely using numbers
+        # Logic: Amount + (Amount * percentage adjustment)
+        adjustment_value = amount * (coefficient / 100.0)
+        
+        return amount + adjustment_value
     @property
     def total_latest_payments_sum(self):
         """
