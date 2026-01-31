@@ -17,7 +17,6 @@ from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
 from creator_project.models import Project
 from decimal import Decimal, InvalidOperation
-from .utils import get_persian_field_label  # Or wherever this function is defined
 User = get_user_model()
 
 # Define Financial Document Type choices
