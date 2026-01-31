@@ -443,8 +443,16 @@ class SubProject(models.Model):
 
         # Apply adjustment increase if it exists (as percentage)
         if self.has_adjustment == 'دارد' and self.adjustment_coefficient:
-            # Convert percentage to decimal (e.g. 25% becomes 0.25)
-            adjustment_decimal = self.adjustment_coefficient / 100
+
+        # FIX: Convert string to float safely before dividing
+            try:
+                # Handle cases where it might be None or empty string
+                val = float(self.adjustment_coefficient) if self.adjustment_coefficient else 0.0
+            except (ValueError, TypeError):
+                val = 0.0
+                
+            adjustment_decimal = val / 100
+
 
             # NEW FIXED CODE
             try:

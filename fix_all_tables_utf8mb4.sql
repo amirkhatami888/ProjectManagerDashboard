@@ -30,6 +30,7 @@ ALTER TABLE creator_project_all_project CONVERT TO CHARACTER SET utf8mb4 COLLATE
 ALTER TABLE creator_project_fundingrequest CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE creator_project_project CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE creator_project_projectfinancialallocation CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE creator_project_projectgalleryimage CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE creator_project_projectrejectioncomment CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE creator_project_projectupdatehistory CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

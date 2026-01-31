@@ -374,7 +374,13 @@ class Project(models.Model):
         # Calculate totals
         for subproject in subprojects:
             # Only include subprojects with contracts
-            if subproject.contract_amount and subproject.contract_amount > 0:
+
+            try:
+                amount = float(subproject.contract_amount) if subproject.contract_amount else 0
+            except (ValueError, TypeError):
+                amount = 0
+
+            if amount > 0:
                 # Add to total contract amount
                 total_contract_amount += subproject.final_contract_amount
                 
@@ -383,6 +389,7 @@ class Project(models.Model):
                 try:
                     # Call the property which is calculated on the fly
                     progress_amount = float(subproject.financial_progress_amount)
+                    
                 except (AttributeError, ValueError):
                     # If property doesn't exist or can't be converted, use 0
                     progress_amount = 0
