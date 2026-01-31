@@ -472,25 +472,47 @@ class SubProject(models.Model):
     #     return base_amount
     @property
     def final_contract_amount(self):
-        # 1. Safely get Contract Amount (Handle text, commas, and None)
+        """
+        Calculate the final contract amount based on the base contract amount and any adjustments
+        """
+        # --- 1. SAFE CONVERSION OF BASE AMOUNT ---
         try:
-            c_val = str(self.contract_amount).replace(',', '') if self.contract_amount else "0"
-            amount = float(c_val)
+            # Convert to string first to use .replace(), then to float
+            raw_contract = str(self.contract_amount or 0).replace(',', '').strip()
+            base_amount = float(raw_contract) if raw_contract else 0.0
         except (ValueError, TypeError):
-            amount = 0.0
+            # Fallback to imaginary_cost if contract_amount is invalid/missing
+            try:
+                raw_imaginary = str(self.imagenrary_cost or 0).replace(',', '').strip()
+                base_amount = float(raw_imaginary)
+            except (ValueError, TypeError):
+                base_amount = 0.0
 
-        # 2. Safely get Adjustment Coefficient (Handle text and None)
-        try:
-            a_val = str(self.adjustment_coefficient).replace(',', '') if self.adjustment_coefficient else "0"
-            coefficient = float(a_val)
-        except (ValueError, TypeError):
-            coefficient = 0.0
+        if base_amount == 0:
+            return 0
 
-        # 3. Perform the calculation safely using numbers
-        # Logic: Amount + (Amount * percentage adjustment)
-        adjustment_value = amount * (coefficient / 100.0)
-        
-        return amount + adjustment_value
+        # --- 2. APPLY ADJUSTMENT COEFFICIENT ---
+        if self.has_adjustment == 'دارد' and self.adjustment_coefficient:
+            try:
+                raw_coeff = str(self.adjustment_coefficient).replace(',', '').strip()
+                coeff = float(raw_coeff) if raw_coeff else 0.0
+            except (ValueError, TypeError):
+                coeff = 0.0
+                
+            adjustment_decimal = coeff / 100
+            base_amount = base_amount * (1 + adjustment_decimal)
+            
+        # --- 3. APPLY 25% INCREASE ---
+        if self.has_25_percent_increase == 'دارد' and self.increase_coefficient_25_percent:
+            try:
+                raw_25 = str(self.increase_coefficient_25_percent).replace(',', '').strip()
+                increase_val = float(raw_25) if raw_25 else 1.0
+            except (ValueError, TypeError):
+                increase_val = 1.0
+                
+            base_amount = base_amount * increase_val
+
+        return base_amount
     @property
     def total_latest_payments_sum(self):
         """
