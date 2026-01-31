@@ -727,12 +727,27 @@ class SubProject(models.Model):
 
     @property
     def required_credit_for_contract_completion(self):
+        
         """
         اعتبار مورد نیاز تکمیل قرار داد
         Calculate required credit for contract completion:
         مبلغ نهایی قرارداد + جمع مبلغ صورت وضعیت تعدیل + مجموع مبلغ پیشبینی شده ی تعدیل های تا انتهای پروژه - جمع مبلغ پرداخت ها
         """
         # Get final contract amount
+        from decimal import Decimal
+    
+        # Helper to force any value (str, float, None) into a Decimal
+        def to_dec(val):
+            if val is None or val == '': return Decimal('0')
+            try:
+                # Convert to string first to avoid float precision issues
+                return Decimal(str(val).replace(',', ''))
+            except:
+                return Decimal('0')
+
+
+        
+
         final_contract_amount = self.final_contract_amount or Decimal('0')
         
         # Get total adjustment reports amount
@@ -745,7 +760,7 @@ class SubProject(models.Model):
         total_payments = self.total_payment_amount or Decimal('0')
         
         # Calculate required credit
-        required_credit = final_contract_amount + total_adjustment_reports + predicted_adjustment - total_payments
+        required_credit =  to_dec(final_contract_amount) +  to_dec(total_adjustment_reports) +  to_dec(predicted_adjustment) -  to_dec(total_payments)
         
         # Return the result (can be negative if overpaid)
         return required_credit
