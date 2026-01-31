@@ -58,7 +58,12 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-12">
-                    <p>از این صفحه می‌توانید درخواست‌های اعتبار تایید شده توسط کارشناسان را بررسی و تایید نهایی کنید.</p>
+                    <p>از این صفحه می‌توانید درخواست‌های اعتبار را مدیریت و بررسی کنید.</p>
+                    <div class="mb-3">
+                        <a href="{% url 'creator_project:funding_request_create' %}" class="btn btn-success">
+                            <i class="bi bi-plus-circle"></i> ایجاد درخواست جدید
+                        </a>
+                    </div>
                     <div class="alert alert-info">
                         <strong><i class="bi bi-bell"></i> درخواست‌های در انتظار بررسی: </strong>
                         <span class="badge bg-info">{{ pending_chief_count }}</span>
