@@ -330,19 +330,23 @@ class Project(models.Model):
         Calculate the project's physical progress as a weighted mean of subprojects' physical progress.
         Weights are based on each subproject's final contract amount or imagenary_cost if no contract.
         """
+        total_weight = 0
+        weighted_progress = 0
+
         subprojects = self.subprojects.all()
         
         if not subprojects.exists():
             return 0
             
-        total_weight = 0
-        weighted_progress = 0
         
         for subproject in subprojects:
             # Get weight - use final_contract_amount which automatically uses imagenary_cost if no contract
             weight = subproject.final_contract_amount
             if weight is not None:
-                weight = float(weight)
+                try:
+                    weight = float(subproject.final_contract_amount or 0)
+                except (ValueError, TypeError):
+                    weight = 0.0
                 # Handle None or zero progress
                 progress = float(subproject.physical_progress or 0)
                 
