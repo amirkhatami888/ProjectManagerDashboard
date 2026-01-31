@@ -629,7 +629,7 @@ class SubProject(models.Model):
         if not self.contract_amount:
             return Decimal('0')
             
-        final_amount = self.final_contract_amount
+        final_amount = self.safe_decimal(self.final_contract_amount)
         if final_amount <= 0:
             return Decimal('0')
             
