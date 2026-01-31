@@ -1046,7 +1046,7 @@ class FundingTableView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         context['title'] = 'جدول اعتبارات'
         
         # Calculate the total sum of final_amount
-        total_amount = sum(request.final_amount or 0 for request in context['funding_requests'])
+        total_amount = sum(float(request.final_amount or 0) for request in context['funding_requests'])
         context['total_amount'] = total_amount
         
         return context
@@ -1074,7 +1074,7 @@ class FundingHistoryView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         context['title'] = 'تاریخچه اعتبارات'
         
         # Calculate the total sum of final_amount
-        total_amount = sum(request.final_amount or 0 for request in context['funding_requests'])
+        total_amount = sum(float(request.final_amount or 0) for request in context['funding_requests'])
         context['total_amount'] = total_amount
         
         return context
