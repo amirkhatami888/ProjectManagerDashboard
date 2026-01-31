@@ -1768,7 +1768,8 @@ def financial_ledger(request, subproject_id):
         ledger_entries.append(ledger_entry)
     
     # Calculate totals
-    total_approved_amount = sum(entry['document'].approved_amount for entry in ledger_entries)
+    from decimal import Decimal
+    total_approved_amount = sum(Decimal(str(entry['document'].approved_amount or 0)) for entry in ledger_entries)
     total_payments_amount = sum(entry['total_payments'] for entry in ledger_entries)
     total_deduction_amount = sum(entry['deduction_amount'] for entry in ledger_entries)
     
