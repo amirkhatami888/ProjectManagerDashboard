@@ -17,6 +17,7 @@ from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
 from creator_project.models import Project
 from decimal import Decimal, InvalidOperation
+from .utils import get_persian_field_label  # Or wherever this function is defined
 User = get_user_model()
 
 # Define Financial Document Type choices
@@ -585,6 +586,19 @@ class SubProject(models.Model):
         # Debt should not be negative
         return max(debt, Decimal('0'))
     
+    def safe_decimal(self, value):
+        from decimal import Decimal
+        if value is None or value == '':
+            return Decimal('0')
+        try:
+            # Convert to string first to handle cases where it's already a decimal/float
+            # then cast to Decimal
+            return Decimal(str(value))
+        except (ValueError, TypeError, decimal.InvalidOperation):
+            return Decimal('0')
+
+
+    
     @property
     def financial_progress_amount(self):
         """
@@ -602,8 +616,8 @@ class SubProject(models.Model):
             except (ValueError, TypeError, decimal.InvalidOperation):
                 return Decimal('0')
 
-        tp = to_decimal(self.total_payments)
-        ta = to_decimal(self.total_adjustment_amount)
+        tp = self.safe_decimal(self.total_payments)
+        ta = self.safe_decimal(self.total_adjustment_amount)
         
         return max(tp - ta, Decimal('0'))
     @property
