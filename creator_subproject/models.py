@@ -748,16 +748,16 @@ class SubProject(models.Model):
 
         
 
-        final_contract_amount = self.final_contract_amount or Decimal('0')
+        final_contract_amount = to_dec(self.final_contract_amount)
         
         # Get total adjustment reports amount
-        total_adjustment_reports = self.total_adjustment_reports or Decimal('0')
+        total_adjustment_reports = to_dec(self.total_adjustment_reports)
         
         # Get predicted adjustment amount
-        predicted_adjustment = self.predicted_adjustment_amount or Decimal('0')
+        predicted_adjustment = to_dec(self.predicted_adjustment_amount)
         
         # Get total payments amount
-        total_payments = self.total_payment_amount or Decimal('0')
+        total_payments = to_dec(self.total_payment_amount)
         
         # Calculate required credit
         required_credit =  to_dec(final_contract_amount) +  to_dec(total_adjustment_reports) +  to_dec(predicted_adjustment) -  to_dec(total_payments)
