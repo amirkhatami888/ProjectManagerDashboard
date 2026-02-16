@@ -128,6 +128,13 @@
 
 <script>
     $(document).ready(function() {
+        // Form processing state variable
+        let isProcessing = false;
+
+        // Add Bootstrap form-control class to form inputs
+        $('form input, form select, form textarea').addClass('form-control');
+        $('form textarea').addClass('form-control-lg');
+
         // Add coordinate validation
         function validateCoordinates() {
             var longitude = $("#id_longitude").val();
@@ -159,6 +166,64 @@
         
         // Add event listeners for coordinate fields
         $("#id_longitude, #id_latitude, #id_province").on('change input', validateCoordinates);
+
+        // Form submission validation with processing state handling
+        $('.needs-validation').on('submit', function(event) {
+            // Prevent multiple submissions
+            if (isProcessing) {
+                event.preventDefault();
+                return false;
+            }
+
+            // Check form validity
+            if (!this.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+                $(this).addClass('was-validated');
+                
+                // Show validation errors for all required fields
+                $(this).find('[required]').each(function() {
+                    if (!$(this).val().trim()) {
+                        $(this).addClass('is-invalid');
+                        
+                        // Create validation message if doesn't exist
+                        if ($(this).next('.invalid-feedback').length === 0) {
+                            $(this).after('<div class="invalid-feedback">این فیلد الزامی است</div>');
+                        }
+                    } else {
+                        $(this).removeClass('is-invalid');
+                    }
+                });
+                
+                return false;
+            }
+
+            // Set processing state
+            isProcessing = true;
+
+            // Add loading indicator
+            const submitBtn = $(this).find('button[type="submit"]');
+            const originalText = submitBtn.html();
+            submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> درحال پردازش...');
+
+            // Set timeout to reset processing state if request takes too long
+            setTimeout(function() {
+                if (isProcessing) {
+                    isProcessing = false;
+                    submitBtn.prop('disabled', false).html(originalText);
+                    alert('هشدار: درخواست با تأخیر مواجه شد. لطفاً دوباره تلاش کنید.');
+                }
+            }, 30000); // 30 seconds timeout
+
+            return true;
+        });
+
+        // Input validation feedback - remove error styling when user starts typing
+        $('input, textarea, select').on('input change', function() {
+            if ($(this).val().trim()) {
+                $(this).removeClass('is-invalid');
+            }
+        });
     });
 </script>
 {% endblock %}
