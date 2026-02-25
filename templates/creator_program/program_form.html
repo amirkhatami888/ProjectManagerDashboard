@@ -178,24 +178,45 @@
             // Custom required-fields validation for fields that may not have HTML5 'required'
             function validateRequiredFields(form) {
                 var ok = true;
-                // List of important fields to validate (update as needed)
-                var requiredSelectors = ['#id_title', '#id_program_type', '#id_license_state', '#id_license_code'];
+                // Names of important fields to validate (use both id and name lookup)
+                var requiredNames = ['title', 'program_type', 'province', 'license_state', 'license_code'];
 
-                requiredSelectors.forEach(function(sel) {
-                    var $el = $(form).find(sel);
+                // Remove any existing summary
+                $(form).find('#form-error-summary').remove();
+
+                var firstInvalid = null;
+
+                requiredNames.forEach(function(name) {
+                    var $el = $(form).find('#id_' + name);
+                    if (!$el.length) {
+                        $el = $(form).find('[name="' + name + '"]');
+                    }
+
                     if ($el.length) {
                         var val = $el.val();
-                        if (val === null || String(val).trim() === '') {
+
+                        // For selects, sometimes empty option is '' or 'None' - treat falsy as invalid
+                        if (val === null || typeof val === 'undefined' || String(val).trim() === '') {
                             ok = false;
                             $el.addClass('is-invalid');
                             if ($el.next('.invalid-feedback').length === 0) {
                                 $el.after('<div class="invalid-feedback">این فیلد الزامی است</div>');
                             }
+                            if (!firstInvalid) firstInvalid = $el;
                         } else {
                             $el.removeClass('is-invalid');
                         }
                     }
                 });
+
+                if (!ok) {
+                    // Summarize at top of form so user sees where to correct
+                    $(form).prepend('<div id="form-error-summary" class="alert alert-danger">لطفاً خطاهای فرم را اصلاح کنید و دوباره ارسال نمایید.</div>');
+                    if (firstInvalid && firstInvalid.length) {
+                        // Focus first invalid field
+                        try { firstInvalid.focus(); } catch(e) {}
+                    }
+                }
 
                 return ok;
             }
