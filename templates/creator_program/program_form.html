@@ -223,7 +223,7 @@
                 return false;
             }
 
-            // Set processing state
+            // Set processing state and submit via AJAX so we can handle server validation
             isProcessing = true;
 
             // Add loading indicator
@@ -231,16 +231,55 @@
             const originalText = submitBtn.html();
             submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> درحال پردازش...');
 
-            // Set timeout to reset processing state if request takes too long
-            setTimeout(function() {
-                if (isProcessing) {
-                    isProcessing = false;
-                    submitBtn.prop('disabled', false).html(originalText);
-                    alert('هشدار: درخواست با تأخیر مواجه شد. لطفاً دوباره تلاش کنید.');
-                }
-            }, 30000); // 30 seconds timeout
+            var form = this;
+            var action = $(form).attr('action') || window.location.href;
+            var method = ($(form).attr('method') || 'POST').toUpperCase();
+            var formData = new FormData(form);
 
-            return true;
+            // Use fetch to POST the form and handle server-side validation responses
+            fetch(action, {
+                method: method,
+                body: formData,
+                credentials: 'same-origin',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).then(function(response) {
+                // If server redirected (successful create/update), follow it
+                if (response.redirected) {
+                    window.location = response.url;
+                    return null;
+                }
+                return response.text();
+            }).then(function(html) {
+                if (!html) return;
+
+                // Replace the form with returned HTML (which may contain validation errors)
+                try {
+                    var $newForm = $(html).find('form.needs-validation').first();
+                    if ($newForm.length) {
+                        $(form).replaceWith($newForm);
+                    } else {
+                        // If response doesn't contain form, replace body (fallback)
+                        document.open();
+                        document.write(html);
+                        document.close();
+                    }
+                } catch (e) {
+                    console.error('Error processing response HTML', e);
+                }
+            }).catch(function(err) {
+                console.error(err);
+                alert('خطا در ارسال فرم. لطفاً اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.');
+            }).finally(function() {
+                // Reset processing state and restore button
+                isProcessing = false;
+                submitBtn.prop('disabled', false).html(originalText);
+            });
+
+            // Prevent default normal submission
+            event.preventDefault();
+            return false;
         });
 
         // Input validation feedback - remove error styling when user starts typing
