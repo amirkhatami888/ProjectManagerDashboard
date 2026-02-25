@@ -10,15 +10,15 @@ class ProgramForm(forms.ModelForm):
         model = Program
         fields = ['title', 'program_type', 'province', 'city', 'address', 'longitude', 'latitude', 'license_state', 'license_code', 'description', 'program_opening_date']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'required': 'required'}),
-            'program_type': forms.Select(attrs={'class': 'form-control', 'required': 'required'}),
-            'province': forms.Select(attrs={'class': 'form-control', 'required': 'required'}),
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'program_type': forms.Select(attrs={'class': 'form-control'}),
+            'province': forms.Select(attrs={'class': 'form-control'}),
             'city': forms.TextInput(attrs={'class': 'form-control'}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'longitude': forms.NumberInput(attrs={'class': 'form-control', 'step': 'any'}),
             'latitude': forms.NumberInput(attrs={'class': 'form-control', 'step': 'any'}),
-            'license_state': forms.Select(attrs={'class': 'form-control', 'required': 'required'}),
-            'license_code': forms.TextInput(attrs={'class': 'form-control', 'required': 'required'}),
+            'license_state': forms.Select(attrs={'class': 'form-control'}),
+            'license_code': forms.TextInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'program_opening_date': forms.DateInput(attrs={
                 'class': 'form-control', 

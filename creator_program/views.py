@@ -84,6 +84,39 @@ class ProgramCreateView(LoginRequiredMixin, CreateView):
         logger.error(f"DEBUG: Form errors: {form.errors}")
         logger.error(f"DEBUG: Form data: {self.request.POST}")
         return super().form_invalid(form)
+
+    def post(self, request, *args, **kwargs):
+        # Defensive POST handling similar to project_create to avoid stuck processing state
+        if request.method == 'POST':
+            post_data = request.POST.copy()
+
+            # Ensure program_opening_date doesn't break validation when empty
+            if 'program_opening_date' in post_data and not post_data.get('program_opening_date').strip():
+                post_data['program_opening_date'] = ''
+
+            form = self.form_class(post_data, user=request.user)
+            if form.is_valid():
+                try:
+                    obj = form.save(commit=False)
+                    obj.created_by = request.user
+
+                    # If province manager, ensure province is set to their province when available
+                    if request.user.is_province_manager and getattr(request.user, 'province', None):
+                        obj.province = request.user.province
+
+                    obj.save()
+                    messages.success(request, "طرح با موفقیت ایجاد شد.")
+                    return redirect(self.get_success_url())
+                except Exception as e:
+                    logger.exception("Error saving Program")
+                    messages.error(request, f"خطا در ایجاد طرح: {str(e)}")
+            else:
+                logger.error(f"Program form invalid: {form.errors}")
+
+            # If invalid or exception, render form with errors
+            return render(request, self.template_name, {'form': form})
+
+        return super().post(request, *args, **kwargs)
     
     def get_success_url(self):
         return reverse_lazy('creator_program:program_detail', kwargs={'pk': self.object.pk})
@@ -127,6 +160,35 @@ class ProgramUpdateView(LoginRequiredMixin, UpdateView):
         response = super().form_valid(form)
         messages.success(self.request, "طرح با موفقیت به‌روزرسانی شد.")
         return response
+
+    def post(self, request, *args, **kwargs):
+        # Defensive POST handling for updates to avoid stuck processing
+        self.object = self.get_object()
+        post_data = request.POST.copy()
+
+        if 'program_opening_date' in post_data and not post_data.get('program_opening_date').strip():
+            post_data['program_opening_date'] = ''
+
+        form = self.form_class(post_data, instance=self.object, user=request.user)
+        if form.is_valid():
+            try:
+                obj = form.save(commit=False)
+
+                # If province manager, lock province to user's province when available
+                if request.user.is_province_manager and getattr(request.user, 'province', None):
+                    obj.province = request.user.province
+
+                obj._update_user = request.user
+                obj.save()
+                messages.success(request, "طرح با موفقیت به‌روزرسانی شد.")
+                return redirect(self.get_success_url())
+            except Exception as e:
+                logger.exception("Error updating Program")
+                messages.error(request, f"خطا در به‌روزرسانی طرح: {str(e)}")
+        else:
+            logger.error(f"Program update form invalid: {form.errors}")
+
+        return render(request, self.template_name, {'form': form, 'program': self.object})
     
     def get_success_url(self):
         return reverse_lazy('creator_program:program_detail', kwargs={'pk': self.object.pk})
