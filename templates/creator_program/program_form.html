@@ -175,26 +175,41 @@
                 return false;
             }
 
-            // Check form validity
+            // Custom required-field checks (ensure client-side required validation
+            // for fields that may not have HTML "required" attributes)
+            var requiredIds = ['#id_title', '#id_program_type', '#id_province'];
+            var firstInvalid = null;
+            var allValid = true;
+            requiredIds.forEach(function(selector) {
+                var $el = $(selector);
+                if ($el.length) {
+                    var val = $el.val();
+                    if (!val || !String(val).trim()) {
+                        allValid = false;
+                        $el.addClass('is-invalid');
+                        if ($el.next('.invalid-feedback').length === 0) {
+                            $el.after('<div class="invalid-feedback">این فیلد الزامی است</div>');
+                        }
+                        if (!firstInvalid) firstInvalid = $el;
+                    } else {
+                        $el.removeClass('is-invalid');
+                    }
+                }
+            });
+
+            if (!allValid) {
+                event.preventDefault();
+                event.stopPropagation();
+                $(this).addClass('was-validated');
+                if (firstInvalid) firstInvalid.focus();
+                return false;
+            }
+
+            // Check native validity as a secondary check
             if (!this.checkValidity()) {
                 event.preventDefault();
                 event.stopPropagation();
                 $(this).addClass('was-validated');
-                
-                // Show validation errors for all required fields
-                $(this).find('[required]').each(function() {
-                    if (!$(this).val().trim()) {
-                        $(this).addClass('is-invalid');
-                        
-                        // Create validation message if doesn't exist
-                        if ($(this).next('.invalid-feedback').length === 0) {
-                            $(this).after('<div class="invalid-feedback">این فیلد الزامی است</div>');
-                        }
-                    } else {
-                        $(this).removeClass('is-invalid');
-                    }
-                });
-                
                 return false;
             }
 
