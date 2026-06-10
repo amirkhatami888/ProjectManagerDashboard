@@ -45,33 +45,38 @@ class ProjectForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         # Extract the user parameter if it exists
         user = kwargs.pop('user', None)
+        program = kwargs.pop('program', None)
         super().__init__(*args, **kwargs)
-        
+
         # Make program field required
         self.fields['program'].required = True
-        
+
         # Make province and city fields not required since they will be set automatically
         self.fields['province'].required = False
         self.fields['city'].required = False
-        
+
         # Make physical_progress and overall_status not required since they have default values
         self.fields['physical_progress'].required = False
         self.fields['overall_status'].required = False
-        
+
         # Make province and city fields read-only as they will be set automatically from the program
         self.fields['province'].widget.attrs['readonly'] = True
         self.fields['province'].widget.attrs['disabled'] = True
         self.fields['province'].help_text = 'استان به صورت خودکار از طرح انتخاب شده تنظیم می‌شود'
-        
+
         self.fields['city'].widget.attrs['readonly'] = True
         self.fields['city'].widget.attrs['disabled'] = True
         self.fields['city'].help_text = 'شهر به صورت خودکار از طرح انتخاب شده تنظیم می‌شود'
-        
+
         # Filter programs based on user if provided
         if user:
-            # If the user is a province manager, only show programs created by this user
+            # If the user is a province manager, only show programs created by this user or programs they have permission for
             if hasattr(user, 'is_province_manager') and user.is_province_manager:
-                self.fields['program'].queryset = Program.objects.filter(created_by=user)
+                queryset = Program.objects.filter(created_by=user)
+                # Include the specific program if provided, even if not created by this user
+                if program:
+                    queryset = queryset | Program.objects.filter(id=program.id if hasattr(program, 'id') else program)
+                self.fields['program'].queryset = queryset
             # For other roles (admin, etc.), show all programs
             # You can customize this logic based on your requirements
 

@@ -235,8 +235,18 @@ def expert_dashboard(request):
         messages.error(request, 'شما مجوز دسترسی به این صفحه را ندارید.')
         return redirect('home')
     
-    # Get projects that need review
-    projects_to_review = Project.objects.filter(is_submitted=True, is_approved=False)
+    # Get projects that need review, limited to the expert's assigned provinces
+    provinces = request.user.get_assigned_provinces()
+
+    # If no provinces are returned, fall back to direct province field
+    if not provinces and request.user.province:
+        provinces = [request.user.province]
+
+    if provinces:
+        projects_to_review = Project.objects.filter(is_submitted=True, is_approved=False, province__in=provinces)
+    else:
+        # No assigned provinces: show nothing to avoid exposing other provinces' projects
+        projects_to_review = Project.objects.none()
     
     # Count of projects already reviewed by this expert
     # Since we don't have the review models yet, we'll set this to 0

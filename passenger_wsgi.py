@@ -2,22 +2,51 @@
 WSGI configuration for cPanel/Passenger deployment
 This file is used as the "Application startup file" in cPanel Python App setup.
 
-cPanel Configuration:
+cPanel Configuration (avoid double path – use ONE of these):
+
+  Option A – App under public_html/PMD:
+  - Application root: PMD/ProjectManagerDashboard
+    (relative to your home dir; full path = ~/PMD/ProjectManagerDashboard)
+  - Startup file: passenger_wsgi.py
+  - Entry point: application
+
+  Option B – If your app is inside public_html already:
   - Application root: public_html/PMD/ProjectManagerDashboard
-  - Application startup file: passenger_wsgi.py
-  - Application Entry point: application
+    (do NOT set root to "public_html/PMD" and then add "public_html/PMD" again)
+  - Startup file: passenger_wsgi.py
+  - Entry point: application
+
+  The path to this file must be exactly:
+  /home/ufvuikiv/public_html/PMD/ProjectManagerDashboard/passenger_wsgi.py
+  (no duplicate "public_html/PMD" in the path).
 """
+
+# MUST run before any other imports: use PyMySQL as MySQLdb so DECIMAL columns
+# return str (avoids "could not convert string to float" on login with MariaDB).
+_PYMYSQL_PATCHED = False
+try:
+    import pymysql
+    pymysql.install_as_MySQLdb()
+    from pymysql.constants import FIELD_TYPE
+    from pymysql.converters import conversions
+    _conv = conversions.copy()
+    _conv[FIELD_TYPE.DECIMAL] = str
+    _conv[FIELD_TYPE.NEWDECIMAL] = str
+    pymysql.converters.conversions = _conv
+    _PYMYSQL_PATCHED = True
+except Exception:
+    pass
 
 import sys
 import os
 
-# Use PyMySQL as MySQLdb replacement (better MariaDB compatibility)
-# This is important for cPanel MySQL/MariaDB databases
-try:
-    import pymysql
-    pymysql.install_as_MySQLdb()
-except ImportError:
-    pass  # MySQLdb will be used if PyMySQL is not available
+# Define application immediately so Passenger always sees it (even if setup fails later)
+def application(environ, start_response):
+    if not _PYMYSQL_PATCHED:
+        start_response("503 Service Unavailable", [("Content-Type", "text/plain; charset=utf-8")])
+        return [b"PyMySQL required for MariaDB. In virtualenv run: pip install PyMySQL"]
+    start_response("500 Internal Server Error", [("Content-Type", "text/plain; charset=utf-8")])
+    return [b"WSGI startup failed. Check server error logs for traceback."]
 
 # Get project root directory (where this file is located)
 # This ensures the path is correct regardless of where Python is executed from
@@ -31,11 +60,24 @@ sys.path.insert(0, BASE_DIR)
 # This ensures relative paths in Django settings work correctly
 os.chdir(BASE_DIR)
 
-# Set Django settings module for production
-# Use production_settings for cPanel deployment
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_dashboard.production_settings')
+# Set Django settings module (settings.py is the production config)
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_dashboard.settings')
 
-# Import and create WSGI application
-# This is the entry point that cPanel/Passenger will call
-from django.core.wsgi import get_wsgi_application
-application = get_wsgi_application()
+# Load Django only when PyMySQL is patched (otherwise login 500s with MariaDB)
+if _PYMYSQL_PATCHED:
+    try:
+        from django.core.wsgi import get_wsgi_application
+        application = get_wsgi_application()
+    except Exception as e:
+        import traceback
+        _startup_error = traceback.format_exc()
+
+        def _error_app(environ, start_response):
+            status = "500 Internal Server Error"
+            body = (
+                "Application failed to start.\n\n"
+                "Error:\n" + str(e) + "\n\nTraceback:\n" + _startup_error
+            ).encode("utf-8")
+            start_response(status, [("Content-Type", "text/plain; charset=utf-8")])
+            return [body]
+        application = _error_app

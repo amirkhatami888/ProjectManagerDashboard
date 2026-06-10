@@ -118,7 +118,10 @@
     <div class="login-container">
         <div class="form-signin">
             <!-- logo in the folder static/image/logo.png -->
-            <img class ="logo mb-4", src="{% static 'image/logo.png' %}?v={% now 'U' %}" alt="لوگو">
+            <div class="logo-wrap mb-4">
+                <img class="logo" src="{% static 'image/logo.png' %}?v={% now 'U' %}" alt="لوگو" onerror="this.style.display='none'; var s=this.nextElementSibling; if(s) s.style.display='block';">
+                <span class="logo-placeholder" style="display:none;width:120px;height:120px;line-height:120px;font-size:1.5rem;border-radius:60px;background:#0d6efd;color:white;">لوگو</span>
+            </div>
             <h1 class="h3 mb-4 fw-normal header-text">سامانه مدیریت پروژه</h1>
             
             {% if form.errors %}

@@ -259,14 +259,14 @@ class Project(models.Model):
     
     def get_total_allocation(self):
         """Returns the total allocation amount for this project."""
-        allocations = self.allocations.all()
-        total = sum(allocation.amount for allocation in allocations)
+        from django.db.models import Sum
+        total = self.allocations.aggregate(Sum('amount'))['amount__sum'] or 0
         return total
         
     def get_total_allocation_by_type(self, allocation_type):
         """Returns the total allocation amount for this project by allocation type."""
-        allocations = self.allocations.filter(allocation_type=allocation_type)
-        total = sum(allocation.amount for allocation in allocations)
+        from django.db.models import Sum
+        total = self.allocations.filter(allocation_type=allocation_type).aggregate(Sum('amount'))['amount__sum'] or 0
         return total
     
     def get_total_cash_national(self):
@@ -330,19 +330,23 @@ class Project(models.Model):
         Calculate the project's physical progress as a weighted mean of subprojects' physical progress.
         Weights are based on each subproject's final contract amount or imagenary_cost if no contract.
         """
+        total_weight = 0
+        weighted_progress = 0
+
         subprojects = self.subprojects.all()
         
         if not subprojects.exists():
             return 0
             
-        total_weight = 0
-        weighted_progress = 0
         
         for subproject in subprojects:
             # Get weight - use final_contract_amount which automatically uses imagenary_cost if no contract
             weight = subproject.final_contract_amount
             if weight is not None:
-                weight = float(weight)
+                try:
+                    weight = float(subproject.final_contract_amount or 0)
+                except (ValueError, TypeError):
+                    weight = 0.0
                 # Handle None or zero progress
                 progress = float(subproject.physical_progress or 0)
                 
@@ -374,7 +378,13 @@ class Project(models.Model):
         # Calculate totals
         for subproject in subprojects:
             # Only include subprojects with contracts
-            if subproject.contract_amount and subproject.contract_amount > 0:
+
+            try:
+                amount = float(subproject.contract_amount) if subproject.contract_amount else 0
+            except (ValueError, TypeError):
+                amount = 0
+
+            if amount > 0:
                 # Add to total contract amount
                 total_contract_amount += subproject.final_contract_amount
                 
@@ -383,6 +393,7 @@ class Project(models.Model):
                 try:
                     # Call the property which is calculated on the fly
                     progress_amount = float(subproject.financial_progress_amount)
+                    
                 except (AttributeError, ValueError):
                     # If property doesn't exist or can't be converted, use 0
                     progress_amount = 0
@@ -424,7 +435,7 @@ class Project(models.Model):
             has_contract_info = (
                 hasattr(subproject, 'contract_amount') and 
                 subproject.contract_amount is not None and 
-                subproject.contract_amount > 0 and
+                float(subproject.contract_amount or 0) > 0 and
                 subproject.contract_start_date is not None and
                 subproject.contract_end_date is not None and
                 subproject.contract_type is not None and
@@ -457,7 +468,7 @@ class Project(models.Model):
             has_contract_info = (
                 hasattr(subproject, 'contract_amount') and 
                 subproject.contract_amount is not None and 
-                subproject.contract_amount > 0 and
+                float(subproject.contract_amount or 0) > 0 and
                 subproject.contract_start_date is not None and
                 subproject.contract_end_date is not None and
                 subproject.contract_type is not None and
@@ -527,7 +538,7 @@ class Project(models.Model):
                 subproject.contract_start_date is not None and
                 subproject.contract_end_date is not None and
                 subproject.contract_amount is not None and
-                subproject.contract_amount > 0 and
+                float(subproject.contract_amount or 0) > 0 and
                 subproject.contract_type is not None and
                 subproject.contract_type != 'فاقد قرارداد' and
                 subproject.execution_method is not None
@@ -1164,6 +1175,39 @@ class FundingRequest(models.Model):
             self.chief_user = chief_user
             self.status = 'ارسال شده به رئیس'
             self.save()
+            
+            # Send SMS notification to chief
+            try:
+                from notifications_sms.utils import IPPanelSMSSender
+                from notifications_sms.models import SMSTemplate
+                from django.utils import timezone as tz
+                
+                if chief_user.phone_number:
+                    # Try to get template
+                    template = SMSTemplate.objects.filter(
+                        type='FUNDING_REQUEST_APPROVED',
+                        is_default=True
+                    ).first()
+                    
+                    if template:
+                        message = template.content.format(
+                            project_name=self.project.name,
+                            amount=self.headquarters_suggested_amount or self.province_suggested_amount,
+                            date=tz.now().strftime('%Y-%m-%d')
+                        )
+                    else:
+                        # Custom message
+                        message = f"درخواست اعتبار پروژه {self.project.name} برای بررسی ارسال شد. مبلغ: {self.headquarters_suggested_amount or self.province_suggested_amount:,.0f} ریال"
+                    
+                    sms_sender = IPPanelSMSSender()
+                    sms_sender.send_sms(
+                        recipient=chief_user.phone_number,
+                        message=message
+                    )
+            except Exception as e:
+                # Log error but don't fail the operation
+                print(f"Error sending SMS to chief for funding request {self.id}: {e}")
+            
             return True
         return False
     

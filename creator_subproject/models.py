@@ -16,7 +16,7 @@ from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
 from creator_project.models import Project
-
+from decimal import Decimal, InvalidOperation
 User = get_user_model()
 
 # Define Financial Document Type choices
@@ -430,29 +430,83 @@ class SubProject(models.Model):
         
         return latest_report
     
+    # @property
+    # def final_contract_amount(self):
+    #     """
+    #     Calculate the final contract amount based on the base contract amount and any adjustments
+    #     """
+    #     if not self.contract_amount:
+    #         return self.imagenrary_cost or 0
+            
+    #     # Base contract amount
+    #     base_amount = self.contract_amount
+
+    #     # Apply adjustment increase if it exists (as percentage)
+    #     if self.has_adjustment == 'دارد' and self.adjustment_coefficient:
+
+    #     # FIX: Convert string to float safely before dividing
+    #         try:
+    #             # Handle cases where it might be None or empty string
+    #             val = float(self.adjustment_coefficient) if self.adjustment_coefficient else 0.0
+    #         except (ValueError, TypeError):
+    #             val = 0.0
+                
+    #         adjustment_decimal = val / 100
+
+
+    #         # NEW FIXED CODE
+    #         try:
+    #             # Force conversion to float, handling strings like "1000" or empty ""
+    #             coeff = float(str(self.adjustment_coefficient).replace(',', '') or 0)
+    #         except (ValueError, TypeError):
+    #             coeff = 0.0
+
+    #         adjustment_decimal = coeff / 100
+
+    #         base_amount = base_amount * (1 + adjustment_decimal)
+            
+    #     # For backwards compatibility, also check the 25% increase field
+    #     if self.has_25_percent_increase == 'دارد' and self.increase_coefficient_25_percent:
+    #         base_amount = base_amount * self.increase_coefficient_25_percent
+
+    #     return base_amount
     @property
     def final_contract_amount(self):
         """
         Calculate the final contract amount based on the base contract amount and any adjustments
         """
-        if not self.contract_amount:
-            return self.imagenrary_cost or 0
-            
-        # Base contract amount
-        base_amount = self.contract_amount
+        # Helper to safely convert any input to a float
+        def to_float(value):
+            if value is None:
+                return 0.0
+            try:
+                # Remove commas and whitespace, then convert
+                return float(str(value).replace(',', '').strip())
+            except (ValueError, TypeError):
+                return 0.0
 
-        # Apply adjustment increase if it exists (as percentage)
-        if self.has_adjustment == 'دارد' and self.adjustment_coefficient:
-            # Convert percentage to decimal (e.g. 25% becomes 0.25)
-            adjustment_decimal = self.adjustment_coefficient / 100
+        # 1. Convert Base Amount
+        base_amount = to_float(self.contract_amount)
+        
+        # Fallback to imaginary cost if base is 0
+        if base_amount == 0:
+            base_amount = to_float(getattr(self, 'imagenrary_cost', 0))
+
+        # 2. Apply adjustment percentage
+        if self.has_adjustment == 'دارد':
+            coeff = to_float(self.adjustment_coefficient)
+            adjustment_decimal = coeff / 100.0
             base_amount = base_amount * (1 + adjustment_decimal)
             
-        # For backwards compatibility, also check the 25% increase field
-        if self.has_25_percent_increase == 'دارد' and self.increase_coefficient_25_percent:
-            base_amount = base_amount * self.increase_coefficient_25_percent
+        # 3. Apply 25% increase coefficient
+        if self.has_25_percent_increase == 'دارد':
+            increase_coeff = to_float(self.increase_coefficient_25_percent)
+            # If the coefficient is 0 but it 'has' an increase, 
+            # ensure we don't multiply by 0 and wipe out the amount.
+            if increase_coeff > 0:
+                base_amount = base_amount * increase_coeff
 
         return base_amount
-    
     @property
     def total_latest_payments_sum(self):
         """
@@ -514,16 +568,16 @@ class SubProject(models.Model):
             return Decimal('0')
             
         # Get advance payments amount
-        advance_payments = self.total_advance_payments or Decimal('0')
+        advance_payments = self.safe_decimal(self.total_advance_payments)
         
         # Get situation report amount
-        situation_amount = self.situation_report_amount or Decimal('0')
+        situation_amount = self.safe_decimal(self.situation_report_amount)
         
         # Get total adjustment reports amount
-        adjustment_amount = self.total_adjustment_reports or Decimal('0')
+        adjustment_amount = self.safe_decimal(self.total_adjustment_reports)
         
         # Get total payments amount
-        total_payments = self.total_payment_amount or Decimal('0')
+        total_payments = self.safe_decimal(self.total_payment_amount)
         
         # Calculate debt: advance_payments + situation_amount + adjustment_amount - total_payments
         debt = advance_payments + situation_amount + adjustment_amount - total_payments
@@ -531,17 +585,40 @@ class SubProject(models.Model):
         # Debt should not be negative
         return max(debt, Decimal('0'))
     
+    def safe_decimal(self, value):
+        from decimal import Decimal
+        if value is None or value == '':
+            return Decimal('0')
+        try:
+            # Convert to string first to handle cases where it's already a decimal/float
+            # then cast to Decimal
+            return Decimal(str(value))
+        except (ValueError, TypeError, decimal.InvalidOperation):
+            return Decimal('0')
+
+
+    
     @property
     def financial_progress_amount(self):
         """
         مبلغ پیشرفت مالی زیرپروژه
         Calculated as: مبلغ پرداختی زیر پروژه - جمع مبلغ صورت وضعیت تعدیل
         """
-        total_payment = self.total_payments or Decimal('0')
-        total_adjustment = self.total_adjustment_amount or Decimal('0')
+        # Defensive casting to Decimal to handle cases where DB returns strings
+        def to_decimal(value):
+            if value is None or value == '':
+                return Decimal('0')
+            try:
+                # Remove any commas if they exist in a string representation
+                clean_value = str(value).replace(',', '').strip()
+                return Decimal(clean_value)
+            except (ValueError, TypeError, decimal.InvalidOperation):
+                return Decimal('0')
+
+        tp = self.safe_decimal(self.total_payments)
+        ta = self.safe_decimal(self.total_adjustment_amount)
         
-        return max(total_payment - total_adjustment, Decimal('0'))
-    
+        return max(tp - ta, Decimal('0'))
     @property
     def financial_progress_percentage(self):
         """
@@ -552,7 +629,7 @@ class SubProject(models.Model):
         if not self.contract_amount:
             return Decimal('0')
             
-        final_amount = self.final_contract_amount
+        final_amount = self.safe_decimal(self.final_contract_amount)
         if final_amount <= 0:
             return Decimal('0')
             
@@ -561,7 +638,17 @@ class SubProject(models.Model):
         # Calculate percentage and round to 2 decimal places
         percentage = (progress_amount / final_amount) * 100
         return min(Decimal('100'), round(percentage, 2))
-    
+
+
+
+
+
+
+
+
+
+
+
     def calculate_subproject_debts(self):
         """
         Calculate the subproject debts (replaces the old calculate_debt method)
@@ -640,25 +727,40 @@ class SubProject(models.Model):
 
     @property
     def required_credit_for_contract_completion(self):
+        
         """
         اعتبار مورد نیاز تکمیل قرار داد
         Calculate required credit for contract completion:
         مبلغ نهایی قرارداد + جمع مبلغ صورت وضعیت تعدیل + مجموع مبلغ پیشبینی شده ی تعدیل های تا انتهای پروژه - جمع مبلغ پرداخت ها
         """
         # Get final contract amount
-        final_contract_amount = self.final_contract_amount or Decimal('0')
+        from decimal import Decimal
+    
+        # Helper to force any value (str, float, None) into a Decimal
+        def to_dec(val):
+            if val is None or val == '': return Decimal('0')
+            try:
+                # Convert to string first to avoid float precision issues
+                return Decimal(str(val).replace(',', ''))
+            except:
+                return Decimal('0')
+
+
+        
+
+        final_contract_amount = self.safe_decimal(self.final_contract_amount)
         
         # Get total adjustment reports amount
-        total_adjustment_reports = self.total_adjustment_reports or Decimal('0')
+        total_adjustment_reports = self.safe_decimal(self.total_adjustment_reports)
         
         # Get predicted adjustment amount
-        predicted_adjustment = self.predicted_adjustment_amount or Decimal('0')
+        predicted_adjustment = self.safe_decimal(self.predicted_adjustment_amount)
         
         # Get total payments amount
-        total_payments = self.total_payment_amount or Decimal('0')
+        total_payments = self.safe_decimal(self.total_payment_amount)
         
         # Calculate required credit
-        required_credit = final_contract_amount + total_adjustment_reports + predicted_adjustment - total_payments
+        required_credit =  self.safe_decimal(final_contract_amount) +  self.safe_decimal(total_adjustment_reports) +  self.safe_decimal(predicted_adjustment) -  self.safe_decimal(total_payments)
         
         # Return the result (can be negative if overpaid)
         return required_credit

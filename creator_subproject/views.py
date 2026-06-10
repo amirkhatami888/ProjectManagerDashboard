@@ -1740,12 +1740,21 @@ def financial_ledger(request, subproject_id):
             payment_time_period = (latest_payment_date - document.approval_date).days
         
         # Calculate deduction amount (مبلغ کسورات)
-        deduction_amount = document.approved_amount - total_payments
+        from decimal import Decimal
+        try:
+            approved_amount = Decimal(str(document.approved_amount or 0))
+        except:
+            approved_amount = Decimal('0')
+        try:
+            total_payments_dec = Decimal(str(total_payments or 0))
+        except:
+            total_payments_dec = Decimal('0')
+        deduction_amount = approved_amount - total_payments_dec
         
         # Calculate deduction percentage (درصد کسورات)
         deduction_percentage = 0
-        if document.approved_amount > 0:
-            deduction_percentage = (deduction_amount / document.approved_amount) * 100
+        if approved_amount > 0:
+            deduction_percentage = (deduction_amount / approved_amount) * 100
         
         ledger_entry = {
             'document': document,
@@ -1759,7 +1768,8 @@ def financial_ledger(request, subproject_id):
         ledger_entries.append(ledger_entry)
     
     # Calculate totals
-    total_approved_amount = sum(entry['document'].approved_amount for entry in ledger_entries)
+    from decimal import Decimal
+    total_approved_amount = sum(Decimal(str(entry['document'].approved_amount or 0)) for entry in ledger_entries)
     total_payments_amount = sum(entry['total_payments'] for entry in ledger_entries)
     total_deduction_amount = sum(entry['deduction_amount'] for entry in ledger_entries)
     

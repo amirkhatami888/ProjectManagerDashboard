@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 
 from .models import ActivityLog, ProjectChangeLog, UserSession
-from .utils import log_activity, log_project_change, end_user_session
+from .utils import log_activity, log_project_change, end_user_session, get_persian_field_label
 
 
 @receiver(user_logged_in)

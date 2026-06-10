@@ -232,7 +232,7 @@ def project_create(request):
             post_data.pop('estimated_opening_time')
             
         # Process the form data without the date field
-        form = ProjectForm(post_data, user=request.user)
+        form = ProjectForm(post_data, user=request.user, program=program)
         
         if form.is_valid():
             print("DEBUG: Form is valid")
@@ -306,7 +306,7 @@ def project_create(request):
             'physical_progress': '0',
             'overall_status': 'غیره فعال'
         }
-        form = ProjectForm(user=request.user, initial=initial_data)
+        form = ProjectForm(user=request.user, program=program, initial=initial_data)
         # Make the program field read-only
         form.fields['program'].widget.attrs['readonly'] = True
         form.fields['program'].widget.attrs['disabled'] = True
@@ -350,7 +350,7 @@ def project_update(request, pk):
             post_data.pop('estimated_opening_time')
             
         # Process the form data without the date field
-        form = ProjectForm(post_data, instance=project, user=request.user)
+        form = ProjectForm(post_data, instance=project, user=request.user, program=project.program)
         print(f"DEBUG: Form data: {post_data}")
         
         if form.is_valid():
@@ -416,7 +416,7 @@ def project_update(request, pk):
                 for error in errors:
                     messages.error(request, f"خطا در فیلد {field}: {error}")
     else:
-        form = ProjectForm(instance=project, user=request.user)
+        form = ProjectForm(instance=project, user=request.user, program=project.program)
     
     return render(request, 'creator_project/project_form.html', {
         'form': form, 
@@ -1046,7 +1046,7 @@ class FundingTableView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         context['title'] = 'جدول اعتبارات'
         
         # Calculate the total sum of final_amount
-        total_amount = sum(request.final_amount or 0 for request in context['funding_requests'])
+        total_amount = sum(float(request.final_amount or 0) for request in context['funding_requests'])
         context['total_amount'] = total_amount
         
         return context
@@ -1074,7 +1074,7 @@ class FundingHistoryView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         context['title'] = 'تاریخچه اعتبارات'
         
         # Calculate the total sum of final_amount
-        total_amount = sum(request.final_amount or 0 for request in context['funding_requests'])
+        total_amount = sum(float(request.final_amount or 0) for request in context['funding_requests'])
         context['total_amount'] = total_amount
         
         return context

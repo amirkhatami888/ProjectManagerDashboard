@@ -421,10 +421,10 @@ class FinancialDocumentForm(forms.ModelForm):
             
             # Set initial values for amount fields with comma formatting
             if self.instance.contractor_amount:
-                self.fields['contractor_amount'].initial = f"{self.instance.contractor_amount:,}"
+                self.fields['contractor_amount'].initial = f"{float(self.instance.contractor_amount):,}"
             
             if self.instance.approved_amount:
-                self.fields['approved_amount'].initial = f"{self.instance.approved_amount:,}"
+                self.fields['approved_amount'].initial = f"{float(self.instance.approved_amount):,}"
         else:
             # Set default value for new instance - today's date
             today_jalali = jdatetime.date.today().strftime('%Y/%m/%d')

@@ -176,15 +176,15 @@ def format_field_value(value: str, field_name: str, model_type: str = 'project')
     if value.lower() in ['true', 'false']:
         return 'بله' if value.lower() == 'true' else 'خیر'
     
-    # Handle numeric values with Persian formatting
+    # Handle numeric values with Persian formatting (never raise on non-numeric)
     if field_name in ['physical_progress', 'adjustment_coefficient']:
         try:
             float_val = float(value)
             return f"{float_val:.1f}%"
-        except:
+        except (ValueError, TypeError):
             pass
-    
-    # Handle currency fields
+
+    # Handle currency fields (never raise on non-numeric, e.g. version strings)
     currency_fields = [
         'contract_amount', 'imagenrary_cost', 'allocation_credit_cash_national',
         'allocation_credit_cash_province', 'allocation_credit_cash_charity',
@@ -196,7 +196,7 @@ def format_field_value(value: str, field_name: str, model_type: str = 'project')
         try:
             float_val = float(value)
             return f"{float_val:,.0f} ریال"
-        except:
+        except (ValueError, TypeError):
             pass
     
     # Handle date fields
