@@ -965,7 +965,7 @@
                     <tbody>
                         {% for user_data in users_with_activity %}
                         <tr>
-                            <td>
+                            <td data-sort-value="{% if user_data.is_online %}1{% else %}0{% endif %}">
                                 {% if user_data.is_online %}
                                     <div class="text-sm">
                                         <span class="online-indicator online"></span>
@@ -988,7 +988,7 @@
                                     </small>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td data-sort-value="{{ user_data.user.username }}">
                                 <strong>{{ user_data.user.username }}</strong>
                                 {% if user_data.active_session %}
                                     <br>
@@ -999,7 +999,7 @@
                                 {% endif %}
                             </td>
 
-                            <td data-role="{{ user_data.user.role }}">
+                            <td data-role="{{ user_data.user.role }}" data-sort-value="{{ user_data.user.get_role_display }}">
                                 <div class="text-sm">
                                     {{ user_data.user.get_role_display }}
                                 </div>
@@ -1007,7 +1007,7 @@
                                     نقش کاربر
                                 </small>
                             </td>
-                            <td>
+                            <td data-sort-value="{{ user_data.user.province|default:'' }}">
                                 {% if user_data.user.province %}
                                     <div class="text-sm">
                                         {{ user_data.user.province }}
@@ -1019,7 +1019,7 @@
                                     <span class="text-muted">تعیین نشده</span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td data-sort-value="{% if user_data.last_activity %}{{ user_data.last_activity|date:'U' }}{% else %}0{% endif %}">
                                 {% if user_data.last_activity %}
                                     <div class="text-sm">
                                         {{ user_data.last_activity|timesince }} پیش
@@ -1031,7 +1031,7 @@
                                     <span class="text-muted">هیچ فعالیتی</span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td data-sort-value="{% if user_data.last_login %}{{ user_data.last_login|date:'U' }}{% else %}0{% endif %}">
                                 {% if user_data.last_login %}
                                     <div class="text-sm">
                                         {{ user_data.last_login|timesince }} پیش
@@ -1043,7 +1043,7 @@
                                     <span class="text-muted">هیچ ورودی</span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td data-sort-value="{{ user_data.total_logins }}">
                                 <div class="text-sm">
                                     {{ user_data.total_logins }} ورود
                                 </div>
@@ -1053,7 +1053,7 @@
                             </td>
 
 
-                            <td>
+                            <td data-sort-value="{{ user_data.logins_week }}">
                                 <div class="text-sm">
                                     {{ user_data.logins_week }} ورود
                                 </div>
@@ -1061,7 +1061,7 @@
                                     این هفته
                                 </small>
                             </td>
-                            <td>
+                            <td data-sort-value="{{ user_data.logins_month }}">
                                 <div class="text-sm">
                                     {{ user_data.logins_month }} ورود
                                 </div>
@@ -1069,7 +1069,7 @@
                                     این ماه
                                 </small>
                             </td>
-                                                         <td>
+                                                         <td data-sort-value="{{ user_data.logins_year }}">
                                  <div class="text-sm">
                                      {{ user_data.logins_year }} ورود
                                  </div>
@@ -1486,7 +1486,11 @@
     // Add sorting functionality
     document.addEventListener('DOMContentLoaded', function() {
         const table = document.getElementById('userActivityTable');
-        const headers = table.querySelectorAll('th');
+        if (!table) {
+            return;
+        }
+
+        const headers = table.querySelectorAll('thead th');
         
         // Add sort indicators to headers (skip filter row)
         headers.forEach((header, index) => {
@@ -1496,8 +1500,10 @@
                     sortTable(table, index);
                 });
                 
+                header.dataset.sortDirection = '';
+
                 // Add sort indicator
-                header.innerHTML += ' <i class="fas fa-sort text-muted"></i>';
+                header.insertAdjacentHTML('beforeend', ' <i class="fas fa-sort text-muted sort-icon"></i>');
             }
         });
         
@@ -1522,39 +1528,48 @@
     
     function sortTable(table, columnIndex) {
         const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => row.cells.length > columnIndex);
+        const headers = table.querySelectorAll('thead th');
+        const clickedHeader = headers[columnIndex];
+        const currentDirection = clickedHeader.dataset.sortDirection || '';
+        const nextDirection = currentDirection === 'asc' ? 'desc' : 'asc';
         
         // Remove existing sort indicators
-        const headers = table.querySelectorAll('th');
         headers.forEach(header => {
-            const icon = header.querySelector('i');
+            header.dataset.sortDirection = '';
+            const icon = header.querySelector('.sort-icon');
             if (icon) {
-                icon.className = 'fas fa-sort text-muted';
+                icon.className = 'fas fa-sort text-muted sort-icon';
             }
         });
         
         // Add sort indicator to clicked header
-        const clickedHeader = headers[columnIndex];
-        const icon = clickedHeader.querySelector('i');
+        clickedHeader.dataset.sortDirection = nextDirection;
+        const icon = clickedHeader.querySelector('.sort-icon');
         if (icon) {
-            icon.className = 'fas fa-sort-up text-primary';
+            icon.className = nextDirection === 'asc' ? 'fas fa-sort-up text-primary sort-icon' : 'fas fa-sort-down text-primary sort-icon';
         }
         
         // Sort rows
         rows.sort((a, b) => {
-            const aText = a.cells[columnIndex].textContent.trim();
-            const bText = b.cells[columnIndex].textContent.trim();
+            const aCell = a.cells[columnIndex];
+            const bCell = b.cells[columnIndex];
+            const aValue = (aCell.dataset.sortValue ?? aCell.textContent).trim();
+            const bValue = (bCell.dataset.sortValue ?? bCell.textContent).trim();
             
             // Try to parse as numbers first
-            const aNum = parseFloat(aText);
-            const bNum = parseFloat(bText);
+            const aNum = Number(aValue);
+            const bNum = Number(bValue);
+            let comparison = 0;
             
-            if (!isNaN(aNum) && !isNaN(bNum)) {
-                return aNum - bNum;
+            if (aValue !== '' && bValue !== '' && !Number.isNaN(aNum) && !Number.isNaN(bNum)) {
+                comparison = aNum - bNum;
+            } else {
+                // Otherwise sort as strings
+                comparison = aValue.localeCompare(bValue, 'fa', { numeric: true, sensitivity: 'base' });
             }
             
-            // Otherwise sort as strings
-            return aText.localeCompare(bText, 'fa');
+            return nextDirection === 'asc' ? comparison : -comparison;
         });
         
         // Reorder rows in the table
