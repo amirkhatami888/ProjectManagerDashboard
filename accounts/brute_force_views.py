@@ -16,7 +16,7 @@ from django.conf import settings
 import json
 import logging
 
-from .captcha import SimpleCaptcha
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +30,7 @@ class BruteForceProtectedLoginView(LoginView):
         """Add brute-force protection context to template"""
         context = super().get_context_data(**kwargs)
         
-        captcha = SimpleCaptcha()
-        captcha_data = captcha.generate_captcha(self.request.session.session_key)
-        context['captcha'] = captcha_data
-        context['show_captcha'] = True
+        context['recaptcha_site_key'] = getattr(settings, 'RECAPTCHA_SITE_KEY', '')
         
         # Check for brute-force messages
         if self.request.session.get('brute_force_message'):
@@ -47,20 +44,40 @@ class BruteForceProtectedLoginView(LoginView):
         return context
     
     def post(self, request, *args, **kwargs):
-        """Validate human verification before checking username/password."""
-        if request.POST.get('not_robot') != 'on':
-            return self.reject_before_auth('لطفاً گزینه «من ربات نیستم» را تأیید کنید.')
-
-        captcha_id = request.POST.get('captcha_id')
-        captcha_answer = request.POST.get('captcha_answer')
-        if not captcha_id or not captcha_answer:
-            return self.reject_before_auth('لطفاً مسئله امنیتی را حل کنید.')
-
-        captcha = SimpleCaptcha()
-        if not captcha.verify_captcha(captcha_id, captcha_answer):
-            return self.reject_before_auth('پاسخ مسئله امنیتی اشتباه است. لطفاً دوباره تلاش کنید.')
+        """Validate Google reCAPTCHA before checking username/password."""
+        if not self.verify_recaptcha(request):
+            return self.reject_before_auth('لطفاً گزینه «من ربات نیستم» را از طریق Google reCAPTCHA تأیید کنید.')
 
         return super().post(request, *args, **kwargs)
+
+    def verify_recaptcha(self, request):
+        secret_key = getattr(settings, 'RECAPTCHA_SECRET_KEY', '')
+        recaptcha_response = request.POST.get('g-recaptcha-response', '')
+
+        if not secret_key or not recaptcha_response:
+            return False
+
+        try:
+            response = requests.post(
+                getattr(settings, 'RECAPTCHA_VERIFY_URL', 'https://www.google.com/recaptcha/api/siteverify'),
+                data={
+                    'secret': secret_key,
+                    'response': recaptcha_response,
+                    'remoteip': self.get_client_ip(),
+                },
+                timeout=5,
+            )
+            response.raise_for_status()
+            result = response.json()
+        except requests.RequestException as exc:
+            logger.warning(f"reCAPTCHA verification request failed: {exc}")
+            return False
+
+        if not result.get('success'):
+            logger.warning(f"reCAPTCHA verification failed: {result.get('error-codes', [])}")
+            return False
+
+        return True
 
     def reject_before_auth(self, message):
         messages.error(self.request, message)
@@ -140,15 +157,5 @@ class BruteForceProtectedLoginView(LoginView):
 @csrf_exempt
 @require_http_methods(["POST"])
 def refresh_captcha(request):
-    """AJAX endpoint to refresh CAPTCHA"""
-    captcha = SimpleCaptcha()
-    captcha_data = captcha.generate_captcha(request.session.session_key)
-    
-    return JsonResponse({
-        'captcha_id': captcha_data['id'],
-        'question': captcha_data['question']
-    })
-
-
-
-
+    """Deprecated endpoint kept for backward compatibility."""
+    return JsonResponse({'error': 'Google reCAPTCHA does not support manual refresh.'}, status=410)

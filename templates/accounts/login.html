@@ -113,25 +113,10 @@
             color: #c00;
         }
 
-        .not-robot-check {
-            border: 1px solid #d6dee8;
-            border-radius: 8px;
-            background: #f8f9fa;
-            padding: 14px 16px;
-            text-align: right;
-        }
-
-        .not-robot-check .form-check-input {
-            float: right;
-            margin-left: 10px;
-            margin-right: 0;
-            width: 1.25rem;
-            height: 1.25rem;
-        }
-
-        .not-robot-check .form-check-label {
-            padding-right: 8px;
-            cursor: pointer;
+        .recaptcha-wrap {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
         }
     </style>
 </head>
@@ -183,42 +168,14 @@
                     <label for="id_password"><i class="fas fa-lock me-2"></i>رمز عبور</label>
                 </div>
 
-                <div class="not-robot-check form-check mb-4">
-                    <input class="form-check-input" type="checkbox" name="not_robot" id="id_not_robot" required>
-                    <label class="form-check-label fw-bold" for="id_not_robot">
-                        <i class="fas fa-user-shield text-primary me-2"></i>
-                        من ربات نیستم
-                    </label>
-                    <div class="small text-muted mt-2">
-                        برای جلوگیری از ورودهای خودکار و حملات Brute Force این گزینه الزامی است.
-                    </div>
+                {% if recaptcha_site_key %}
+                <div class="recaptcha-wrap">
+                    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
                 </div>
-                
-                {% if show_captcha and captcha %}
-                <div class="captcha-section mb-4 p-3 border rounded" style="background-color: #f8f9fa;">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <label class="form-label mb-2">
-                                <i class="fas fa-shield-alt me-2 text-warning"></i>
-                                مسئله امنیتی:
-                            </label>
-                            <div class="captcha-question h5 mb-2 text-center" style="font-family: monospace; color: #495057;">
-                                {{ captcha.question }} = ?
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="refresh-captcha" title="تازه کردن مسئله">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                    </div>
-                    <div class="form-floating">
-                        <input type="number" name="captcha_answer" class="form-control" id="id_captcha_answer" placeholder="پاسخ" required>
-                        <label for="id_captcha_answer">پاسخ مسئله</label>
-                        <input type="hidden" name="captcha_id" value="{{ captcha.id }}">
-                    </div>
-                    <small class="text-muted">
-                        <i class="fas fa-info-circle me-1"></i>
-                        برای امنیت بیشتر، لطفاً مسئله ریاضی را حل کنید.
-                    </small>
+                {% else %}
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-triangle-exclamation me-2"></i>
+                    Google reCAPTCHA هنوز تنظیم نشده است. لطفاً کلیدهای RECAPTCHA_SITE_KEY و RECAPTCHA_SECRET_KEY را در محیط سرور تنظیم کنید.
                 </div>
                 {% endif %}
                 <button class="w-100 btn btn-lg btn-primary" type="submit">
@@ -278,35 +235,12 @@
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% if recaptcha_site_key %}
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    {% endif %}
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // CAPTCHA refresh functionality
-            const refreshCaptchaBtn = document.getElementById('refresh-captcha');
-            if (refreshCaptchaBtn) {
-                refreshCaptchaBtn.addEventListener('click', function() {
-                    fetch('{% url "accounts:refresh_captcha" %}', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({})
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.captcha_id && data.question) {
-                            document.querySelector('.captcha-question').textContent = data.question + ' = ?';
-                            document.querySelector('[name=captcha_id]').value = data.captcha_id;
-                            document.querySelector('[name=captcha_answer]').value = '';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error refreshing CAPTCHA:', error);
-                    });
-                });
-            }
-            
             // Form submission with loading state
             const loginForm = document.querySelector('form');
             const submitBtn = document.querySelector('button[type="submit"]');
