@@ -30,6 +30,22 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+
+def user_can_write_project(user, project=None):
+    if user.is_admin:
+        return True
+    if user.is_chief_executive:
+        return True
+    if user.is_ceo:
+        return False
+    if project is None:
+        return user.is_province_manager
+    return (
+        project.created_by == user or
+        (user.is_province_manager and project.province in user.get_assigned_provinces())
+    )
+
 @login_required
 def project_list(request):
     # If user is admin, CEO, or chief executive, show all projects
@@ -323,21 +339,7 @@ def project_update(request, pk):
     project = get_object_or_404(Project, pk=pk)
     
     # Check if user has permission to update this project
-    if request.user.is_admin:
-        # Admins can update any project
-        pass
-    elif request.user.is_province_manager:
-        # Province managers can update projects from their assigned provinces
-        user_provinces = request.user.get_assigned_provinces()
-        if user_provinces and project.province in user_provinces:
-            # User can update projects from their assigned provinces
-            pass
-        elif project.created_by == request.user:
-            # User can update their own projects (fallback)
-            pass
-        else:
-            return HttpResponseForbidden("You don't have permission to update this project.")
-    else:
+    if not user_can_write_project(request.user, project):
         return HttpResponseForbidden("You don't have permission to update this project.")
     
     if request.method == 'POST':
@@ -430,9 +432,7 @@ def project_delete(request, pk):
     project = get_object_or_404(Project, pk=pk)
     
     # Only admins, the project creator, or province managers from the same province can delete projects
-    if not (request.user.is_admin or 
-            project.created_by == request.user or
-            (request.user.is_province_manager and project.province in request.user.get_assigned_provinces())):
+    if not user_can_write_project(request.user, project):
         return HttpResponseForbidden("You don't have permission to delete this project.")
     
     # Placeholder for actual implementation
@@ -1286,8 +1286,7 @@ def allocation_list(request, project_id):
     project = get_object_or_404(Project, id=project_id)
     
     # Check permissions
-    if not (request.user.is_admin or request.user.is_ceo or request.user.is_expert or 
-            request.user.is_chief_executive or project.created_by == request.user):
+    if not (request.user.is_admin or request.user.is_expert or user_can_write_project(request.user, project)):
         messages.error(request, 'شما اجازه دسترسی به این صفحه را ندارید.')
         return redirect('creator_project:project_detail', project_id=project.id)
     
@@ -1307,8 +1306,7 @@ def allocation_edit(request, allocation_id):
     project = allocation.project
     
     # Check permissions
-    if not (request.user.is_admin or request.user.is_ceo or request.user.is_expert or 
-            request.user.is_chief_executive or project.created_by == request.user):
+    if not (request.user.is_admin or request.user.is_expert or user_can_write_project(request.user, project)):
         messages.error(request, 'شما اجازه ویرایش این تخصیص را ندارید.')
         return redirect('creator_project:allocation_list', project_id=project.id)
     
@@ -1338,8 +1336,7 @@ def allocation_delete(request, allocation_id):
     project = allocation.project
     
     # Check permissions
-    if not (request.user.is_admin or request.user.is_ceo or request.user.is_expert or 
-            request.user.is_chief_executive or project.created_by == request.user):
+    if not (request.user.is_admin or request.user.is_expert or user_can_write_project(request.user, project)):
         messages.error(request, 'شما اجازه حذف این تخصیص را ندارید.')
         return redirect('creator_project:allocation_list', project_id=project.id)
     
@@ -1510,9 +1507,7 @@ def upload_gallery_image(request, project_id):
     project = get_object_or_404(Project, id=project_id)
     
     # Check if user has permission to edit this project
-    if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
-            request.user.is_expert or project.created_by == request.user or
-            (request.user.is_province_manager and project.province in request.user.get_assigned_provinces())):
+    if not (request.user.is_admin or request.user.is_expert or user_can_write_project(request.user, project)):
         messages.error(request, 'شما اجازه دسترسی به این بخش را ندارید.')
         return redirect('creator_project:project_detail', pk=project.id)
     
@@ -1589,9 +1584,7 @@ def delete_gallery_image(request, image_id):
     project = gallery_image.project
     
     # Check if user has permission to delete this image
-    if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
-            request.user.is_expert or project.created_by == request.user or
-            (request.user.is_province_manager and project.province in request.user.get_assigned_provinces())):
+    if not (request.user.is_admin or request.user.is_expert or user_can_write_project(request.user, project)):
         messages.error(request, 'شما اجازه حذف این تصویر را ندارید.')
         return redirect('creator_project:project_gallery', pk=project.id)
     

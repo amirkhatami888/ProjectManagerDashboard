@@ -60,8 +60,9 @@ sys.path.insert(0, BASE_DIR)
 # This ensures relative paths in Django settings work correctly
 os.chdir(BASE_DIR)
 
-# Set Django settings module (settings.py is the production config)
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_dashboard.settings')
+# Use production settings on cPanel/Passenger and keep DEBUG disabled by default.
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_dashboard.production_settings')
+os.environ.setdefault('DEBUG', 'False')
 
 # Load Django only when PyMySQL is patched (otherwise login 500s with MariaDB)
 if _PYMYSQL_PATCHED:

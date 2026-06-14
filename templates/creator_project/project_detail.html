@@ -914,7 +914,7 @@
                         <a href="{% url 'creator_project:project_gallery' project.id %}" class="btn btn-sm btn-dark">
                             <i class="bi bi-eye"></i> مشاهده همه
                         </a>
-                        {% if user.is_admin or user.is_ceo or user.is_chief_executive or user.is_expert or project.created_by == user or user.is_province_manager and project.province in user.get_assigned_provinces %}
+                        {% if user.is_admin or user.is_expert or project.created_by == user or user.is_province_manager and project.province in user.get_assigned_provinces %}
                         <a href="{% url 'creator_project:upload_gallery_image' project.id %}" class="btn btn-sm btn-success">
                             <i class="bi bi-plus-circle"></i> آپلود تصویر
                         </a>
@@ -953,7 +953,7 @@
                             <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
                             <h6 class="text-muted mt-2">هنوز تصویری آپلود نشده است</h6>
                             <p class="text-muted small">برای شروع، اولین تصویر پروژه خود را آپلود کنید</p>
-                            {% if user.is_admin or user.is_ceo or user.is_chief_executive or user.is_expert or project.created_by == user or user.is_province_manager and project.province in user.get_assigned_provinces %}
+                            {% if user.is_admin or user.is_expert or project.created_by == user or user.is_province_manager and project.province in user.get_assigned_provinces %}
                             <a href="{% url 'creator_project:upload_gallery_image' project.id %}" class="btn btn-primary btn-sm">
                                 <i class="bi bi-cloud-upload"></i> آپلود اولین تصویر
                             </a>

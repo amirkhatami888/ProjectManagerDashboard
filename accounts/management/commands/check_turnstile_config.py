@@ -15,3 +15,8 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(self.style.ERROR(f'{name}: missing'))
         self.stdout.write(f'DJANGO_SETTINGS_MODULE: {getattr(settings, "SETTINGS_MODULE", "unknown")}')
+        debug_value = getattr(settings, 'DEBUG', None)
+        if debug_value:
+            self.stdout.write(self.style.ERROR('DEBUG: True'))
+        else:
+            self.stdout.write(self.style.SUCCESS('DEBUG: False'))

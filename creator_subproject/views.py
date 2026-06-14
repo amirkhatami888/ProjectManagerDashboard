@@ -34,38 +34,22 @@ from .forms import (
 from .utils import jalali_to_gregorian, gregorian_to_jalali
 
 def can_modify_project(user, project):
-    """
-    Check if the user has permission to modify a project.
-    
-    Args:
-        user: The user to check permissions for
-        project: The project to check
-        
-    Returns:
-        bool: True if the user can modify the project, False otherwise
-    """
-    # Admin users can modify any project
+    """Check if the user has permission to create/edit/delete project data."""
     if user.is_admin:
         return True
-    
-    # Project creators can modify their own projects
+
+    if user.is_chief_executive:
+        return True
+    if user.is_ceo:
+        return False
+
     if project.created_by == user:
         return True
-    
-    # CEO and chief executives can modify any project
-    if hasattr(user, 'is_ceo') and user.is_ceo:
-        return True
-    
-    if hasattr(user, 'is_chief_executive') and user.is_chief_executive:
-        return True
-    
-    # Province managers can modify projects from their assigned provinces
-    if hasattr(user, 'is_province_manager') and user.is_province_manager:
+
+    if user.is_province_manager:
         user_provinces = user.get_assigned_provinces()
-        if user_provinces and project.province in user_provinces:
-            return True
-    
-    # Default to no access
+        return bool(user_provinces and project.province in user_provinces)
+
     return False
 
 @login_required
@@ -858,10 +842,7 @@ def project_situation_create(request, project_id):
     project = get_object_or_404(Project, pk=project_id)
 
     # Check permissions
-    if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
-            request.user.is_vice_chief_executive or request.user.is_expert or 
-            project.created_by == request.user or
-            (request.user.is_province_manager and project.province in request.user.get_assigned_provinces())):
+    if not (can_modify_project(request.user, project)):
         return HttpResponseForbidden("You don't have permission to add situations to this project.")
 
     if request.method == 'POST':
@@ -889,8 +870,7 @@ def project_situation_update(request, pk):
     situation = get_object_or_404(ProjectSituation, pk=pk)
 
     # Check permissions
-    if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
-            request.user.is_vice_chief_executive or request.user.is_expert or situation.created_by == request.user):
+    if not (can_modify_project(request.user, situation.project) or situation.created_by == request.user):
         return HttpResponseForbidden("You don't have permission to update this situation.")
 
     if request.method == 'POST':
@@ -915,8 +895,7 @@ def project_situation_delete(request, pk):
     situation = get_object_or_404(ProjectSituation, pk=pk)
 
     # Check permissions
-    if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
-            request.user.is_vice_chief_executive or situation.created_by == request.user):
+    if not (can_modify_project(request.user, situation.project) or situation.created_by == request.user):
         return HttpResponseForbidden("You don't have permission to delete this situation.")
 
     # Store the project ID for redirecting after deletion
@@ -939,8 +918,7 @@ def project_situation_toggle_resolved(request, pk):
     situation = get_object_or_404(ProjectSituation, pk=pk)
 
     # Check permissions
-    if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
-            request.user.is_vice_chief_executive or request.user.is_expert or situation.created_by == request.user):
+    if not (can_modify_project(request.user, situation.project) or situation.created_by == request.user):
         return HttpResponseForbidden("You don't have permission to update this situation.")
 
     # Toggle the resolved status

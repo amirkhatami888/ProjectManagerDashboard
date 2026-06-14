@@ -8,16 +8,18 @@
 <div class="container-fluid my-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>لیست طرح‌ها</h1>
+        {% if user.is_admin or user.is_chief_executive or user.is_province_manager %}
         <a href="{% url 'creator_program:program_create' %}" class="btn btn-primary">
             <i class="bi bi-plus-circle me-2"></i>ایجاد طرح جدید
         </a>
+        {% endif %}
     </div>
     
     <!-- Access Information -->
     <div class="alert alert-info mb-4">
         <i class="bi bi-info-circle me-2"></i>
         <strong>دسترسی شما:</strong>
-        {% if user.is_admin or user.is_ceo or user.is_chief_executive %}
+        {% if user.is_admin or user.is_chief_executive or user.is_province_manager %}
             شما به تمام طرح‌ها دسترسی دارید.
         {% else %}
             شما به طرح‌های استان‌های زیر دسترسی دارید:
@@ -88,9 +90,11 @@
                                     <a href="{% url 'creator_program:program_detail' program.pk %}" class="btn btn-sm btn-primary" title="مشاهده">
                                         <i class="bi bi-eye"></i>
                                     </a>
+                                    {% if user.is_admin or user.is_chief_executive or user.is_province_manager and program.province in user.get_assigned_provinces %}
                                     <a href="{% url 'creator_program:program_update' program.pk %}" class="btn btn-sm btn-secondary" title="بروزرسانی">
                                         <i class="bi bi-pencil"></i>
                                     </a>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>

@@ -11,6 +11,18 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+
+def user_can_write_program(user, program=None):
+    if user.is_admin or user.is_chief_executive:
+        return True
+    if user.is_ceo:
+        return False
+    if program is None:
+        return user.is_province_manager
+    user_provinces = user.get_assigned_provinces()
+    return program.province in user_provinces
+
+
 class ProgramListView(LoginRequiredMixin, ListView):
     model = Program
     template_name = 'creator_program/program_list.html'
@@ -61,6 +73,11 @@ class ProgramDetailView(LoginRequiredMixin, DetailView):
 
 
 class ProgramCreateView(LoginRequiredMixin, CreateView):
+    def dispatch(self, request, *args, **kwargs):
+        if not user_can_write_program(request.user):
+            raise PermissionDenied("شما مجوز ایجاد طرح را ندارید.")
+        return super().dispatch(request, *args, **kwargs)
+
     model = Program
     form_class = ProgramForm
     template_name = 'creator_program/program_form.html'
@@ -107,13 +124,7 @@ class ProgramUpdateView(LoginRequiredMixin, UpdateView):
     
     def user_can_modify(self, program, user):
         """Check if user can modify the program based on province and role"""
-        # Admin, CEO, and chief executive can modify all programs
-        if user.is_admin or user.is_ceo or user.is_chief_executive:
-            return True
-        
-        # Check if user has access to the program's province
-        user_provinces = user.get_assigned_provinces()
-        return program.province in user_provinces
+        return user_can_write_program(user, program)
     
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
