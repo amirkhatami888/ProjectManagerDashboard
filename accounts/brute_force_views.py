@@ -30,12 +30,10 @@ class BruteForceProtectedLoginView(LoginView):
         """Add brute-force protection context to template"""
         context = super().get_context_data(**kwargs)
         
-        # Check if CAPTCHA is required
-        if self.request.session.get('show_captcha', False):
-            captcha = SimpleCaptcha()
-            captcha_data = captcha.generate_captcha(self.request.session.session_key)
-            context['captcha'] = captcha_data
-            context['show_captcha'] = True
+        captcha = SimpleCaptcha()
+        captcha_data = captcha.generate_captcha(self.request.session.session_key)
+        context['captcha'] = captcha_data
+        context['show_captcha'] = True
         
         # Check for brute-force messages
         if self.request.session.get('brute_force_message'):
@@ -48,33 +46,31 @@ class BruteForceProtectedLoginView(LoginView):
         
         return context
     
+    def post(self, request, *args, **kwargs):
+        """Validate human verification before checking username/password."""
+        if request.POST.get('not_robot') != 'on':
+            return self.reject_before_auth('لطفاً گزینه «من ربات نیستم» را تأیید کنید.')
+
+        captcha_id = request.POST.get('captcha_id')
+        captcha_answer = request.POST.get('captcha_answer')
+        if not captcha_id or not captcha_answer:
+            return self.reject_before_auth('لطفاً مسئله امنیتی را حل کنید.')
+
+        captcha = SimpleCaptcha()
+        if not captcha.verify_captcha(captcha_id, captcha_answer):
+            return self.reject_before_auth('پاسخ مسئله امنیتی اشتباه است. لطفاً دوباره تلاش کنید.')
+
+        return super().post(request, *args, **kwargs)
+
+    def reject_before_auth(self, message):
+        messages.error(self.request, message)
+        form = self.get_form_class()(self.request)
+        return self.render_to_response(self.get_context_data(form=form))
+
     def form_valid(self, form):
         """Handle valid form submission with additional security checks"""
         username = form.cleaned_data.get('username')
         password = form.cleaned_data.get('password')
-        not_robot = self.request.POST.get('not_robot')
-        captcha_id = self.request.POST.get('captcha_id')
-        captcha_answer = self.request.POST.get('captcha_answer')
-
-        if not_robot != 'on':
-            messages.error(self.request, 'لطفاً گزینه «من ربات نیستم» را تأیید کنید.')
-            return self.form_invalid(form)
-        
-        # Verify CAPTCHA if required
-        if self.request.session.get('captcha_required', False):
-            if not captcha_id or not captcha_answer:
-                messages.error(self.request, 'لطفاً مسئله امنیتی را حل کنید.')
-                return self.form_invalid(form)
-            
-            captcha = SimpleCaptcha()
-            if not captcha.verify_captcha(captcha_id, captcha_answer):
-                messages.error(self.request, 'پاسخ مسئله امنیتی اشتباه است.')
-                return self.form_invalid(form)
-            
-            # Clear CAPTCHA requirement after successful verification
-            self.request.session.pop('captcha_required', None)
-            self.request.session.pop('show_captcha', None)
-        
         # Authenticate user
         user = authenticate(self.request, username=username, password=password)
         
@@ -145,9 +141,6 @@ class BruteForceProtectedLoginView(LoginView):
 @require_http_methods(["POST"])
 def refresh_captcha(request):
     """AJAX endpoint to refresh CAPTCHA"""
-    if not request.session.get('show_captcha', False):
-        return JsonResponse({'error': 'CAPTCHA not required'}, status=400)
-    
     captcha = SimpleCaptcha()
     captcha_data = captcha.generate_captcha(request.session.session_key)
     
