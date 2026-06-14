@@ -52,8 +52,13 @@ class BruteForceProtectedLoginView(LoginView):
         """Handle valid form submission with additional security checks"""
         username = form.cleaned_data.get('username')
         password = form.cleaned_data.get('password')
+        not_robot = self.request.POST.get('not_robot')
         captcha_id = self.request.POST.get('captcha_id')
         captcha_answer = self.request.POST.get('captcha_answer')
+
+        if not_robot != 'on':
+            messages.error(self.request, 'لطفاً گزینه «من ربات نیستم» را تأیید کنید.')
+            return self.form_invalid(form)
         
         # Verify CAPTCHA if required
         if self.request.session.get('captcha_required', False):

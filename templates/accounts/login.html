@@ -112,6 +112,27 @@
             font-weight: bold;
             color: #c00;
         }
+
+        .not-robot-check {
+            border: 1px solid #d6dee8;
+            border-radius: 8px;
+            background: #f8f9fa;
+            padding: 14px 16px;
+            text-align: right;
+        }
+
+        .not-robot-check .form-check-input {
+            float: right;
+            margin-left: 10px;
+            margin-right: 0;
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        .not-robot-check .form-check-label {
+            padding-right: 8px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="text-center">
@@ -160,6 +181,17 @@
                 <div class="form-floating mb-4">
                     <input type="password" name="password" class="form-control" id="id_password" placeholder="رمز عبور" required>
                     <label for="id_password"><i class="fas fa-lock me-2"></i>رمز عبور</label>
+                </div>
+
+                <div class="not-robot-check form-check mb-4">
+                    <input class="form-check-input" type="checkbox" name="not_robot" id="id_not_robot" required>
+                    <label class="form-check-label fw-bold" for="id_not_robot">
+                        <i class="fas fa-user-shield text-primary me-2"></i>
+                        من ربات نیستم
+                    </label>
+                    <div class="small text-muted mt-2">
+                        برای جلوگیری از ورودهای خودکار و حملات Brute Force این گزینه الزامی است.
+                    </div>
                 </div>
                 
                 {% if show_captcha and captcha %}
@@ -281,6 +313,10 @@
             
             if (loginForm && submitBtn) {
                 loginForm.addEventListener('submit', function(e) {
+                    if (!loginForm.checkValidity()) {
+                        return;
+                    }
+
                     // Add loading state
                     submitBtn.disabled = true;
                     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>در حال ورود...';
