@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Activity Monitor Dashboard{% endblock %}
+{% block title %}داشبورد نظارت بر فعالیت‌ها{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -114,53 +114,53 @@
         <div class="col-12">
             <h1 class="h3 mb-0 text-gray-800">
                 <i class="fas fa-chart-line text-primary"></i>
-                Activity Monitor Dashboard
+                داشبورد نظارت بر فعالیت‌ها
             </h1>
-            <p class="text-muted">Real-time monitoring of system activities and user actions</p>
+            <p class="text-muted">پایش لحظه‌ای فعالیت‌های سامانه و اقدامات کاربران</p>
         </div>
     </div>
 
-    <!-- Statistics Cards -->
+    <!-- کارت‌های آماری -->
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="stats-card">
                 <div class="stats-number">{{ summary.total_activities|default:0 }}</div>
-                <div class="stats-label">Total Activities (7 days)</div>
+                <div class="stats-label">کل فعالیت‌ها (۷ روز گذشته)</div>
             </div>
         </div>
         
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="stats-card success">
                 <div class="stats-number">{{ summary.total_logins|default:0 }}</div>
-                <div class="stats-label">User Logins (7 days)</div>
+                <div class="stats-label">ورود کاربران (۷ روز گذشته)</div>
             </div>
         </div>
         
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="stats-card info">
                 <div class="stats-number">{{ summary.total_project_changes|default:0 }}</div>
-                <div class="stats-label">Project Changes (7 days)</div>
+                <div class="stats-label">تغییرات پروژه‌ها (۷ روز گذشته)</div>
             </div>
         </div>
         
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="stats-card warning">
                 <div class="stats-number">{{ summary.total_errors|default:0 }}</div>
-                <div class="stats-label">System Errors (7 days)</div>
+                <div class="stats-label">خطاهای سامانه (۷ روز گذشته)</div>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <!-- Recent Activities -->
+        <!-- فعالیت‌های اخیر -->
         <div class="col-lg-8">
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-history"></i> Recent Activities
+                        <i class="fas fa-history"></i> فعالیت‌های اخیر
                     </h6>
                     <a href="{% url 'activity_monitor:activity_logs' %}" class="btn btn-sm btn-primary">
-                        View All
+                        مشاهده همه
                     </a>
                 </div>
                 <div class="card-body">
@@ -169,12 +169,12 @@
                         <div class="activity-item {% if activity.severity == 'HIGH' %}error{% elif activity.severity == 'MEDIUM' %}warning{% else %}success{% endif %}">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
-                                    <strong>{{ activity.user.username|default:"System" }}</strong>
+                                    <strong>{{ activity.user.username|default:"سامانه" }}</strong>
                                     <span class="badge badge-{% if activity.activity_type == 'LOGIN' %}success{% elif activity.activity_type == 'ERROR' %}danger{% else %}primary{% endif %} ml-2">
                                         {{ activity.activity_type }}
                                     </span>
                                 </div>
-                                <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                                <small class="text-muted">{{ activity.timestamp|timesince }} پیش</small>
                             </div>
                             <p class="mb-0 mt-1">{{ activity.description }}</p>
                             {% if activity.ip_address %}
@@ -183,16 +183,16 @@
                         </div>
                         {% endfor %}
                     {% else %}
-                        <p class="text-muted text-center py-4">No recent activities found.</p>
+                        <p class="text-muted text-center py-4">هیچ فعالیت اخیری یافت نشد.</p>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Today's Project Changes -->
+            <!-- تغییرات امروز پروژه‌ها -->
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-project-diagram"></i> Today's Project Changes
+                        <i class="fas fa-project-diagram"></i> تغییرات امروز پروژه‌ها
                     </h6>
                 </div>
                 <div class="card-body">
@@ -204,26 +204,26 @@
                                     <strong>{{ change.project_name }}</strong>
                                     <span class="badge badge-info ml-2">{{ change.change_type }}</span>
                                 </div>
-                                <small class="text-muted">{{ change.timestamp|timesince }} ago</small>
+                                <small class="text-muted">{{ change.timestamp|timesince }} پیش</small>
                             </div>
                             <p class="mb-0 mt-1">{{ change.change_description }}</p>
-                            <small class="text-muted">By: {{ change.user.username|default:"System" }}</small>
+                            <small class="text-muted">توسط: {{ change.user.username|default:"سامانه" }}</small>
                         </div>
                         {% endfor %}
                     {% else %}
-                        <p class="text-muted text-center py-4">No project changes today.</p>
+                        <p class="text-muted text-center py-4">امروز هیچ تغییری در پروژه‌ها ثبت نشده است.</p>
                     {% endif %}
                 </div>
             </div>
         </div>
 
-        <!-- Sidebar -->
+        <!-- نوار کناری -->
         <div class="col-lg-4">
-            <!-- Active Sessions -->
+            <!-- نشست‌های فعال -->
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-users"></i> Active Sessions
+                        <i class="fas fa-users"></i> نشست‌های فعال
                     </h6>
                 </div>
                 <div class="card-body">
@@ -237,24 +237,24 @@
                                     <small class="text-muted">{{ session.ip_address }}</small>
                                 </div>
                                 <div class="text-right">
-                                    <small class="text-muted">{{ session.last_activity|timesince }} ago</small>
+                                    <small class="text-muted">{{ session.last_activity|timesince }} پیش</small>
                                     <br>
-                                    <span class="badge badge-success">{{ session.page_views }} views</span>
+                                    <span class="badge badge-success">{{ session.page_views }} بازدید</span>
                                 </div>
                             </div>
                         </div>
                         {% endfor %}
                     {% else %}
-                        <p class="text-muted text-center py-4">No active sessions.</p>
+                        <p class="text-muted text-center py-4">هیچ نشست فعالی وجود ندارد.</p>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Unresolved System Events -->
+            <!-- Unresolved رویدادهای سامانه -->
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-exclamation-triangle"></i> Unresolved Events
+                        <i class="fas fa-exclamation-triangle"></i> رویدادهای حل‌نشده
                     </h6>
                 </div>
                 <div class="card-body">
@@ -268,42 +268,42 @@
                                         {{ event.severity }}
                                     </span>
                                 </div>
-                                <small class="text-muted">{{ event.timestamp|timesince }} ago</small>
+                                <small class="text-muted">{{ event.timestamp|timesince }} پیش</small>
                             </div>
                             <p class="mb-0 mt-1">{{ event.description|truncatechars:100 }}</p>
                             <small class="text-muted">{{ event.component }}</small>
                         </div>
                         {% endfor %}
                     {% else %}
-                        <p class="text-muted text-center py-4">No unresolved events.</p>
+                        <p class="text-muted text-center py-4">هیچ رویداد حل‌نشده‌ای وجود ندارد.</p>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Quick Actions -->
+            <!-- دسترسی سریع -->
             <div class="quick-actions">
                 <h6 class="font-weight-bold text-primary mb-3">
-                    <i class="fas fa-bolt"></i> Quick Actions
+                    <i class="fas fa-bolt"></i> دسترسی سریع
                 </h6>
                 
                 <a href="{% url 'activity_monitor:activity_logs' %}" class="quick-action-btn">
-                    <i class="fas fa-list"></i> View All Activities
+                    <i class="fas fa-list"></i> مشاهده همه فعالیت‌ها
                 </a>
                 
                 <a href="{% url 'activity_monitor:project_changes' %}" class="quick-action-btn">
-                    <i class="fas fa-project-diagram"></i> Project Changes
+                    <i class="fas fa-project-diagram"></i> تغییرات پروژه‌ها
                 </a>
                 
                 <a href="{% url 'activity_monitor:system_events' %}" class="quick-action-btn">
-                    <i class="fas fa-exclamation-triangle"></i> System Events
+                    <i class="fas fa-exclamation-triangle"></i> رویدادهای سامانه
                 </a>
                 
                 <a href="{% url 'activity_monitor:analytics' %}" class="quick-action-btn">
-                    <i class="fas fa-chart-bar"></i> Analytics
+                    <i class="fas fa-chart-bar"></i> تحلیل‌ها
                 </a>
                 
                 <a href="{% url 'activity_monitor:audit_trail' %}" class="quick-action-btn">
-                    <i class="fas fa-shield-alt"></i> Audit Trail
+                    <i class="fas fa-shield-alt"></i> ردیابی حسابرسی
                 </a>
                 
                 <a href="{% url 'activity_monitor:gallery_settings' %}" class="quick-action-btn">
