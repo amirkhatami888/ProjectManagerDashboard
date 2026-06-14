@@ -218,6 +218,11 @@ def user_activity_report(request):
         month_ago = now - timedelta(days=30)
         year_ago = now - timedelta(days=365)
         
+        total_logins = ActivityLog.objects.filter(
+            user=user,
+            activity_type='LOGIN'
+        ).count()
+        
         logins_week = ActivityLog.objects.filter(
             user=user,
             activity_type='LOGIN',
@@ -245,6 +250,7 @@ def user_activity_report(request):
             'last_login': last_login_activity.timestamp if last_login_activity else None,
             'last_activity': last_activity.timestamp if last_activity else None,
             'total_sessions': total_sessions,
+            'total_logins': total_logins,
             'total_page_views': total_page_views,
             'avg_session_duration': avg_duration,
             'logins_week': logins_week,
