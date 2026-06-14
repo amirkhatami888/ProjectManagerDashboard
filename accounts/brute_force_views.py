@@ -30,7 +30,17 @@ class BruteForceProtectedLoginView(LoginView):
         """Add brute-force protection context to template"""
         context = super().get_context_data(**kwargs)
         
-        context['turnstile_site_key'] = getattr(settings, 'TURNSTILE_SITE_KEY', '')
+        turnstile_site_key = getattr(settings, 'TURNSTILE_SITE_KEY', '')
+        turnstile_secret_key = getattr(settings, 'TURNSTILE_SECRET_KEY', '')
+        context['turnstile_site_key'] = (
+            turnstile_site_key if turnstile_site_key and turnstile_secret_key else ''
+        )
+        context['turnstile_missing_keys'] = [
+            key for key, value in {
+                'TURNSTILE_SITE_KEY': turnstile_site_key,
+                'TURNSTILE_SECRET_KEY': turnstile_secret_key,
+            }.items() if not value
+        ]
         
         # Check for brute-force messages
         if self.request.session.get('brute_force_message'):

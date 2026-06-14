@@ -175,7 +175,13 @@
                 {% else %}
                 <div class="alert alert-warning" role="alert">
                     <i class="fas fa-triangle-exclamation me-2"></i>
-                    Cloudflare Turnstile هنوز تنظیم نشده است. لطفاً کلیدهای TURNSTILE_SITE_KEY و TURNSTILE_SECRET_KEY را در محیط سرور تنظیم کنید.
+                    Cloudflare Turnstile هنوز تنظیم نشده است. لطفاً
+                    {% if turnstile_missing_keys %}
+                        {{ turnstile_missing_keys|join:" و " }}
+                    {% else %}
+                        TURNSTILE_SITE_KEY و TURNSTILE_SECRET_KEY
+                    {% endif %}
+                    را در محیط سرور تنظیم کنید.
                 </div>
                 {% endif %}
                 <button class="w-100 btn btn-lg btn-primary" type="submit">

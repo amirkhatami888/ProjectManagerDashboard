@@ -198,8 +198,8 @@ LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 # Cloudflare Turnstile keys for the login page.
 # Set these in the production environment or .env file.
-TURNSTILE_SITE_KEY = config('TURNSTILE_SITE_KEY', default='')
-TURNSTILE_SECRET_KEY = config('TURNSTILE_SECRET_KEY', default='')
+TURNSTILE_SITE_KEY = config('TURNSTILE_SITE_KEY', default='').strip()
+TURNSTILE_SECRET_KEY = config('TURNSTILE_SECRET_KEY', default='').strip()
 TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
 
 # Session settings for production
