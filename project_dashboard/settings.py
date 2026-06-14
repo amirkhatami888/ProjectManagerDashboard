@@ -196,11 +196,11 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = 'dashboard:dashboard'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
-# Google reCAPTCHA v2 checkbox keys for the login page.
+# Cloudflare Turnstile keys for the login page.
 # Set these in the production environment or .env file.
-RECAPTCHA_SITE_KEY = config('RECAPTCHA_SITE_KEY', default='')
-RECAPTCHA_SECRET_KEY = config('RECAPTCHA_SECRET_KEY', default='')
-RECAPTCHA_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify'
+TURNSTILE_SITE_KEY = config('TURNSTILE_SITE_KEY', default='')
+TURNSTILE_SECRET_KEY = config('TURNSTILE_SECRET_KEY', default='')
+TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
 
 # Session settings for production
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'

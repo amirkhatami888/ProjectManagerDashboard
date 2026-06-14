@@ -113,7 +113,7 @@
             color: #c00;
         }
 
-        .recaptcha-wrap {
+        .turnstile-wrap {
             display: flex;
             justify-content: center;
             margin-bottom: 1.5rem;
@@ -168,14 +168,14 @@
                     <label for="id_password"><i class="fas fa-lock me-2"></i>رمز عبور</label>
                 </div>
 
-                {% if recaptcha_site_key %}
-                <div class="recaptcha-wrap">
-                    <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
+                {% if turnstile_site_key %}
+                <div class="turnstile-wrap">
+                    <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"></div>
                 </div>
                 {% else %}
                 <div class="alert alert-warning" role="alert">
                     <i class="fas fa-triangle-exclamation me-2"></i>
-                    Google reCAPTCHA هنوز تنظیم نشده است. لطفاً کلیدهای RECAPTCHA_SITE_KEY و RECAPTCHA_SECRET_KEY را در محیط سرور تنظیم کنید.
+                    Cloudflare Turnstile هنوز تنظیم نشده است. لطفاً کلیدهای TURNSTILE_SITE_KEY و TURNSTILE_SECRET_KEY را در محیط سرور تنظیم کنید.
                 </div>
                 {% endif %}
                 <button class="w-100 btn btn-lg btn-primary" type="submit">
@@ -235,8 +235,8 @@
     
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-    {% if recaptcha_site_key %}
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    {% if turnstile_site_key %}
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     {% endif %}
     
     <script>

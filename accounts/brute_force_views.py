@@ -30,7 +30,7 @@ class BruteForceProtectedLoginView(LoginView):
         """Add brute-force protection context to template"""
         context = super().get_context_data(**kwargs)
         
-        context['recaptcha_site_key'] = getattr(settings, 'RECAPTCHA_SITE_KEY', '')
+        context['turnstile_site_key'] = getattr(settings, 'TURNSTILE_SITE_KEY', '')
         
         # Check for brute-force messages
         if self.request.session.get('brute_force_message'):
@@ -44,25 +44,25 @@ class BruteForceProtectedLoginView(LoginView):
         return context
     
     def post(self, request, *args, **kwargs):
-        """Validate Google reCAPTCHA before checking username/password."""
-        if not self.verify_recaptcha(request):
-            return self.reject_before_auth('لطفاً گزینه «من ربات نیستم» را از طریق Google reCAPTCHA تأیید کنید.')
+        """Validate Cloudflare Turnstile before checking username/password."""
+        if not self.verify_turnstile(request):
+            return self.reject_before_auth('لطفاً گزینه «من ربات نیستم» را تأیید کنید.')
 
         return super().post(request, *args, **kwargs)
 
-    def verify_recaptcha(self, request):
-        secret_key = getattr(settings, 'RECAPTCHA_SECRET_KEY', '')
-        recaptcha_response = request.POST.get('g-recaptcha-response', '')
+    def verify_turnstile(self, request):
+        secret_key = getattr(settings, 'TURNSTILE_SECRET_KEY', '')
+        turnstile_response = request.POST.get('cf-turnstile-response', '')
 
-        if not secret_key or not recaptcha_response:
+        if not secret_key or not turnstile_response:
             return False
 
         try:
             response = requests.post(
-                getattr(settings, 'RECAPTCHA_VERIFY_URL', 'https://www.google.com/recaptcha/api/siteverify'),
+                getattr(settings, 'TURNSTILE_VERIFY_URL', 'https://challenges.cloudflare.com/turnstile/v0/siteverify'),
                 data={
                     'secret': secret_key,
-                    'response': recaptcha_response,
+                    'response': turnstile_response,
                     'remoteip': self.get_client_ip(),
                 },
                 timeout=5,
@@ -70,11 +70,11 @@ class BruteForceProtectedLoginView(LoginView):
             response.raise_for_status()
             result = response.json()
         except requests.RequestException as exc:
-            logger.warning(f"reCAPTCHA verification request failed: {exc}")
+            logger.warning(f"Turnstile verification request failed: {exc}")
             return False
 
         if not result.get('success'):
-            logger.warning(f"reCAPTCHA verification failed: {result.get('error-codes', [])}")
+            logger.warning(f"Turnstile verification failed: {result.get('error-codes', [])}")
             return False
 
         return True
@@ -158,4 +158,4 @@ class BruteForceProtectedLoginView(LoginView):
 @require_http_methods(["POST"])
 def refresh_captcha(request):
     """Deprecated endpoint kept for backward compatibility."""
-    return JsonResponse({'error': 'Google reCAPTCHA does not support manual refresh.'}, status=410)
+    return JsonResponse({'error': 'Cloudflare Turnstile does not support manual refresh.'}, status=410)
