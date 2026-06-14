@@ -17,27 +17,6 @@
             <h1 class="h3 mb-0">{% if is_create %}ایجاد پروژه جدید{% else %}ویرایش پروژه{% endif %}</h1>
         </div>
         <div class="card-body">
-            <!-- Debug information - only visible in DEBUG mode -->
-            {% if debug %}
-            <div class="alert alert-warning">
-                <strong>Debug Info:</strong><br>
-                User: {{ user.username }} ({{ user.role }})<br>
-                Province: {{ user.province }}<br>
-                Is Province Manager: {{ user.is_province_manager }}<br>
-                <hr>
-                <strong>Form Errors:</strong><br>
-                {% if form.errors %}
-                    <ul>
-                    {% for field, errors in form.errors.items %}
-                        <li>{{ field }}: {{ errors }}</li>
-                    {% endfor %}
-                    </ul>
-                {% else %}
-                    No form errors.
-                {% endif %}
-            </div>
-            {% endif %}
-            <!-- End debug information -->
             
             {% if user.is_province_manager and user.province %}
             <div class="alert alert-info">

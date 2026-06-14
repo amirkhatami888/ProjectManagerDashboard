@@ -89,8 +89,7 @@ def project_list(request):
         return HttpResponseForbidden("You don't have permission to view projects.")
     
     return render(request, 'creator_project/project_list.html', {
-        'projects': projects,
-        'debug': True
+        'projects': projects
     })
 
 @login_required
@@ -113,7 +112,6 @@ def expert_all_projects(request):
     return render(request, 'creator_project/expert_all_projects.html', {
         'projects': projects,
         'title': 'تمام پروژه‌ها',
-        'debug': True
     })
 
 @login_required
@@ -136,7 +134,6 @@ def expert_all_programs(request):
     return render(request, 'creator_project/expert_all_programs.html', {
         'programs': programs,
         'title': 'تمام طرح‌های استان‌های تحت نظارت',
-        'debug': True
     })
 
 @login_required
@@ -330,7 +327,6 @@ def project_create(request):
     return render(request, 'creator_project/project_form.html', {
         'form': form, 
         'is_create': True,
-        'debug': True,
         'program': program  # Pass the program to the template
     })
 
@@ -424,7 +420,6 @@ def project_update(request, pk):
         'form': form, 
         'project': project, 
         'is_create': False,
-        'debug': True
     })
 
 @login_required

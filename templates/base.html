@@ -339,18 +339,6 @@
                 </div>
                 {% endif %}
                 
-                <!-- Debug info - will only show in development -->
-                {% if user.is_authenticated and debug %}
-                <div class="bg-dark text-white p-2 small">
-                    <div class="container">
-                        DEBUG: Username: {{ user.username }} | 
-                        Role: {{ user.role }} | 
-                        Province: {{ user.province }} | 
-                        Is Province Manager: {{ user.is_province_manager }}
-                    </div>
-                </div>
-                {% endif %}
-                <!-- End debug info -->
                 
                 <!-- Page content -->
                 {% block content %}{% endblock %}
