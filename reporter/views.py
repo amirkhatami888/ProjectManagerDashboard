@@ -1566,12 +1566,17 @@ def projects_map_view(request):
                 latitude += offset * (1 if position in (0, 1, 7) else -1 if position in (3, 4, 5) else 0)
                 longitude += offset * (1 if position in (1, 2, 3) else -1 if position in (5, 6, 7) else 0)
 
+            try:
+                progress = float(program.calculate_overall_physical_progress() or 0)
+            except (TypeError, ValueError):
+                progress = 0.0
+
             project_info = {
                 'id': program.id,
                 'name': program.title,
                 'longitude': longitude,
                 'latitude': latitude,
-                'progress': float(program.calculate_overall_physical_progress() or 0),
+                'progress': progress,
                 'province': program.province,
                 'city': program.city,
                 'type': program.program_type,
