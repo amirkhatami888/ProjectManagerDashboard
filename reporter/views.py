@@ -1517,17 +1517,17 @@ def projects_map_view(request):
         messages.error(request, "شما دسترسی به بخش گزارش گیری را ندارید.")
         return redirect('dashboard:dashboard')
 
-    projects = Project.objects.select_related('program').filter(
-        program__longitude__isnull=False,
-        program__latitude__isnull=False
-    )
-    print(f"DEBUG: Initial projects with program coordinates: {projects.count()}")
+    programs = Program.objects.filter(
+        longitude__isnull=False,
+        latitude__isnull=False
+    ).exclude(longitude='').exclude(latitude='')
+    print(f"DEBUG: Initial programs with coordinates: {programs.count()}")
 
     # Filter by province if the user has a province restriction
     user_provinces = request.user.get_assigned_provinces()
     if user_provinces and not (request.user.is_admin or request.user.is_chief_executive or request.user.is_ceo or request.user.is_vice_chief_executive):
-        projects = projects.filter(program__province__in=user_provinces)
-        print(f"DEBUG: After user province filter ({user_provinces}): {projects.count()}")
+        programs = programs.filter(province__in=user_provinces)
+        print(f"DEBUG: After user province filter ({user_provinces}): {programs.count()}")
 
     # Get request parameters for filtering
     province = request.GET.get('province', '')
@@ -1536,20 +1536,16 @@ def projects_map_view(request):
 
     # Apply filters if provided
     if province:
-        projects = projects.filter(program__province=province)
-        print(f"DEBUG: After province filter: {projects.count()}")
+        programs = programs.filter(province=province)
+        print(f"DEBUG: After province filter: {programs.count()}")
     if program_type:
-        projects = projects.filter(program__program_type=program_type)
-        print(f"DEBUG: After program_type filter: {projects.count()}")
+        programs = programs.filter(program_type=program_type)
+        print(f"DEBUG: After program_type filter: {programs.count()}")
 
-    # Prepare data for the map view
+    # Prepare data for the map view (one marker per Program)
     project_data = []
     coordinate_counts = {}
-    for project in projects:
-        program = project.program
-        if not program:
-            continue
-
+    for program in programs:
         longitude = None
         latitude = None
         try:
@@ -1571,21 +1567,21 @@ def projects_map_view(request):
                 longitude += offset * (1 if position in (1, 2, 3) else -1 if position in (5, 6, 7) else 0)
 
             project_info = {
-                'id': project.id,
-                'name': project.name,
+                'id': program.id,
+                'name': program.title,
                 'longitude': longitude,
                 'latitude': latitude,
-                'progress': float(project.physical_progress or 0),
+                'progress': float(program.calculate_overall_physical_progress() or 0),
                 'province': program.province,
-                'city': program.city or project.city,
-                'type': project.project_type,
+                'city': program.city,
+                'type': program.program_type,
                 'program_name': program.title,
                 'program_type': program.program_type,
-                'url': reverse('creator_project:project_detail', kwargs={'pk': project.id})
+                'url': reverse('creator_program:program_detail', kwargs={'pk': program.id})
             }
             project_data.append(project_info)
 
-    print(f"DEBUG: Final project_data count: {len(project_data)}")
+    print(f"DEBUG: Final program markers count: {len(project_data)}")
     print(f"DEBUG: User: {request.user.username}, Role: {request.user.role}, Assigned Provinces: {request.user.get_assigned_provinces()}")
 
     # Prepare JSON for frontend
