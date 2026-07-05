@@ -1526,7 +1526,7 @@ def projects_map_view(request):
     # Filter by province if the user has a province restriction
     user_provinces = request.user.get_assigned_provinces()
     if user_provinces and not (request.user.is_admin or request.user.is_chief_executive or request.user.is_ceo or request.user.is_vice_chief_executive):
-        projects = projects.filter(province__in=user_provinces)
+        projects = projects.filter(program__province__in=user_provinces)
         print(f"DEBUG: After user province filter ({user_provinces}): {projects.count()}")
 
     # Get request parameters for filtering
@@ -1536,7 +1536,7 @@ def projects_map_view(request):
 
     # Apply filters if provided
     if province:
-        projects = projects.filter(province=province)
+        projects = projects.filter(program__province=province)
         print(f"DEBUG: After province filter: {projects.count()}")
     if program_type:
         projects = projects.filter(program__program_type=program_type)
@@ -1576,8 +1576,8 @@ def projects_map_view(request):
                 'longitude': longitude,
                 'latitude': latitude,
                 'progress': float(project.physical_progress or 0),
-                'province': project.province,
-                'city': project.city,
+                'province': program.province,
+                'city': program.city or project.city,
                 'type': project.project_type,
                 'program_name': program.title,
                 'program_type': program.program_type,
