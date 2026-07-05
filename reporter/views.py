@@ -10,11 +10,13 @@ from django.db.models.functions import Coalesce
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django.http import JsonResponse, HttpResponse
+from django.core.serializers.json import DjangoJSONEncoder
 from decimal import Decimal
 import csv
 import xlsxwriter
 from io import BytesIO
 import json
+import logging
 
 from creator_project.models import Project, ProjectUpdateHistory
 from creator_subproject.models import SubProject, SubProjectUpdateHistory
@@ -23,6 +25,8 @@ from creator_review.models import ProjectReview, SubProjectReview
 from creator_program.models import Program
 from .models import ProjectReport, SubProjectReport, GeneratedReport, SearchHistory, ProjectFinancialAllocation
 from .forms import ProjectReportForm, SubProjectReportForm
+
+logger = logging.getLogger(__name__)
 
 @login_required
 def reporter_dashboard(request):
@@ -1513,84 +1517,91 @@ def user_search_history(request):
 def projects_map_view(request):
     """View for displaying the projects progress map"""
     # Check if the user is a province manager - restrict access
-    if request.user.is_province_manager:
+    if getattr(request.user, 'is_province_manager', False):
         messages.error(request, "شما دسترسی به بخش گزارش گیری را ندارید.")
         return redirect('dashboard:dashboard')
 
-    programs = Program.objects.filter(
-        longitude__isnull=False,
-        latitude__isnull=False
-    ).exclude(longitude='').exclude(latitude='')
-    print(f"DEBUG: Initial programs with coordinates: {programs.count()}")
-
-    # Filter by province if the user has a province restriction
-    user_provinces = request.user.get_assigned_provinces()
-    if user_provinces and not (request.user.is_admin or request.user.is_chief_executive or request.user.is_ceo or request.user.is_vice_chief_executive):
-        programs = programs.filter(province__in=user_provinces)
-        print(f"DEBUG: After user province filter ({user_provinces}): {programs.count()}")
-
-    # Get request parameters for filtering
     province = request.GET.get('province', '')
     program_type = request.GET.get('program_type', '')
-    print(f"DEBUG: Filter params - province: '{province}', program_type: '{program_type}'")
 
-    # Apply filters if provided
-    if province:
-        programs = programs.filter(province=province)
-        print(f"DEBUG: After province filter: {programs.count()}")
-    if program_type:
-        programs = programs.filter(program_type=program_type)
-        print(f"DEBUG: After program_type filter: {programs.count()}")
-
-    # Prepare data for the map view (one marker per Program)
     project_data = []
-    coordinate_counts = {}
-    for program in programs:
-        longitude = None
-        latitude = None
+    try:
+        programs = Program.objects.filter(
+            longitude__isnull=False,
+            latitude__isnull=False
+        ).only('id', 'title', 'longitude', 'latitude', 'province', 'city', 'program_type')
+
+        # Filter by province if the user has a province restriction
         try:
-            longitude = float(program.longitude) if program.longitude else None
-            latitude = float(program.latitude) if program.latitude else None
-        except (ValueError, TypeError):
-            longitude = None
-            latitude = None
+            user_provinces = request.user.get_assigned_provinces()
+        except Exception:
+            user_provinces = []
+        has_all_province_access = (
+            getattr(request.user, 'is_admin', False)
+            or getattr(request.user, 'is_chief_executive', False)
+            or getattr(request.user, 'is_ceo', False)
+            or getattr(request.user, 'is_vice_chief_executive', False)
+        )
+        if user_provinces and not has_all_province_access:
+            programs = programs.filter(province__in=user_provinces)
 
-        if longitude is not None and latitude is not None:
-            coordinate_key = (round(latitude, 6), round(longitude, 6))
-            marker_index = coordinate_counts.get(coordinate_key, 0)
-            coordinate_counts[coordinate_key] = marker_index + 1
-            if marker_index:
-                ring = (marker_index - 1) // 8 + 1
-                position = (marker_index - 1) % 8
-                offset = 0.00035 * ring
-                latitude += offset * (1 if position in (0, 1, 7) else -1 if position in (3, 4, 5) else 0)
-                longitude += offset * (1 if position in (1, 2, 3) else -1 if position in (5, 6, 7) else 0)
+        # Apply filters if provided
+        if province:
+            programs = programs.filter(province=province)
+        if program_type:
+            programs = programs.filter(program_type=program_type)
 
+        coordinate_counts = {}
+        for program in programs:
             try:
-                progress = float(program.calculate_overall_physical_progress() or 0)
-            except (TypeError, ValueError):
-                progress = 0.0
+                longitude = None
+                latitude = None
+                try:
+                    longitude = float(program.longitude) if program.longitude else None
+                    latitude = float(program.latitude) if program.latitude else None
+                except (ValueError, TypeError):
+                    longitude = None
+                    latitude = None
 
-            project_info = {
-                'id': program.id,
-                'name': program.title,
-                'longitude': longitude,
-                'latitude': latitude,
-                'progress': progress,
-                'province': program.province,
-                'city': program.city,
-                'type': program.program_type,
-                'program_name': program.title,
-                'program_type': program.program_type,
-                'url': reverse('creator_program:program_detail', kwargs={'pk': program.id})
-            }
-            project_data.append(project_info)
+                if longitude is None or latitude is None:
+                    continue
 
-    print(f"DEBUG: Final program markers count: {len(project_data)}")
-    print(f"DEBUG: User: {request.user.username}, Role: {request.user.role}, Assigned Provinces: {request.user.get_assigned_provinces()}")
+                coordinate_key = (round(latitude, 6), round(longitude, 6))
+                marker_index = coordinate_counts.get(coordinate_key, 0)
+                coordinate_counts[coordinate_key] = marker_index + 1
+                if marker_index:
+                    ring = (marker_index - 1) // 8 + 1
+                    position = (marker_index - 1) % 8
+                    offset = 0.00035 * ring
+                    latitude += offset * (1 if position in (0, 1, 7) else -1 if position in (3, 4, 5) else 0)
+                    longitude += offset * (1 if position in (1, 2, 3) else -1 if position in (5, 6, 7) else 0)
+
+                try:
+                    progress = float(program.calculate_overall_physical_progress() or 0)
+                except Exception:
+                    progress = 0.0
+
+                project_info = {
+                    'id': program.id,
+                    'name': program.title or '',
+                    'longitude': longitude,
+                    'latitude': latitude,
+                    'progress': progress,
+                    'province': program.province or '',
+                    'city': program.city or '',
+                    'type': program.program_type or '',
+                    'program_name': program.title or '',
+                    'program_type': program.program_type or '',
+                    'url': reverse('creator_program:program_detail', kwargs={'pk': program.id})
+                }
+                project_data.append(project_info)
+            except Exception:
+                logger.exception("projects_map: failed to serialize program %s", getattr(program, 'pk', None))
+    except Exception:
+        logger.exception("projects_map: failed to build program queryset")
 
     # Prepare JSON for frontend
-    projects_json = json.dumps(project_data, ensure_ascii=False)
+    projects_json = json.dumps(project_data, ensure_ascii=False, cls=DjangoJSONEncoder)
 
     # Get unique provinces and program types for filters
     provinces = Program.PROVINCE_CHOICES
@@ -2520,5 +2531,4 @@ def export_program_search_results_excel(request):
         
     except Exception as e:
         return HttpResponse(f'Error generating Excel file: {str(e)}', status=500)
-
 

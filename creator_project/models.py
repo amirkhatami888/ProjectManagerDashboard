@@ -530,22 +530,32 @@ class Project(models.Model):
         total_amount = 0
         
         for subproject in self.subprojects.all():
+            try:
+                final_contract_amount = float(subproject.final_contract_amount or 0)
+            except (TypeError, ValueError):
+                final_contract_amount = 0
+
+            try:
+                contract_amount = float(subproject.contract_amount or 0)
+            except (TypeError, ValueError):
+                contract_amount = 0
+
             # Check if the subproject has complete contract information
             has_contract_info = (
                 hasattr(subproject, 'final_contract_amount') and 
                 subproject.final_contract_amount is not None and 
-                subproject.final_contract_amount > 0 and
+                final_contract_amount > 0 and
                 subproject.contract_start_date is not None and
                 subproject.contract_end_date is not None and
                 subproject.contract_amount is not None and
-                float(subproject.contract_amount or 0) > 0 and
+                contract_amount > 0 and
                 subproject.contract_type is not None and
                 subproject.contract_type != 'فاقد قرارداد' and
                 subproject.execution_method is not None
             )
             
             if has_contract_info:
-                total_amount += float(subproject.final_contract_amount)
+                total_amount += final_contract_amount
                 
         return total_amount
     
