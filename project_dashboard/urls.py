@@ -34,8 +34,6 @@ urlpatterns = [
     path('subprojects/', include('creator_subproject.urls')),
     path('reviews/', include('creator_review.urls')),
     path('reporter/', include('reporter.urls')),
-    path("notifications/", include("notifications.urls")),
-    path("sms/", include("notifications_sms.urls")),
     path("webhooks/", include("webhooks.urls")),
     path("activity-monitor/", include("activity_monitor.urls", namespace="activity_monitor")),
     path('gantt-test/', views.gantt_test, name='gantt_test'),

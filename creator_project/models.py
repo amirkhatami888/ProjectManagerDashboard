@@ -943,110 +943,7 @@ def clear_rejection_comments_on_draft(sender, instance, **kwargs):
 
 @receiver(post_save, sender=ProjectRejectionComment)
 def send_sms_on_project_rejection_comment(sender, instance, created, **kwargs):
-    """
-    Send SMS notification when a project rejection comment is created
-    """
-    if created:  # Only send on create
-        try:
-            import logging
-            logger = logging.getLogger(__name__)
-            
-            from notifications_sms.models import SMSSettings
-            from notifications_sms.utils import IPPanelSMSSender, get_default_template
-            from django.db import transaction
-            
-            logger.info(f"Project rejection comment created for project: {instance.project.name}")
-            
-            # Check if auto SMS for rejected projects is enabled
-            sms_settings = SMSSettings.get_settings()
-            if not sms_settings.auto_send_rejected:
-                logger.warning("Auto send rejected is disabled in SMS settings")
-                return
-            
-            # Get the project creator/owner
-            project = instance.project
-            creator = project.created_by
-            
-            # Skip if creator has no phone number
-            if not creator or not creator.phone_number:
-                logger.warning(f"Creator has no phone number for project: {project.name}")
-                return
-            
-            logger.info(f"Sending rejection SMS to {creator.phone_number} for project: {project.name}")
-            
-            # Get the PROJECT_REJECTED template
-            template = get_default_template('PROJECT_REJECTED')
-            
-            if template:
-                logger.info(f"Using template: {template.name}")
-                # Use the simple template content directly since it should be "پروژه رد شده"
-                message = template.content
-                
-                # If the template has variables, replace them
-                if '{' in message:
-                    context_vars = {
-                        'first_name': creator.first_name or creator.username,
-                        'last_name': creator.last_name or '',
-                        'full_name': creator.get_full_name() or creator.username,
-                        'role': creator.get_role_display() if hasattr(creator, 'get_role_display') else '',
-                        'rejection_reason': instance.comment,
-                        'expert_name': instance.expert.get_full_name() or instance.expert.username,
-                        'rejection_date': instance.created_at.strftime('%Y/%m/%d'),
-                        'project_name': project.name,
-                        'project_id': project.project_id or str(project.id)
-                    }
-                    
-                    # Replace variables in template content
-                    for var, value in context_vars.items():
-                        message = message.replace(f'{{{var}}}', str(value))
-            else:
-                # Fallback message
-                logger.warning("No PROJECT_REJECTED template found, using fallback message")
-                message = f"با سلام وعرض ادب خدمت همکار گرامی به دلیل زیر پروژه نیازمند اصلاح است: {instance.comment}"
-            
-            logger.info(f"SMS message to send: {message}")
-            
-            # Send SMS using transaction to ensure atomicity
-            with transaction.atomic():
-                result = IPPanelSMSSender.send_sms(
-                    recipient_number=creator.phone_number,
-                    message=message,
-                    sender_user=instance.expert,
-                    recipient_user=creator,
-                    template=template
-                )
-                
-                logger.info(f"SMS send result: {result}")
-                
-                # Also create entry in old SMS log system for compatibility with "گزارش پیامک‌ها" dashboard
-                from notifications.models import SMSLog as OldSMSLog
-                try:
-                    old_log_status = 'sent' if result.get('status') == 'OK' else 'failed'
-                    old_sms_log = OldSMSLog.objects.create(
-                        recipient=creator,
-                        message=message,
-                        project_name=project.name,
-                        project_id=project.project_id or str(project.id),
-                        province=project.province,
-                        status=old_log_status,
-                        message_id=result.get('message_id', ''),
-                        error_message=result.get('message', '') if result.get('status') != 'OK' else ''
-                    )
-                    logger.info(f"Created old SMS log entry: {old_sms_log.id}")
-                except Exception as old_log_error:
-                    # Don't let old log creation fail the main process
-                    logger.warning(f"Failed to create old SMS log: {old_log_error}")
-                
-                if result.get('status') == 'OK':
-                    logger.info(f"SMS sent successfully to {creator.phone_number} for project rejection")
-                else:
-                    logger.error(f"Failed to send SMS: {result.get('message', 'Unknown error')}")
-            
-        except Exception as e:
-            # Log the error but don't raise it to avoid breaking the rejection process
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error sending rejection SMS for project {instance.project.name}: {str(e)}", exc_info=True)
+    return
 
 
 class FundingRequest(models.Model):
@@ -1176,37 +1073,6 @@ class FundingRequest(models.Model):
             self.status = 'ارسال شده به رئیس'
             self.save()
             
-            # Send SMS notification to chief
-            try:
-                from notifications_sms.utils import IPPanelSMSSender
-                from notifications_sms.models import SMSTemplate
-                from django.utils import timezone as tz
-                
-                if chief_user.phone_number:
-                    # Try to get template
-                    template = SMSTemplate.objects.filter(
-                        type='FUNDING_REQUEST_APPROVED',
-                        is_default=True
-                    ).first()
-                    
-                    if template:
-                        message = template.content.format(
-                            project_name=self.project.name,
-                            amount=self.headquarters_suggested_amount or self.province_suggested_amount,
-                            date=tz.now().strftime('%Y-%m-%d')
-                        )
-                    else:
-                        # Custom message
-                        message = f"درخواست اعتبار پروژه {self.project.name} برای بررسی ارسال شد. مبلغ: {self.headquarters_suggested_amount or self.province_suggested_amount:,.0f} ریال"
-                    
-                    sms_sender = IPPanelSMSSender()
-                    sms_sender.send_sms(
-                        recipient=chief_user.phone_number,
-                        message=message
-                    )
-            except Exception as e:
-                # Log error but don't fail the operation
-                print(f"Error sending SMS to chief for funding request {self.id}: {e}")
             
             return True
         return False
@@ -1222,55 +1088,6 @@ class FundingRequest(models.Model):
         self.approved_at = timezone.now()
         self.save()
         
-        # Send SMS notification to project creator
-        try:
-            from notifications_sms.utils import IPPanelSMSSender
-            from notifications_sms.models import SMSTemplate
-            from django.utils import timezone as tz
-            from django.db import transaction
-            
-            # Get the default template for funding request approval
-            template = SMSTemplate.objects.filter(
-                type=SMSTemplate.FUNDING_REQUEST_APPROVED,
-                is_default=True
-            ).first()
-            
-            if template and self.created_by.phone_number:
-                # Prepare context variables for the template
-                context_vars = {
-                    'first_name': self.created_by.first_name or self.created_by.username,
-                    'last_name': self.created_by.last_name,
-                    'full_name': self.created_by.get_full_name() or self.created_by.username,
-                    'role': self.created_by.get_role_display() if hasattr(self.created_by, 'get_role_display') else '',
-                    'province': str(self.created_by.province) if hasattr(self.created_by, 'province') and self.created_by.province else '',
-                    'project_name': self.project.name,
-                    'final_amount': f"{self.final_amount:,.0f}" if self.final_amount else '0',
-                    'province_amount': f"{self.province_suggested_amount:,.0f}" if self.province_suggested_amount else '0',
-                    'approval_date': tz.localtime(self.approved_at).strftime('%Y/%m/%d') if self.approved_at else '',
-                    'chief_name': self.chief_user.get_full_name() if self.chief_user else '',
-                    'expert_name': self.expert_user.get_full_name() if self.expert_user else '',
-                }
-                
-                # Replace variables in template content
-                message_content = template.content
-                for var, value in context_vars.items():
-                    message_content = message_content.replace(f'{{{var}}}', str(value))
-                
-                # Send SMS using transaction to ensure atomicity
-                with transaction.atomic():
-                    IPPanelSMSSender.send_sms(
-                        recipient_number=self.created_by.phone_number,
-                        message=message_content,
-                        sender_user=self.chief_user,
-                        recipient_user=self.created_by,
-                        template=template
-                    )
-                    
-        except Exception as e:
-            # Log the error but don't prevent the approval from completing
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Failed to send SMS notification for funding approval: {str(e)}")
         
         return True
     

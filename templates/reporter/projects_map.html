@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}نقشه پیشرفت طرح‌ها{% endblock %}
+{% block title %}نقشه پیشرفت پروژه‌ها{% endblock %}
 
 {% block extra_head %}
 <!-- Leaflet CSS -->
@@ -72,7 +72,7 @@
     <div class="row">
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h1>نقشه پیشرفت طرح‌ها</h1>
+                <h1>نقشه پیشرفت پروژه‌ها</h1>
             </div>
             
             <!-- Filters -->
@@ -110,10 +110,10 @@
             <!-- Map Container -->
             <div id="map"></div>
             
-            <!-- No programs message -->
-            <div id="no-programs-message" class="alert alert-info mt-3" style="display: none;">
+            <!-- No projects message -->
+            <div id="no-projects-message" class="alert alert-info mt-3" style="display: none;">
                 <i class="bi bi-info-circle"></i>
-                هیچ طرحی با مختصات جغرافیایی برای نمایش در نقشه یافت نشد. لطفاً فیلترها را بررسی کنید یا مطمئن شوید که طرح‌ها دارای طول و عرض جغرافیایی هستند.
+                هیچ پروژه‌ای با مختصات جغرافیایی برای نمایش در نقشه یافت نشد. لطفاً فیلترها را بررسی کنید یا مطمئن شوید که طرح‌های مربوط به پروژه‌ها دارای طول و عرض جغرافیایی هستند.
             </div>
             
             <!-- Legend -->
@@ -157,15 +157,15 @@
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
         
-        // Program data from backend
-        var programs = JSON.parse('{{ programs_json|escapejs }}');
-        console.log('Programs data:', programs);
-        console.log('Number of programs:', programs.length);
+        // Project data from backend
+        var projects = JSON.parse('{{ projects_json|escapejs }}');
+        console.log('Projects data:', projects);
+        console.log('Number of projects:', projects.length);
         
-        // Show message if no programs found
-        if (programs.length === 0) {
-            document.getElementById('no-programs-message').style.display = 'block';
-            return; // Exit early if no programs
+        // Show message if no projects found
+        if (projects.length === 0) {
+            document.getElementById('no-projects-message').style.display = 'block';
+            return; // Exit early if no projects
         }
         
         // Province boundaries layer
@@ -317,30 +317,32 @@
         }
         
         // Add markers to the map
-        programs.forEach(function(program) {
+        projects.forEach(function(project) {
             // Create marker with custom icon
-            var icon = createMarkerIcon(program.progress);
-            var marker = L.marker([program.latitude, program.longitude], {
+            var icon = createMarkerIcon(project.progress);
+            var marker = L.marker([project.latitude, project.longitude], {
                 icon: icon
             }).addTo(map);
             
             // Format popup content
             var popupContent = `
                 <div class="project-info">
-                    <h5>${program.name}</h5>
-                    <p><strong>استان:</strong> ${program.province}</p>
-                    <p><strong>شهر:</strong> ${program.city}</p>
-                    <p><strong>نوع طرح:</strong> ${program.type}</p>
+                    <h5>${project.name}</h5>
+                    <p><strong>استان:</strong> ${project.province}</p>
+                    <p><strong>شهر:</strong> ${project.city}</p>
+                    <p><strong>نوع پروژه:</strong> ${project.type}</p>
+                    <p><strong>طرح:</strong> ${project.program_name}</p>
+                    <p><strong>نوع طرح:</strong> ${project.program_type}</p>
                     <p><strong>پیشرفت فیزیکی:</strong> 
                         <span class="progress-badge" style="background-color: ${
-                            program.progress < 25 ? '#e74c3c' : 
-                            program.progress < 50 ? '#f39c12' : 
-                            program.progress < 75 ? '#3498db' : '#2ecc71'
+                            project.progress < 25 ? '#e74c3c' : 
+                            project.progress < 50 ? '#f39c12' : 
+                            project.progress < 75 ? '#3498db' : '#2ecc71'
                         }">
-                            ${program.progress.toFixed(1)}%
+                            ${project.progress.toFixed(1)}%
                         </span>
                     </p>
-                    <a href="${program.url}" class="btn btn-sm btn-primary mt-2">مشاهده جزئیات</a>
+                    <a href="${project.url}" class="btn btn-sm btn-primary mt-2">مشاهده جزئیات</a>
                 </div>
             `;
             
@@ -353,16 +355,16 @@
                 var markerElement = marker.getElement();
                 var progressFill = markerElement.querySelector('.progress-fill');
                 if (progressFill) {
-                    progressFill.setAttribute('d', createProgressPath(program.progress));
+                    progressFill.setAttribute('d', createProgressPath(project.progress));
                 }
             });
         });
         
         // Fit map to markers if there are any
-        if (programs.length > 0) {
+        if (projects.length > 0) {
             var bounds = [];
-            programs.forEach(function(program) {
-                bounds.push([program.latitude, program.longitude]);
+            projects.forEach(function(project) {
+                bounds.push([project.latitude, project.longitude]);
             });
             map.fitBounds(bounds, { padding: [50, 50] });
         }

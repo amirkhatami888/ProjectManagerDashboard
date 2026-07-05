@@ -43,8 +43,6 @@ INSTALLED_APPS = [
     'creator_subproject',
     'creator_review',
     'reporter',
-    'notifications',
-    'notifications_sms',
     'webhooks',
     'activity_monitor',
     'session_manager',

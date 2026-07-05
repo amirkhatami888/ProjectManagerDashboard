@@ -296,29 +296,6 @@
                         {% endif %}
                     {% endif %}
 
-                    <!-- سامانه پیامک Section -->
-                    {% if user.is_authenticated %}
-                        {% if user.is_admin or user.is_chief_executive %}
-                        <li class="nav-item">
-                            <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseSMS"
-                               aria-expanded="true" aria-controls="collapseSMS">
-                                <i class="fas fa-sms"></i>
-                                <span>سامانه پیامک</span>
-                            </a>
-                            <div id="collapseSMS" class="collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionSidebar">
-                                <div class="bg-white py-2 collapse-inner rounded">
-                                    <h6 class="collapse-header">امکانات پیامک:</h6>
-                                    <a class="collapse-item" href="{% url 'sms_dashboard' %}">داشبورد</a>
-                                    <a class="collapse-item" href="{% url 'manage_templates' %}">قالب‌ها</a>
-                                    <a class="collapse-item" href="{% url 'send_sms' %}">ارسال تکی</a>
-                                    <a class="collapse-item" href="{% url 'send_bulk_sms' %}">ارسال گروهی</a>
-                                    <a class="collapse-item" href="{% url 'sms_logs' %}">گزارش‌ها</a>
-                                    <a class="collapse-item" href="{% url 'edit_sms_settings' %}">تنظیمات</a>
-                                </div>
-                            </div>
-                        </li>
-                        {% endif %}
-                    {% endif %}
                 </ul>
                 {% endblock %}
             </div>
