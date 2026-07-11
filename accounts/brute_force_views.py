@@ -18,6 +18,8 @@ import logging
 
 import requests
 
+from dashboard.models import SecuritySettings
+
 logger = logging.getLogger(__name__)
 
 class BruteForceProtectedLoginView(LoginView):
@@ -32,8 +34,10 @@ class BruteForceProtectedLoginView(LoginView):
         
         turnstile_site_key = getattr(settings, 'TURNSTILE_SITE_KEY', '')
         turnstile_secret_key = getattr(settings, 'TURNSTILE_SECRET_KEY', '')
+        turnstile_enabled = self.is_turnstile_enabled()
+        context['turnstile_enabled'] = turnstile_enabled
         context['turnstile_site_key'] = (
-            turnstile_site_key if turnstile_site_key and turnstile_secret_key else ''
+            turnstile_site_key if turnstile_enabled and turnstile_site_key and turnstile_secret_key else ''
         )
         context['turnstile_missing_keys'] = [
             key for key, value in {
@@ -55,10 +59,17 @@ class BruteForceProtectedLoginView(LoginView):
     
     def post(self, request, *args, **kwargs):
         """Validate Cloudflare Turnstile before checking username/password."""
-        if not self.verify_turnstile(request):
+        if self.is_turnstile_enabled() and not self.verify_turnstile(request):
             return self.reject_before_auth('لطفاً گزینه «من ربات نیستم» را تأیید کنید.')
 
         return super().post(request, *args, **kwargs)
+
+    def is_turnstile_enabled(self):
+        try:
+            return SecuritySettings.get_solo().turnstile_enabled
+        except Exception as exc:
+            logger.warning(f"Could not load Turnstile setting; defaulting to enabled: {exc}")
+            return True
 
     def verify_turnstile(self, request):
         secret_key = getattr(settings, 'TURNSTILE_SECRET_KEY', '')

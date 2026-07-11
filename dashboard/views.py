@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.db.models import Sum, Count, Avg, Q, F, Value
 from django.db.models.functions import Coalesce
 from django.http import HttpResponseForbidden
@@ -11,6 +12,7 @@ from creator_subproject.models import SubProject, SituationReport
 # Comment out the missing import and use a placeholder
 # from creator_review.models import ProjectReview, SubProjectReview
 from accounts.models import User
+from .models import SecuritySettings
 
 
 @login_required
@@ -61,12 +63,30 @@ def admin_dashboard(request):
         'province_manager': request.user._meta.model.objects.filter(role='PROVINCE_MANAGER').count(),
     }
     
+    security_settings = SecuritySettings.get_solo()
+
     context = {
         'user': request.user,
         'users_count': users_count,
+        'security_settings': security_settings,
     }
     
     return render(request, 'dashboard/admin_dashboard.html', context)
+
+
+@login_required
+@require_POST
+def toggle_turnstile(request):
+    if not request.user.is_admin:
+        return HttpResponseForbidden("You don't have permission to access this page.")
+
+    security_settings = SecuritySettings.get_solo()
+    security_settings.turnstile_enabled = request.POST.get('turnstile_enabled') == 'on'
+    security_settings.save(update_fields=['turnstile_enabled', 'updated_at'])
+
+    status = 'enabled' if security_settings.turnstile_enabled else 'disabled'
+    messages.success(request, f'Cloudflare Turnstile has been {status}.')
+    return redirect('dashboard:admin_dashboard')
 
 
 @login_required

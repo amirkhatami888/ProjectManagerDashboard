@@ -9,6 +9,7 @@ urlpatterns = [
     
     # Admin dashboard
     path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),
+    path('dashboard/admin/turnstile/', views.toggle_turnstile, name='toggle_turnstile'),
     
     # CEO dashboard
     path('dashboard/ceo/', views.ceo_dashboard, name='ceo_dashboard'),
