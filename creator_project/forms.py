@@ -327,10 +327,19 @@ class ProjectFinancialAllocationForm(forms.ModelForm):
             'data-currency-field': 'true'
         })
     )
+    allocation_date = forms.CharField(
+        label='تاریخ تخصیص',
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control persian-date',
+            'id': 'id_allocation_date',
+            'autocomplete': 'off',
+        })
+    )
     
     class Meta:
         model = ProjectFinancialAllocation
-        fields = ['amount', 'allocation_type', 'letter_number', 'description']
+        fields = ['amount', 'allocation_type', 'letter_number', 'allocation_date', 'description']
         widgets = {
             'amount': forms.TextInput(attrs={
                 'class': 'form-control currency-input currency-input-enhanced',
@@ -352,6 +361,7 @@ class ProjectFinancialAllocationForm(forms.ModelForm):
             'amount': 'مبلغ تخصیص (ریال)',
             'allocation_type': 'نوع تخصیص',
             'letter_number': 'شماره نامه',
+            'allocation_date': 'تاریخ تخصیص',
             'description': 'توضیحات',
         }
     
@@ -360,7 +370,17 @@ class ProjectFinancialAllocationForm(forms.ModelForm):
         
         # Set initial value for amount field with comma formatting if instance exists
         if self.instance.pk and self.instance.amount:
-            self.fields['amount'].initial = f"{self.instance.amount:,}"
+            formatted_amount = f"{self.instance.amount:,}"
+            self.fields['amount'].initial = formatted_amount
+            self.initial['amount'] = formatted_amount
+
+        # Show existing date as Jalali when editing
+        if self.instance.pk and self.instance.allocation_date:
+            import jdatetime
+            j_date = jdatetime.date.fromgregorian(date=self.instance.allocation_date)
+            jalali_str = j_date.strftime('%Y/%m/%d')
+            self.fields['allocation_date'].initial = jalali_str
+            self.initial['allocation_date'] = jalali_str
     
     def clean_amount(self):
         amount = self.cleaned_data.get('amount')
@@ -374,20 +394,32 @@ class ProjectFinancialAllocationForm(forms.ModelForm):
         return amount
     
     def clean_allocation_date(self):
-        """Handle allocation_date field manually since it's not in Meta fields"""
-        allocation_date = self.data.get('allocation_date')
-        if allocation_date:
-            try:
-                # Parse Persian date (format: YYYY/MM/DD)
-                parts = allocation_date.split('/')
-                if len(parts) == 3:
-                    import jdatetime
-                    j_date = jdatetime.date(int(parts[0]), int(parts[1]), int(parts[2]))
-                    g_date = j_date.togregorian()
-                    return g_date
-            except (ValueError, TypeError):
+        """Convert Jalali date string (possibly with Persian digits) to Gregorian date."""
+        allocation_date = self.cleaned_data.get('allocation_date')
+        if not allocation_date:
+            raise forms.ValidationError('تاریخ تخصیص الزامی است.')
+
+        # Already converted (e.g. re-validation)
+        if hasattr(allocation_date, 'year') and not isinstance(allocation_date, str):
+            return allocation_date
+
+        try:
+            persian_digits = '۰۱۲۳۴۵۶۷۸۹'
+            arabic_digits = '٠١٢٣٤٥٦٧٨٩'
+            english_digits = '0123456789'
+            allocation_date = str(allocation_date).translate(
+                str.maketrans(persian_digits + arabic_digits, english_digits + english_digits)
+            ).strip()
+
+            parts = allocation_date.replace('-', '/').split('/')
+            if len(parts) != 3:
                 raise forms.ValidationError('تاریخ تخصیص نامعتبر است.')
-        return None
+
+            import jdatetime
+            j_date = jdatetime.date(int(parts[0]), int(parts[1]), int(parts[2]))
+            return j_date.togregorian()
+        except (ValueError, TypeError):
+            raise forms.ValidationError('تاریخ تخصیص نامعتبر است.')
 
 
 class ProjectGalleryImageForm(forms.ModelForm):

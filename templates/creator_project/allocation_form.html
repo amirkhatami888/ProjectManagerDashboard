@@ -2,7 +2,7 @@
 {% load static %}
 {% load jalali_tags %}
 
-{% block title %}ویرایش تخصیص مالی - {{ project.name }}{% endblock %}
+{% block title %}{% if allocation %}ویرایش{% else %}افزودن{% endif %} تخصیص مالی - {{ project.name }}{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
@@ -72,7 +72,7 @@ input[type="text"].persian-date::-webkit-calendar-picker-indicator {
     <div class="form-container">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h1>ویرایش تخصیص مالی</h1>
+                <h1>{% if allocation %}ویرایش{% else %}افزودن{% endif %} تخصیص مالی</h1>
                 <p class="text-muted mb-0">پروژه: {{ project.name }}</p>
             </div>
             
@@ -131,7 +131,7 @@ input[type="text"].persian-date::-webkit-calendar-picker-indicator {
                                 <label for="id_allocation_date" class="form-label">تاریخ تخصیص <span class="text-danger">*</span></label>
                                 <div class="date-input-container">
                                     <input type="text" name="allocation_date" id="id_allocation_date" class="form-control persian-date" 
-                                           value="{% if form.allocation_date.value %}{{ form.allocation_date.value }}{% endif %}">
+                                           value="{% if form.allocation_date.value %}{{ form.allocation_date.value }}{% endif %}" required>
                                     <i class="bi bi-calendar3 calendar-icon" data-input="id_allocation_date"></i>
                                 </div>
                                 <div class="form-text text-muted">فرمت تاریخ: سال/ماه/روز</div>
@@ -177,9 +177,18 @@ input[type="text"].persian-date::-webkit-calendar-picker-indicator {
 <script src="{% static 'js/currency-formatter.js' %}"></script>
 
 <script>
+function toEnglishDigits(str) {
+    if (!str) return str;
+    var persian = '۰۱۲۳۴۵۶۷۸۹';
+    var arabic = '٠١٢٣٤٥٦٧٨٩';
+    return String(str).replace(/[۰-۹٠-٩]/g, function(d) {
+        var i = persian.indexOf(d);
+        if (i >= 0) return String(i);
+        return String(arabic.indexOf(d));
+    });
+}
+
 $(document).ready(function() {
-    console.log("Document ready - starting datepicker initialization");
-    
     // Initialize Persian Datepicker for date fields
     $(".persian-date").each(function() {
         var inputId = this.id;
@@ -189,7 +198,6 @@ $(document).ready(function() {
         if (!$input.val()) {
             var today = new persianDate();
             $input.val(today.format('YYYY/MM/DD'));
-            console.log("Set default date to today:", today.format('YYYY/MM/DD'));
         }
         
         // Initialize Persian datepicker and store instance
@@ -197,7 +205,7 @@ $(document).ready(function() {
             format: 'YYYY/MM/DD',
             autoClose: true,
             initialValueType: 'persian',
-            persianDigit: true,
+            persianDigit: false,
             observer: true,
             calendar: {
                 persian: {
@@ -205,17 +213,11 @@ $(document).ready(function() {
                 }
             },
             onSelect: function(unix) {
-                console.log('Date selected for', inputId);
-                // Make sure the input value is updated when a date is selected
                 var pd = new persianDate(unix);
                 var formattedDate = pd.format('YYYY/MM/DD');
-                $('#' + inputId).val(formattedDate);
-            },
-            onShow: function() {
-                console.log('Datepicker shown for', inputId);
+                $('#' + inputId).val(toEnglishDigits(formattedDate));
             },
             onHide: function() {
-                console.log('Datepicker hidden for', inputId);
                 $input.trigger('blur');
             }
         }).data('datepicker');
@@ -240,13 +242,8 @@ $(document).ready(function() {
         var $input = $('#' + inputId);
         
         if ($input.length) {
-            // Force close any open datepickers first
             $('.datepicker-container, .datepicker-plot-area').hide();
-            
-            // Get the datepicker instance
             var datepicker = $input.data('datepicker');
-            
-            // Show the datepicker
             if (datepicker && typeof datepicker.show === 'function') {
                 setTimeout(function() {
                     datepicker.show();
@@ -263,34 +260,25 @@ $(document).ready(function() {
         }
     });
     
-    // Handle form submission - clean the amount field and handle date conversion
+    // Handle form submission - clean amount and normalize date digits
     $('#allocationForm').on('submit', function(e) {
-        console.log("Form submitting...");
-        
-        // Ensure the numeric value of amount field is set correctly
         var amountField = $('#{{ form.amount.id_for_label }}');
-        var amountValue = amountField.val().replace(/,/g, '');
-        amountField.val(amountValue);
+        amountField.val(amountField.val().replace(/,/g, '').replace(/٬/g, ''));
         
-        // Ensure the date is in the correct format before submitting
-        var date = $('#id_allocation_date').val();
+        var $date = $('#id_allocation_date');
+        var date = toEnglishDigits($date.val());
         if (date) {
-            if (!date.match(/^\d{4}\/\d{2}\/\d{2}$/)) {
-                // Try to clean up the date format if it doesn't match YYYY/MM/DD
-                var parts = date.split('/');
-                if (parts.length === 3) {
-                    // Ensure each part has correct formatting (add leading zeros)
-                    parts[0] = parts[0].padStart(4, '0');
-                    parts[1] = parts[1].padStart(2, '0');
-                    parts[2] = parts[2].padStart(2, '0');
-                    $('#id_allocation_date').val(parts.join('/'));
-                }
+            var parts = date.split('/');
+            if (parts.length === 3) {
+                parts[0] = parts[0].padStart(4, '0');
+                parts[1] = parts[1].padStart(2, '0');
+                parts[2] = parts[2].padStart(2, '0');
+                $date.val(parts.join('/'));
+            } else {
+                $date.val(date);
             }
         }
-        
-        console.log("Form submitting with date:", $('#id_allocation_date').val());
-        console.log("Form submitting with amount:", amountField.val());
     });
 });
 </script>
-{% endblock %} 
+{% endblock %}

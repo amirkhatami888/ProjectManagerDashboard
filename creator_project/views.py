@@ -596,19 +596,9 @@ def project_add_allocation(request, pk):
     if request.method == 'POST':
         form = ProjectFinancialAllocationForm(request.POST)
         
-        # Handle Persian date conversion
         if form.is_valid():
             allocation = form.save(commit=False)
             allocation.project = project
-            
-            # Handle Persian date for allocation_date
-            allocation_date = form.cleaned_data.get('allocation_date')
-            if allocation_date:
-                allocation.allocation_date = allocation_date
-            else:
-                # Set default date to today if not provided
-                allocation.allocation_date = timezone.now().date()
-            
             allocation.save()
             
             # Reset approval status if province manager adds allocation
@@ -1306,15 +1296,13 @@ def allocation_edit(request, allocation_id):
         return redirect('creator_project:allocation_list', project_id=project.id)
     
     if request.method == 'POST':
-        # ProjectFinancialAllocationForm not implemented yet
-        form = forms.Form(request.POST, instance=allocation)
+        form = ProjectFinancialAllocationForm(request.POST, instance=allocation)
         if form.is_valid():
             form.save()
             messages.success(request, 'تخصیص مالی با موفقیت بروزرسانی شد.')
             return redirect('creator_project:allocation_list', project_id=project.id)
     else:
-        # ProjectFinancialAllocationForm not implemented yet
-        form = forms.Form(instance=allocation)
+        form = ProjectFinancialAllocationForm(instance=allocation)
     
     context = {
         'form': form,
