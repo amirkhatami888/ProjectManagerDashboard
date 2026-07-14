@@ -1,4 +1,5 @@
 from django import forms
+from decimal import Decimal, InvalidOperation
 from .models import Project, FundingRequest, ProjectGalleryImage
 from creator_program.models import Program
 from .models import ProjectFinancialAllocation
@@ -368,9 +369,14 @@ class ProjectFinancialAllocationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Set initial value for amount field with comma formatting if instance exists
-        if self.instance.pk and self.instance.amount:
-            formatted_amount = f"{self.instance.amount:,}"
+        # Set initial value for amount field with comma formatting if instance exists.
+        # Production MySQL/PyMySQL may return DECIMAL as str, so coerce before formatting.
+        if self.instance.pk and self.instance.amount not in (None, ''):
+            try:
+                amount_value = int(Decimal(str(self.instance.amount).replace(',', '').replace('٬', '')))
+                formatted_amount = f"{amount_value:,}"
+            except (ValueError, TypeError, ArithmeticError, InvalidOperation):
+                formatted_amount = str(self.instance.amount)
             self.fields['amount'].initial = formatted_amount
             self.initial['amount'] = formatted_amount
 
