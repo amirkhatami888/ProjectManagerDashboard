@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}جزئیات گزارش فعالیت{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1 text-gray-800">
+                <i class="fas fa-clipboard-list text-primary me-2"></i>
+                جزئیات گزارش فعالیت
+            </h1>
+            <p class="text-muted mb-0">{{ activity.description }}</p>
+        </div>
+        <a href="{% url 'activity_monitor:activity_logs' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right me-1"></i> بازگشت به گزارش‌ها
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">اطلاعات فعالیت</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">نوع فعالیت</dt>
+                        <dd class="col-sm-8"><span class="badge bg-primary">{{ activity.get_activity_type_display }}</span></dd>
+
+                        <dt class="col-sm-4">تاریخ و زمان</dt>
+                        <dd class="col-sm-8">{{ activity.timestamp|date:"Y-m-d H:i:s" }}</dd>
+
+                        <dt class="col-sm-4">کاربر</dt>
+                        <dd class="col-sm-8">
+                            {% if activity.user %}
+                                {{ activity.user.get_full_name|default:activity.user.username }}
+                                <small class="text-muted">({{ activity.user.username }})</small>
+                            {% else %}
+                                سامانه
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-4">شدت</dt>
+                        <dd class="col-sm-8">{{ activity.get_severity_display }}</dd>
+
+                        <dt class="col-sm-4">نشانی IP</dt>
+                        <dd class="col-sm-8">{{ activity.ip_address|default:"-" }}</dd>
+
+                        <dt class="col-sm-4">شناسه نشست</dt>
+                        <dd class="col-sm-8"><code>{{ activity.session_key|default:"-" }}</code></dd>
+
+                        <dt class="col-sm-4">مرورگر</dt>
+                        <dd class="col-sm-8"><small>{{ activity.user_agent|default:"-" }}</small></dd>
+
+                        <dt class="col-sm-4">شرح</dt>
+                        <dd class="col-sm-8">{{ activity.description }}</dd>
+                    </dl>
+                </div>
+            </div>
+
+            {% if activity.details %}
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">جزئیات فنی</h5>
+                </div>
+                <div class="card-body">
+                    <pre class="mb-0 bg-light p-3 rounded"><code>{{ activity.details|pprint }}</code></pre>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">شیء مرتبط</h5>
+                </div>
+                <div class="card-body">
+                    {% if activity.content_object %}
+                        <p class="mb-1"><strong>نوع:</strong> {{ activity.content_type }}</p>
+                        <p class="mb-0"><strong>شناسه:</strong> {{ activity.object_id }}</p>
+                    {% else %}
+                        <p class="text-muted mb-0">شیء مرتبطی ثبت نشده است.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

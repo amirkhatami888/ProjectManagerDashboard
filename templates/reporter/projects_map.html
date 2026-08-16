@@ -42,6 +42,15 @@
     .leaflet-popup-content {
         direction: rtl;
         text-align: right;
+        min-width: 260px;
+        margin: 14px 16px;
+    }
+    .leaflet-popup-content-wrapper {
+        border-radius: 10px;
+    }
+    .project-info {
+        direction: rtl;
+        width: 100%;
     }
     .project-info h5 {
         margin-top: 0;
@@ -50,6 +59,24 @@
     }
     .project-info p {
         margin-bottom: 5px;
+    }
+    .project-info .details-link {
+        display: block;
+        width: 100%;
+        margin-top: 12px;
+        text-align: center;
+        white-space: nowrap;
+        color: #ffffff !important;
+        background-color: #0d6efd !important;
+        border: 1px solid #0d6efd !important;
+        text-decoration: none !important;
+        opacity: 1 !important;
+    }
+    .project-info .details-link:hover,
+    .project-info .details-link:focus {
+        color: #ffffff !important;
+        background-color: #0b5ed7 !important;
+        border-color: #0a58ca !important;
     }
     .progress-badge {
         display: inline-block;
@@ -342,7 +369,7 @@
                             ${project.progress.toFixed(1)}%
                         </span>
                     </p>
-                    <a href="${project.url}" class="btn btn-sm btn-primary mt-2">مشاهده جزئیات</a>
+                    <a href="${project.url}" class="btn btn-sm btn-primary details-link">مشاهده جزئیات</a>
                 </div>
             `;
             
@@ -379,4 +406,4 @@
         }, 100);
     });
 </script>
-{% endblock %} 
+{% endblock %}

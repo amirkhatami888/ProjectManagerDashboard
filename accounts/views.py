@@ -47,7 +47,7 @@ def profile(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'پروفایل شما با موفقیت به‌روزرسانی شد.')
-            return redirect('profile')
+            return redirect('accounts:profile')
     else:
         form = UserProfileForm(instance=request.user)
     
