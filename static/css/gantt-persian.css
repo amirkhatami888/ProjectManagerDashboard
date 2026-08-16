@@ -29,6 +29,22 @@
     vertical-align: middle;
 }
 
+/* Isolate the subproject-title column from dependency arrows. */
+.gantt .grid-body .grid-row .grid-cell:first-child,
+.gantt .grid-header .grid-row .grid-cell:first-child {
+    position: relative;
+    z-index: 100;
+    overflow: hidden;
+    background-color: #fff !important;
+    isolation: isolate;
+}
+
+/* Keep the dependency layer below the left-side title column. */
+.gantt .arrows {
+    position: relative;
+    z-index: 1;
+}
+
 .gantt .bar-label {
     direction: rtl;
     text-align: right;
@@ -66,6 +82,15 @@
 .gantt .arrow:hover {
     stroke: #495057;
     stroke-width: 3;
+}
+
+/* Keep dependency arrows inside the chart box. */
+#gantt-chart-container,
+#gantt-chart-container .gantt-container,
+#gantt-chart-fullscreen,
+#gantt-chart-fullscreen .gantt-container {
+    overflow: hidden;
+    position: relative;
 }
 
 /* Loading spinner */

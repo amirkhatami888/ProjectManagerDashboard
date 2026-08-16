@@ -1524,6 +1524,12 @@
 
                         if (predecessorChartName && successorChartName) {
                             dependencies.push({
+                                fromId: currentSpInfo.relationshipType === 'قبل از'
+                                    ? currentSpInfo.id
+                                    : relatedSpInfo.id,
+                                toId: currentSpInfo.relationshipType === 'قبل از'
+                                    ? relatedSpInfo.id
+                                    : currentSpInfo.id,
                                 fromName: predecessorChartName,
                                 toName: successorChartName,
                                 relType: currentSpInfo.relationshipType
@@ -1537,16 +1543,43 @@
 
             console.log("Dependencies found:", dependencies);
 
-            var svg = chartContext.el.querySelector('svg');
+            var chartRoot = chartContext.el;
+            var svg = chartRoot.querySelector('svg');
             if (!svg) {
                 console.error("drawGanttArrows: SVG element not found in chart.");
                 return;
             }
 
-            var defs = svg.querySelector('defs');
+            // Draw in a separate overlay positioned over the chart. This
+            // avoids ApexCharts' internal SVG transforms/clipping and makes
+            // the connectors visible like MS Project dependency links.
+            var oldOverlay = chartRoot.querySelector('.dependency-arrow-overlay');
+            if (oldOverlay) {
+                oldOverlay.remove();
+            }
+
+            var rootRect = chartRoot.getBoundingClientRect();
+            var overlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            overlay.setAttribute('class', 'dependency-arrow-overlay');
+            overlay.setAttribute('width', String(chartRoot.clientWidth));
+            overlay.setAttribute('height', String(chartRoot.clientHeight));
+            overlay.setAttribute('viewBox', `0 0 ${chartRoot.clientWidth} ${chartRoot.clientHeight}`);
+            overlay.style.position = 'absolute';
+            overlay.style.inset = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.overflow = 'visible';
+            overlay.style.pointerEvents = 'none';
+            overlay.style.zIndex = '20';
+            if (getComputedStyle(chartRoot).position === 'static') {
+                chartRoot.style.position = 'relative';
+            }
+            chartRoot.appendChild(overlay);
+
+            var defs = overlay.querySelector('defs');
             if (!defs) {
                 defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-                svg.prepend(defs);
+                overlay.appendChild(defs);
             }
 
             // Create multiple arrowhead markers for different colors
@@ -1570,29 +1603,29 @@
                 }
             });
             
-            var arrowGroupClass = 'dependency-arrow-group';
-            var arrowGroup = svg.querySelector('.' + arrowGroupClass);
-            if (arrowGroup) {
-                arrowGroup.innerHTML = ''; // Clear existing arrows
-            } else {
-                arrowGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                arrowGroup.setAttribute('class', arrowGroupClass);
-                // Try to insert before the tooltips group, or after datalabels, or after series.
-                let tooltipsGroup = svg.querySelector('.apexcharts-tooltip-series-group');
-                let dataLabelsGroup = svg.querySelector('.apexcharts-datalabels');
-                let seriesGroup = svg.querySelector('.apexcharts-series');
+            var arrowGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            arrowGroup.setAttribute('class', 'dependency-arrow-group');
+            overlay.appendChild(arrowGroup);
 
-                if (tooltipsGroup && tooltipsGroup.parentNode) {
-                     tooltipsGroup.parentNode.insertBefore(arrowGroup, tooltipsGroup);
-                } else if (dataLabelsGroup && dataLabelsGroup.parentNode) {
-                    dataLabelsGroup.parentNode.insertBefore(arrowGroup, dataLabelsGroup);
-                } else if (seriesGroup && seriesGroup.parentNode) {
-                     seriesGroup.parentNode.insertBefore(arrowGroup, seriesGroup.nextSibling || null); // Insert after series if possible
-                } else {
-                    svg.appendChild(arrowGroup); // Fallback
-                }
-                console.log("Arrow group created/found.");
-            }
+            /*
+             * The subproject names occupy the left side of the chart.  The
+             * dependency overlay is positioned above the chart.  Keep the
+             * routing lane at the timeline boundary instead of clipping the
+             * path, so the complete connector remains visible.
+             */
+            const renderedBarsForClip = Array.from(
+                svg.querySelectorAll('.apexcharts-rangebar-area, .apexcharts-bar-area')
+            ).map(function (bar) {
+                return bar.getBoundingClientRect();
+            }).filter(function (rect) {
+                return rect.width > 0 && rect.height > 0;
+            });
+            const timelineLeft = renderedBarsForClip.length > 0
+                ? Math.max(0, Math.min.apply(null, renderedBarsForClip.map(function (rect) {
+                    return rect.left - rootRect.left;
+                })))
+                : 0;
+            console.log("Arrow overlay created.");
 
             if (dependencies.length === 0) {
                 console.log("No dependencies to draw arrows for.");
@@ -1600,79 +1633,82 @@
             }
 
             dependencies.forEach(dep => {
-                if (!chartContext.w || !chartContext.w.globals || !chartContext.w.globals.labels) {
-                    console.warn('drawGanttArrows: ApexCharts globals not available for dependency:', dep);
-                    return;
-                }
-                let fromIndex = chartContext.w.globals.labels.indexOf(dep.fromName);
-                let toIndex = chartContext.w.globals.labels.indexOf(dep.toName);
+                // Use the stable subproject IDs instead of ApexCharts labels.
+                // Labels can be normalized or reordered for RTL/Persian text.
+                let fromIndex = subprojectsData.findIndex(sp => sp.id === dep.fromId);
+                let toIndex = subprojectsData.findIndex(sp => sp.id === dep.toId);
 
                 console.log("Processing dependency:", dep, "fromIndex:", fromIndex, "toIndex:", toIndex);
 
                 if (fromIndex === -1 || toIndex === -1) {
-                    console.warn('drawGanttArrows: Could not find tasks in chart labels for dependency:', dep, "Available labels:", chartContext.w.globals.labels);
+                    console.warn('drawGanttArrows: Could not find subprojects for dependency:', dep);
                     return;
                 }
                 
-                if (!chartContext.w.globals.barseriesXY || 
-                    !chartContext.w.globals.barseriesXY[0] ||
-                    !chartContext.w.globals.barseriesXY[0].length || // check if array has elements
-                    !chartContext.w.globals.barseriesXY[0][fromIndex] || 
-                    !chartContext.w.globals.barseriesXY[0][toIndex]) {
-                    console.warn("drawGanttArrows: barseriesXY not available or incomplete for dependency:", dep, "barseriesXY[0]:", chartContext.w.globals.barseriesXY ? chartContext.w.globals.barseriesXY[0] : 'undefined');
+                // ApexCharts does not expose barseriesXY consistently between
+                // versions. Read the actual rendered range-bar rectangles
+                // instead, so dependencies continue to work after upgrades,
+                // zooming, and chart resizing.
+                const barElements = Array.from(
+                    svg.querySelectorAll(
+                        '.apexcharts-rangebar-area, .apexcharts-bar-area'
+                    )
+                ).filter(function (bar) {
+                    const rect = bar.getBoundingClientRect();
+                    return rect.width > 0 && rect.height > 0;
+                }).sort(function (a, b) {
+                    return a.getBoundingClientRect().top - b.getBoundingClientRect().top;
+                });
+
+                if (!barElements[fromIndex] || !barElements[toIndex]) {
+                    console.warn(
+                        "drawGanttArrows: rendered bar elements not available for dependency:",
+                        dep,
+                        "bar count:",
+                        barElements.length
+                    );
                     return;
                 }
 
-                const fromBar = chartContext.w.globals.barseriesXY[0][fromIndex]; 
-                const toBar = chartContext.w.globals.barseriesXY[0][toIndex];     
+                const fromRect = barElements[fromIndex].getBoundingClientRect();
+                const toRect = barElements[toIndex].getBoundingClientRect();
+                const fromBar = {
+                    x: fromRect.left - rootRect.left,
+                    y: fromRect.top - rootRect.top,
+                    width: fromRect.width,
+                    height: fromRect.height
+                };
+                const toBar = {
+                    x: toRect.left - rootRect.left,
+                    y: toRect.top - rootRect.top,
+                    width: toRect.width,
+                    height: toRect.height
+                };
                 console.log("fromBar:", fromBar, "toBar:", toBar);
 
-                // Calculate arrow coordinates based on relationship type
-                let fromX_px, fromY_px, toX_px, toY_px;
-                
-                if (dep.relType === 'بعد از') {
-                    // Arrow from end of predecessor to start of successor
-                    fromX_px = fromBar.y + fromBar.w; // End of predecessor bar
-                    fromY_px = fromBar.x + fromBar.h / 2; // Middle of predecessor bar
-                    toX_px = toBar.y; // Start of successor bar
-                    toY_px = toBar.x + toBar.h / 2; // Middle of successor bar
-                    
-                    // Debug consecutive projects arrow drawing
-                    const gap = toX_px - fromX_px;
-                    console.log(`🔗 Arrow for consecutive projects: ${dep.fromName} -> ${dep.toName}`);
-                    console.log(`   From: (${fromX_px}, ${fromY_px}) To: (${toX_px}, ${toY_px})`);
-                    console.log(`   Gap: ${gap}px (should be 0 for consecutive projects)`);
-                } else if (dep.relType === 'قبل از') {
-                    // Arrow from end of predecessor to start of successor
-                    fromX_px = fromBar.y + fromBar.w; // End of predecessor bar
-                    fromY_px = fromBar.x + fromBar.h / 2; // Middle of predecessor bar
-                    toX_px = toBar.y; // Start of successor bar
-                    toY_px = toBar.x + toBar.h / 2; // Middle of successor bar
-                } else if (dep.relType === 'شروع با') {
-                    // Arrow from start of first task to start of second task
-                    fromX_px = fromBar.y; // Start of first bar
-                    fromY_px = fromBar.x + fromBar.h / 2; // Middle of first bar
-                    toX_px = toBar.y; // Start of second bar
-                    toY_px = toBar.x + toBar.h / 2; // Middle of second bar
-                } else if (dep.relType === 'پایان با') {
-                    // Arrow from end of first task to end of second task
-                    fromX_px = fromBar.y + fromBar.w; // End of first bar
-                    fromY_px = fromBar.x + fromBar.h / 2; // Middle of first bar
-                    toX_px = toBar.y + toBar.w; // End of second bar
-                    toY_px = toBar.x + toBar.h / 2; // Middle of second bar
-                } else {
-                    // Default: end to start relationship
-                    fromX_px = fromBar.y + fromBar.w; // End of predecessor bar
-                    fromY_px = fromBar.x + fromBar.h / 2; // Middle of predecessor bar
-                    toX_px = toBar.y; // Start of successor bar
-                    toY_px = toBar.x + toBar.h / 2; // Middle of successor bar
-                } 
+                /*
+                 * ApexCharts still stores range values in increasing time
+                 * order when the page is RTL.  `getBoundingClientRect()` gives
+                 * the actual painted geometry, so semantic start/finish edges
+                 * must be mapped to the rendered left/right edges here rather
+                 * than inferred from the page direction.
+                 */
+                const renderedEdge = (bar, edge) => (
+                    edge === 'start' ? bar.x : bar.x + bar.width
+                );
+                const anchorEdges = {
+                    'بعد از': ['finish', 'start'],   // Finish-to-Start
+                    'قبل از': ['start', 'finish'],   // Start-to-Finish
+                    'شروع با': ['start', 'start'],   // Start-to-Start
+                    'پایان با': ['finish', 'finish'] // Finish-to-Finish
+                };
+                const [sourceEdge, targetEdge] =
+                    anchorEdges[dep.relType] || anchorEdges['بعد از'];
+                const fromX_px = renderedEdge(fromBar, sourceEdge);
+                const fromY_px = fromBar.y + fromBar.height / 2;
+                const toX_px = renderedEdge(toBar, targetEdge);
+                const toY_px = toBar.y + toBar.height / 2;
 
-                if (fromX_px === toX_px && fromY_px === toY_px) {
-                    console.log("Skipping zero-length line for dep:", dep);
-                    return; 
-                }
-                
                 console.log(`Drawing line for ${dep.fromName} -> ${dep.toName} (${dep.relType}) from (${fromX_px}, ${fromY_px}) to (${toX_px}, ${toY_px})`);
 
                 // Choose arrow color based on relationship type
@@ -1694,13 +1730,71 @@
                         arrowColor = '#FF0000'; // Default red
                 }
 
-                var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', String(fromX_px));
-                line.setAttribute('y1', String(fromY_px));
-                line.setAttribute('x2', String(toX_px));
-                line.setAttribute('y2', String(toY_px));
+                // Use the existing compact route for ordinary, non-overlapping
+                // links.  Same-x, near-zero-dx, and overlapping links use a
+                // two-lane dogleg so no segment is hidden by a bar.
+                const barWidth = Math.max(fromBar.width, toBar.width);
+                const minimumClearance = Math.max(16, Math.min(48, barWidth / 2 + 8));
+                const stub = Math.max(12, Math.min(24, barWidth * 0.15));
+                const horizontalDistance = Math.abs(toX_px - fromX_px);
+                const barsOverlapInTime =
+                    fromBar.x < toBar.x + toBar.width &&
+                    toBar.x < fromBar.x + fromBar.width;
+                const needsOutsideDogleg =
+                    horizontalDistance < stub * 2 || barsOverlapInTime;
+                const goesForward = toX_px > fromX_px && !needsOutsideDogleg;
+                let pathData;
+                if (!needsOutsideDogleg) {
+                    const routeX = fromX_px + Math.max(stub, horizontalDistance / 2);
+                    const corner = Math.min(6, Math.abs(toY_px - fromY_px) / 2);
+                    const verticalDirection = toY_px >= fromY_px ? 1 : -1;
+                    const firstBendX = routeX - (goesForward ? corner : 0);
+                    const lastBendX = routeX + (goesForward ? corner : 0);
+                    pathData =
+                        `M ${fromX_px} ${fromY_px} ` +
+                        `L ${firstBendX} ${fromY_px} ` +
+                        `Q ${routeX} ${fromY_px} ${routeX} ${fromY_px + verticalDirection * corner} ` +
+                        `L ${routeX} ${toY_px - verticalDirection * corner} ` +
+                        `Q ${routeX} ${toY_px} ${lastBendX} ${toY_px} ` +
+                        `L ${toX_px} ${toY_px}`;
+                } else {
+                    const sourceOutward = sourceEdge === 'start' ? -1 : 1;
+                    const targetOutward = targetEdge === 'start' ? -1 : 1;
+                    const sourceLane = sourceOutward < 0
+                        ? Math.max(
+                            timelineLeft + 2,
+                            Math.min(fromBar.x, toBar.x) - minimumClearance
+                        )
+                        : Math.max(fromBar.x + fromBar.width, toBar.x + toBar.width) + minimumClearance;
+                    const targetLane = targetOutward < 0
+                        ? Math.max(
+                            timelineLeft + 2,
+                            Math.min(fromBar.x, toBar.x) - minimumClearance * 1.5
+                        )
+                        : Math.max(fromBar.x + fromBar.width, toBar.x + toBar.width) + minimumClearance * 1.5;
+                    const sameRow = Math.abs(fromY_px - toY_px) < 1;
+                    const channelY = sameRow
+                        ? fromY_px - Math.max(12, fromBar.height / 2 + 8)
+                        : (fromY_px + toY_px) / 2;
+                    // The final command is always a non-zero segment ending
+                    // exactly at the target anchor; marker orientation is
+                    // therefore derived from the visible entering direction.
+                    pathData =
+                        `M ${fromX_px} ${fromY_px} ` +
+                        `L ${sourceLane} ${fromY_px} ` +
+                        `L ${sourceLane} ${channelY} ` +
+                        `L ${targetLane} ${channelY} ` +
+                        `L ${targetLane} ${toY_px} ` +
+                        `L ${toX_px} ${toY_px}`;
+                }
+                var line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                line.setAttribute('d', pathData);
                 line.setAttribute('stroke', arrowColor);
                 line.setAttribute('stroke-width', '2');
+                line.setAttribute('fill', 'none');
+                line.setAttribute('stroke-linejoin', 'round');
+                line.setAttribute('stroke-linecap', 'round');
+                line.setAttribute('vector-effect', 'non-scaling-stroke');
                 
                 // Use the correct arrowhead marker for the color
                 const colorId = arrowColor.replace('#', '');
@@ -2555,4 +2649,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

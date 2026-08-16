@@ -8,11 +8,74 @@ from django.contrib import messages
 from django.db import models
 
 from creator_project.models import Project, ALL_Project
+from creator_program.models import Program
 from creator_subproject.models import SubProject, SituationReport
 # Comment out the missing import and use a placeholder
 # from creator_review.models import ProjectReview, SubProjectReview
 from accounts.models import User
 from .models import SecuritySettings
+
+
+def _get_province_stats():
+    """Build province summaries with their top-level programs."""
+    province_stats = list(Project.objects.values('province').annotate(
+        total_projects=Count('id'),
+        avg_physical_progress=Avg('physical_progress'),
+        total_cash_allocation=Sum('allocation_credit_cash_national') +
+                             Sum('allocation_credit_cash_province') +
+                             Sum('allocation_credit_cash_charity') +
+                             Sum('allocation_credit_cash_travel'),
+        total_treasury_allocation=Sum('allocation_credit_treasury_national') +
+                                 Sum('allocation_credit_treasury_province') +
+                                 Sum('allocation_credit_treasury_travel'),
+        total_debt=Sum('debt')
+    ).order_by('province'))
+
+    programs_by_province = {}
+    for program in Program.objects.prefetch_related('projects').order_by('title'):
+        programs_by_province.setdefault(program.province, []).append({
+            'id': program.id,
+            'title': program.title,
+            'program_id': program.program_id,
+            'program_type': program.program_type,
+            'project_count': program.projects.count(),
+        })
+
+    # Include provinces that have programs but no projects yet.
+    known_provinces = {item['province'] for item in province_stats}
+    for province_name in sorted(set(programs_by_province) - known_provinces):
+        province_stats.append({
+            'province': province_name,
+            'total_projects': 0,
+            'avg_physical_progress': 0,
+            'total_cash_allocation': 0,
+            'total_treasury_allocation': 0,
+            'total_debt': 0,
+        })
+    province_stats.sort(key=lambda item: item['province'])
+
+    for province in province_stats:
+        province['total_cash_allocation'] = province['total_cash_allocation'] or 0
+        province['total_treasury_allocation'] = province['total_treasury_allocation'] or 0
+        province['total_debt'] = province['total_debt'] or 0
+        province['total_allocation'] = (
+            province['total_cash_allocation'] + province['total_treasury_allocation']
+        )
+        province['programs'] = programs_by_province.get(province['province'], [])
+        province['total_programs'] = len(province['programs'])
+
+        if province['total_allocation'] > 0:
+            province_projects = Project.objects.filter(province=province['province'])
+            total_payments = sum(
+                project.get_total_latest_payments() for project in province_projects
+            )
+            province['avg_financial_progress'] = min(
+                100, (total_payments / province['total_allocation']) * 100
+            ) if total_payments > 0 else 0
+        else:
+            province['avg_financial_progress'] = 0
+
+    return province_stats
 
 
 @login_required
@@ -113,40 +176,7 @@ def ceo_dashboard(request):
     }
     
     # Provincial statistics
-    province_stats = Project.objects.values('province').annotate(
-        total_projects=Count('id'),
-        avg_physical_progress=Avg('physical_progress'),
-        total_cash_allocation=Sum('allocation_credit_cash_national') + 
-                             Sum('allocation_credit_cash_province') + 
-                             Sum('allocation_credit_cash_charity') + 
-                             Sum('allocation_credit_cash_travel'),
-        total_treasury_allocation=Sum('allocation_credit_treasury_national') + 
-                                 Sum('allocation_credit_treasury_province') + 
-                                 Sum('allocation_credit_treasury_travel'),
-        total_debt=Sum('debt')
-    ).order_by('province')
-    
-    # Calculate total allocation and financial progress for each province
-    for province in province_stats:
-        province['total_allocation'] = province['total_cash_allocation'] + province['total_treasury_allocation']
-        
-        # Calculate financial progress (as percentage of allocation used vs. total allocation)
-        # Default to 0 if no allocation to avoid division by zero
-        if province['total_allocation'] > 0:
-            # Get projects in this province
-            province_projects = Project.objects.filter(province=province['province'])
-            total_payments = 0
-            
-            for project in province_projects:
-                # Sum up the latest payments from all subprojects
-                total_payments += project.get_total_latest_payments()
-                
-            if total_payments > 0 and province['total_allocation'] > 0:
-                province['avg_financial_progress'] = min(100, (total_payments / province['total_allocation']) * 100)
-            else:
-                province['avg_financial_progress'] = 0
-        else:
-            province['avg_financial_progress'] = 0
+    province_stats = _get_province_stats()
     
     context = {
         'user': request.user,
@@ -183,40 +213,7 @@ def chief_executive_dashboard(request):
     }
     
     # Provincial statistics
-    province_stats = Project.objects.values('province').annotate(
-        total_projects=Count('id'),
-        avg_physical_progress=Avg('physical_progress'),
-        total_cash_allocation=Sum('allocation_credit_cash_national') + 
-                             Sum('allocation_credit_cash_province') + 
-                             Sum('allocation_credit_cash_charity') + 
-                             Sum('allocation_credit_cash_travel'),
-        total_treasury_allocation=Sum('allocation_credit_treasury_national') + 
-                                 Sum('allocation_credit_treasury_province') + 
-                                 Sum('allocation_credit_treasury_travel'),
-        total_debt=Sum('debt')
-    ).order_by('province')
-    
-    # Calculate total allocation and financial progress for each province
-    for province in province_stats:
-        province['total_allocation'] = province['total_cash_allocation'] + province['total_treasury_allocation']
-        
-        # Calculate financial progress (as percentage of allocation used vs. total allocation)
-        # Default to 0 if no allocation to avoid division by zero
-        if province['total_allocation'] > 0:
-            # Get projects in this province
-            province_projects = Project.objects.filter(province=province['province'])
-            total_payments = 0
-            
-            for project in province_projects:
-                # Sum up the latest payments from all subprojects
-                total_payments += project.get_total_latest_payments()
-                
-            if total_payments > 0 and province['total_allocation'] > 0:
-                province['avg_financial_progress'] = min(100, (total_payments / province['total_allocation']) * 100)
-            else:
-                province['avg_financial_progress'] = 0
-        else:
-            province['avg_financial_progress'] = 0
+    province_stats = _get_province_stats()
     
     context = {
         'user': request.user,

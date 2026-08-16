@@ -73,3 +73,5 @@ temp/
 # Backup files
 *.bak
 *.backup
+
+*.sql

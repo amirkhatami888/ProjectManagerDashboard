@@ -13,66 +13,37 @@
         </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="card-title mb-0">اقدامات سریع</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <a href="{% url 'creator_project:project_list' %}" class="btn btn-lg btn-outline-primary w-100">
-                                <i class="bi bi-list-check mb-2 d-block fs-3"></i>
-                                مشاهده همه پروژه‌ها
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <a href="{% url 'activity_monitor:dashboard' %}" class="btn btn-lg btn-outline-success w-100">
-                                <i class="fas fa-chart-line mb-2 d-block fs-3"></i>
-                                نظارت بر فعالیت‌ها
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <a href="{% url 'reporter:reporter_dashboard' %}" class="btn btn-lg btn-outline-info w-100">
-                                <i class="bi bi-file-earmark-bar-graph mb-2 d-block fs-3"></i>
-                                گزارش گیر و جستجو
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <a href="{% url 'admin:index' %}" class="btn btn-lg btn-outline-warning w-100">
-                                <i class="bi bi-gear mb-2 d-block fs-3"></i>
-                                پنل مدیریت
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Provincial Statistics Section -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">اطلاعات آماری استانی</h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">اطلاعات آماری استانی</h5>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-light btn-sm" id="showAllProvinceCards">
+                                <i class="bi bi-arrows-expand me-1"></i> نمایش همه
+                            </button>
+                            <button type="button" class="btn btn-outline-light btn-sm" id="closeAllProvinceCards">
+                                <i class="bi bi-arrows-collapse me-1"></i> بستن همه
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         {% for province in province_stats %}
-                        <div class="col-md-6 col-lg-4 mb-4">
-                            <div class="card h-100 {% if province.total_projects == 0 %}bg-light text-muted{% endif %}">
-                                <div class="card-header {% if province.total_projects > 0 %}bg-info text-white{% else %}bg-secondary text-white{% endif %}" 
-                                     data-bs-toggle="collapse" 
-                                     data-bs-target="#collapse{{ forloop.counter }}" 
-                                     aria-expanded="false" 
+                        <div class="col-md-6 col-lg-4 mb-4 province-card-column">
+                            <div class="card h-100 {% if province.total_projects == 0 %}bg-light text-muted{% endif %} province-card">
+                                <div class="card-header {% if province.total_projects > 0 %}bg-info text-white{% else %}bg-secondary text-white{% endif %}"
+                                     data-bs-toggle="collapse"
+                                     data-bs-target="#collapse{{ forloop.counter }}"
+                                     aria-expanded="false"
                                      aria-controls="collapse{{ forloop.counter }}"
                                      style="cursor: pointer;">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <h5 class="card-title mb-0">{{ province.province }}</h5>
-                                        <span class="badge bg-light text-dark">{{ province.total_projects }} پروژه</span>
+                                        <span class="badge bg-light text-dark">{{ province.total_programs }} طرح</span>
                                         <i class="bi bi-chevron-down"></i>
                                     </div>
                                 </div>
@@ -82,35 +53,38 @@
                                             <span>تعداد پروژه‌ها:</span>
                                             <strong>{{ province.total_projects }}</strong>
                                         </div>
-                                        
-                                        <div class="mb-3">
-                                            <div class="d-flex justify-content-between mb-1">
-                                                <span>میانگین پیشرفت فیزیکی:</span>
-                                                <strong>{{ province.avg_physical_progress|floatformat:2 }}%</strong>
-                                            </div>
-                                            <div class="progress">
-                                                <div class="progress-bar" role="progressbar" 
-                                                    style="width: {{ province.avg_physical_progress }}%;" 
-                                                    aria-valuenow="{{ province.avg_physical_progress }}" 
-                                                    aria-valuemin="0" aria-valuemax="100">
+
+                                        <div class="row g-3 mb-3 text-center">
+                                            <div class="col-6">
+                                                <div class="province-donut" role="img"
+                                                     aria-label="میانگین پیشرفت فیزیکی {{ province.avg_physical_progress|floatformat:2 }} درصد">
+                                                    <svg viewBox="0 0 42 42" class="province-donut-svg">
+                                                        <circle class="province-donut-track" cx="21" cy="21" r="15.9155"></circle>
+                                                        <circle class="province-donut-value province-donut-value-physical"
+                                                                cx="21" cy="21" r="15.9155"
+                                                                pathLength="100"
+                                                                style="stroke-dasharray: {{ province.avg_physical_progress|default:0 }}, 100;"></circle>
+                                                    </svg>
+                                                    <span class="province-donut-label">{{ province.avg_physical_progress|floatformat:0 }}%</span>
                                                 </div>
+                                                <small class="d-block mt-2">پیشرفت فیزیکی</small>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="province-donut" role="img"
+                                                     aria-label="میانگین پیشرفت مالی {{ province.avg_financial_progress|floatformat:2 }} درصد">
+                                                    <svg viewBox="0 0 42 42" class="province-donut-svg">
+                                                        <circle class="province-donut-track" cx="21" cy="21" r="15.9155"></circle>
+                                                        <circle class="province-donut-value province-donut-value-financial"
+                                                                cx="21" cy="21" r="15.9155"
+                                                                pathLength="100"
+                                                                style="stroke-dasharray: {{ province.avg_financial_progress|default:0 }}, 100;"></circle>
+                                                    </svg>
+                                                    <span class="province-donut-label">{{ province.avg_financial_progress|floatformat:0 }}%</span>
+                                                </div>
+                                                <small class="d-block mt-2">پیشرفت مالی</small>
                                             </div>
                                         </div>
-                                        
-                                        <div class="mb-3">
-                                            <div class="d-flex justify-content-between mb-1">
-                                                <span>میانگین پیشرفت مالی:</span>
-                                                <strong>{{ province.avg_financial_progress|floatformat:2 }}%</strong>
-                                            </div>
-                                            <div class="progress">
-                                                <div class="progress-bar bg-success" role="progressbar" 
-                                                    style="width: {{ province.avg_financial_progress }}%;" 
-                                                    aria-valuenow="{{ province.avg_financial_progress }}" 
-                                                    aria-valuemin="0" aria-valuemax="100">
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
+
                                         <div class="table-responsive">
                                             <table class="table table-sm">
                                                 <tbody>
@@ -133,6 +107,55 @@
                                                 </tbody>
                                             </table>
                                         </div>
+                                        <div class="border-top pt-3 mt-3">
+                                            <button type="button" class="btn btn-outline-primary w-100"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#programsModal{{ forloop.counter }}">
+                                                <i class="bi bi-diagram-3 me-1"></i>
+                                                مشاهده طرح‌های این استان
+                                                <span class="badge bg-primary ms-1">{{ province.total_programs }}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal fade" id="programsModal{{ forloop.counter }}" tabindex="-1"
+                             aria-labelledby="programsModalLabel{{ forloop.counter }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered modal-lg">
+                                <div class="modal-content" dir="rtl">
+                                    <div class="modal-header bg-primary text-white">
+                                        <h5 class="modal-title" id="programsModalLabel{{ forloop.counter }}">
+                                            طرح‌های استان {{ province.province }}
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                                aria-label="بستن"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        {% if province.programs %}
+                                            <div class="list-group">
+                                                {% for program in province.programs %}
+                                                    <a href="{% url 'creator_program:program_detail' program.id %}"
+                                                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                                        <span>
+                                                            <strong>{{ program.title }}</strong>
+                                                            <small class="d-block text-muted">
+                                                                کد طرح: {{ program.program_id }} | {{ program.program_type }}
+                                                            </small>
+                                                        </span>
+                                                        <span class="badge bg-info text-dark">
+                                                            {{ program.project_count }} پروژه
+                                                            <i class="bi bi-arrow-left ms-1"></i>
+                                                        </span>
+                                                    </a>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <div class="text-center text-muted py-4">
+                                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                                طرحی برای این استان ثبت نشده است.
+                                            </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -144,4 +167,75 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .province-card-column { align-self: flex-start; }
+    .province-card .collapse.show { display: block; }
+    .province-donut { width: 92px; height: 92px; position: relative; margin: 0 auto; }
+    .province-donut-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .province-donut-svg circle { fill: none; stroke-width: 4; }
+    .province-donut-track { stroke: #e9ecef; }
+    .province-donut-value { stroke-linecap: round; }
+    .province-donut-value-physical { stroke: #0d6efd; }
+    .province-donut-value-financial { stroke: #198754; }
+    .province-donut-label {
+        position: absolute; inset: 0; display: flex; align-items: center;
+        justify-content: center; font-weight: 700; font-size: .9rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const provinceCards = document.querySelectorAll('.province-card');
+    const showAllButton = document.getElementById('showAllProvinceCards');
+    const closeAllButton = document.getElementById('closeAllProvinceCards');
+
+    provinceCards.forEach(function (card) {
+        const collapse = card.querySelector('.collapse');
+        if (!collapse) return;
+
+        collapse.addEventListener('show.bs.collapse', function () {
+            const column = card.closest('.province-card-column');
+            if (!column) return;
+            const rowTop = column.offsetTop;
+            document.querySelectorAll('.province-card-column').forEach(function (siblingColumn) {
+                if (siblingColumn.offsetTop === rowTop) {
+                    const otherCollapse = siblingColumn.querySelector('.province-card .collapse');
+                    if (otherCollapse && otherCollapse !== collapse && !otherCollapse.classList.contains('show')) {
+                        bootstrap.Collapse.getOrCreateInstance(otherCollapse, { toggle: false }).show();
+                    }
+                }
+            });
+        });
+    });
+
+    if (showAllButton) {
+        showAllButton.addEventListener('click', function () {
+            provinceCards.forEach(function (card) {
+                const collapse = card.querySelector('.collapse');
+                if (collapse && !collapse.classList.contains('show')) {
+                    bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).show();
+                }
+            });
+        });
+    }
+
+    if (closeAllButton) {
+        closeAllButton.addEventListener('click', function () {
+            provinceCards.forEach(function (card) {
+                const collapse = card.querySelector('.collapse');
+                if (collapse && collapse.classList.contains('show')) {
+                    bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).hide();
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %}
