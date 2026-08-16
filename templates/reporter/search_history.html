@@ -12,30 +12,50 @@
 <!-- Add toggle fields JavaScript -->
 <script src="{% static 'js/toggle-fields.js' %}?v=1.1"></script>
 <style>
+    :root {
+        --project-report-navy: #12263a;
+        --project-report-blue: #2563eb;
+        --project-report-teal: #0f766e;
+        --project-report-border: #e2e8f0;
+        --project-report-bg: #f1f5f9;
+    }
+
+    body {
+        background: var(--project-report-bg);
+    }
+
     .search-hero {
-        background: #2c3e50;
+        background:
+            radial-gradient(circle at 12% 20%, rgba(59, 130, 246, .28), transparent 30%),
+            linear-gradient(120deg, #0f172a 0%, #1e3a5f 55%, #0f766e 100%);
         color: white;
-        padding: 3rem 0;
-        margin-bottom: 2rem;
+        padding: 3.5rem 0;
+        margin-bottom: 2.25rem;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, .16);
     }
     
     .filter-card {
         border: none;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-        border-radius: 8px;
-        margin-bottom: 2rem;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .07);
+        border-radius: 14px;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
     }
     
     .filter-card .card-header {
-        border-radius: 8px 8px 0 0 !important;
+        border-radius: 0 !important;
         border: none;
         padding: 1.5rem;
-        background: #34495e;
+        background: var(--project-report-navy);
         color: white;
     }
     
     .filter-section {
         margin-bottom: 2rem;
+        border: 1px solid var(--project-report-border);
+        border-radius: 12px;
+        padding: 1rem;
+        background: #fbfdff;
     }
     
     .search-btn {
@@ -71,21 +91,82 @@
     }
     
     .results-card {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
         border: none;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .07);
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    .results-card,
+    .results-card .card-body,
+    .results-card .table-responsive {
+        box-sizing: border-box;
     }
     
     .results-card .card-header {
-        border-radius: 8px 8px 0 0 !important;
+        border-radius: 0 !important;
         border: none;
         padding: 1.5rem;
-        background: #34495e;
+        background: var(--project-report-navy);
         color: white;
     }
     
     .results-table {
         margin-bottom: 0;
+        width: 100%;
+        min-width: 0;
+        table-layout: fixed;
+        font-size: .78rem;
+    }
+
+    .results-card .card-body {
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .results-card .table-responsive {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow-x: hidden;
+        overflow-y: hidden;
+        padding-bottom: 0;
+    }
+
+    .results-table th,
+    .results-table td {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        padding: .5rem .35rem !important;
+        line-height: 1.35;
+    }
+
+    .results-card .table-responsive::-webkit-scrollbar {
+        height: 10px;
+    }
+
+    .results-card .table-responsive::-webkit-scrollbar-track {
+        background: #e9eef5;
+        border-radius: 999px;
+    }
+
+    .results-card .table-responsive::-webkit-scrollbar-thumb {
+        background: #94a3b8;
+        border-radius: 999px;
+    }
+
+    .results-table th:nth-child(2),
+    .results-table td:nth-child(2),
+    .results-table th:nth-child(6),
+    .results-table td:nth-child(6),
+    .results-table th:nth-child(7),
+    .results-table td:nth-child(7) {
+        width: 13%;
     }
     
     .results-table thead th {
@@ -102,7 +183,78 @@
     }
     
     .results-table tbody tr:hover {
-        background-color: #f8f9fa;
+        background-color: #f8fafc;
+    }
+
+    .results-table tbody tr {
+        transition: background-color .15s ease;
+    }
+
+    .results-table .badge {
+        border-radius: 999px;
+        padding: .3rem .4rem;
+        font-weight: 600;
+        font-size: .7rem;
+    }
+
+    .results-table .btn {
+        padding: .25rem .35rem;
+        font-size: .7rem;
+    }
+
+    @media (max-width: 767.98px) {
+        .results-table {
+            font-size: .68rem;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: .35rem .2rem !important;
+        }
+
+        .results-table th:nth-child(4),
+        .results-table td:nth-child(4),
+        .results-table th:nth-child(7),
+        .results-table td:nth-child(7),
+        .results-table th:nth-child(8),
+        .results-table td:nth-child(8),
+        .results-table th:nth-child(9),
+        .results-table td:nth-child(9) {
+            display: none;
+        }
+    }
+
+    .form-control, .form-select {
+        border-color: var(--project-report-border);
+        border-radius: 9px;
+        min-height: 42px;
+    }
+
+    .section-title {
+        color: var(--project-report-navy);
+    }
+
+    .sidebar-card, .operations-card {
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, .07);
+        background: #fff;
+    }
+
+    .sidebar-card .card-header, .operations-card .card-header {
+        border-radius: 0 !important;
+        background: var(--project-report-navy);
+        padding: 1.1rem 1.25rem;
+    }
+
+    @media (max-width: 767.98px) {
+        .search-hero {
+            padding: 2.25rem 0;
+        }
+
+        .search-hero .text-end {
+            display: none;
+        }
     }
     
     .form-control:focus {
@@ -1794,7 +1946,7 @@
                             <td><strong>{{ project.project_id|default:"--" }}</strong></td>
                         <td>{{ project.name }}</td>
                         <td>{{ project.province }}</td>
-                            <td><span class="badge bg-primary">{{ project.project_type }}</span></td>
+                            <td>{{ project.project_type|default:"--" }}</td>
                         <td>{{ project.program__program_id|default:"--" }}</td>
                         <td>{{ project.program__title|default:"--" }}</td>
                         <td>{{ project.program__program_type|default:"--" }}</td>

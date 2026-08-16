@@ -17,6 +17,7 @@ import xlsxwriter
 from io import BytesIO
 import json
 import logging
+from urllib.parse import parse_qs
 
 from creator_project.models import Project, ProjectUpdateHistory
 from creator_subproject.models import SubProject, SubProjectUpdateHistory
@@ -1246,50 +1247,58 @@ def search_history_view(request):
                         pass
             
             # Get the limited fields we need for display after all filtering is done
-            projects = project_queryset.values(
+            projects = list(project_queryset.values(
                 'id', 'name', 'physical_progress', 'province', 'project_type',
                 'program__title', 'program__program_id', 'program__program_type',
                 'program__license_state', 'program__license_code', 'program__province'
-            )
+            ))
             
             # Add calculated financial progress
             for project in projects:
                 project_obj = Project.objects.get(id=project['id'])
-                project['financial_progress'] = project_obj.calculate_financial_progress
+                project['financial_progress'] = project_obj.calculate_financial_progress()
             
             # Record the search in the user's history
             if projects:
-                SearchHistory.objects.create(
-                    user=request.user,
-                    query_text=query,
-                    filters={
-                        'type_filter': type_filter,
-                        'from_date': from_date,
-                        'to_date': to_date,
-                        'project_types': project_types,
-                        'project_statuses': project_statuses,
-                        'project_provinces': project_provinces,
-                        'program_types': program_types,
-                        'program_provinces': program_provinces,
-                        'license_states': license_states,
-                        'license_codes': license_codes,
-                        'debt_enabled': debt_enabled,
-                        'min_debt': min_debt,
-                        'max_debt': max_debt,
-                        'cash_allocation_enabled': cash_allocation_enabled,
-                        'min_cash_allocation': min_cash_allocation,
-                        'max_cash_allocation': max_cash_allocation,
-                        'treasury_allocation_enabled': treasury_allocation_enabled,
-                        'min_treasury_allocation': min_treasury_allocation,
-                        'max_treasury_allocation': max_treasury_allocation,
-                        'total_allocation_enabled': total_allocation_enabled,
-                        'min_total_allocation': min_total_allocation,
-                        'max_total_allocation': max_total_allocation,
-                        'required_credit_enabled': required_credit_enabled,
-                        'min_required_credit': min_required_credit,
-                        'max_required_credit': max_required_credit
-                    }
-                )
+                try:
+                    SearchHistory.objects.create(
+                        user=request.user,
+                        query_text=query,
+                        search_type=type_filter,
+                        results_count=len(projects),
+                        from_date=parse_jalali_date(from_date) if from_date else None,
+                        to_date=parse_jalali_date(to_date) if to_date else None,
+                        filters={
+                            'type_filter': type_filter,
+                            'from_date': from_date,
+                            'to_date': to_date,
+                            'project_types': project_types,
+                            'project_statuses': project_statuses,
+                            'project_provinces': project_provinces,
+                            'program_types': program_types,
+                            'program_provinces': program_provinces,
+                            'license_states': license_states,
+                            'license_codes': license_codes,
+                            'debt_enabled': debt_enabled,
+                            'min_debt': min_debt,
+                            'max_debt': max_debt,
+                            'cash_allocation_enabled': cash_allocation_enabled,
+                            'min_cash_allocation': min_cash_allocation,
+                            'max_cash_allocation': max_cash_allocation,
+                            'treasury_allocation_enabled': treasury_allocation_enabled,
+                            'min_treasury_allocation': min_treasury_allocation,
+                            'max_treasury_allocation': max_treasury_allocation,
+                            'total_allocation_enabled': total_allocation_enabled,
+                            'min_total_allocation': min_total_allocation,
+                            'max_total_allocation': max_total_allocation,
+                            'required_credit_enabled': required_credit_enabled,
+                            'min_required_credit': min_required_credit,
+                            'max_required_credit': max_required_credit
+                        }
+                    )
+                except Exception:
+                    # A broken/legacy history table must not hide valid search results.
+                    logger.exception("Could not save project search history")
                 
             # Store counts in session for report generation
             request.session['total_project_results'] = len(projects)
@@ -1336,6 +1345,8 @@ def program_search_view(request):
     
     # Initialize program search results
     programs = []
+    from_date_obj = None
+    to_date_obj = None
     
     # Add province choices for the form
     province_choices = [
@@ -1460,22 +1471,29 @@ def program_search_view(request):
             
             # Save search history
             if programs:
-                SearchHistory.objects.create(
-                    user=request.user,
-                    query_text=query,
-                    from_date=from_date_obj if from_date else None,
-                    to_date=to_date_obj if to_date else None,
-                    field_filter='program',
-                    search_type='program',
-                    results_count=len(programs),
-                    filters={
-                        'program_types': program_types,
-                        'program_provinces': program_provinces,
-                        'license_states': license_states,
-                        'license_codes': license_codes,
-                        'opening_date': opening_date if opening_date_filter_enabled == 'on' else None,
-                    }
-                )
+                try:
+                    SearchHistory.objects.create(
+                        user=request.user,
+                        query_text=query,
+                        from_date=from_date_obj,
+                        to_date=to_date_obj,
+                        field_filter='program',
+                        # "program" is not a SearchHistory choice; keep the
+                        # record compatible with the model's supported types.
+                        search_type='all',
+                        results_count=len(programs),
+                        filters={
+                            'type_filter': 'program',
+                            'program_types': program_types,
+                            'program_provinces': program_provinces,
+                            'license_states': license_states,
+                            'license_codes': license_codes,
+                            'opening_date': opening_date if opening_date_filter_enabled == 'on' else None,
+                        }
+                    )
+                except Exception:
+                    # A broken/legacy history table must not hide valid results.
+                    logger.exception("Could not save program search history")
                 
         except Exception as e:
             # Log the error but don't crash
@@ -2324,17 +2342,28 @@ def export_program_search_results_excel(request):
     if request.method != 'POST':
         return HttpResponse('Method not allowed', status=405)
     
-    # Get search parameters from POST data
-    query = request.POST.get('query', '')
+    # The modal submits the current GET query as one encoded parameter.
+    # Expand it before applying filters so exports match the visible results.
+    search_params = request.POST.get('search_params', '')
+    encoded_params = parse_qs(search_params, keep_blank_values=True)
+
+    def search_value(name, default=''):
+        values = encoded_params.get(name)
+        return values[0] if values else request.POST.get(name, default)
+
+    def search_values(name):
+        return encoded_params.get(name) or request.POST.getlist(name)
+
+    query = search_value('query')
     
     # Program-specific filters
-    program_title = request.POST.get('program_title', '')
-    program_id = request.POST.get('program_id', '')
-    program_types = request.POST.getlist('program_types')
-    program_provinces = request.POST.getlist('program_provinces')
-    license_states = request.POST.getlist('license_states')
-    license_codes = request.POST.get('license_codes', '')
-    opening_date = request.POST.get('opening_date', '')
+    program_title = search_value('program_title')
+    program_id = search_value('program_id')
+    program_types = search_values('program_types')
+    program_provinces = search_values('program_provinces')
+    license_states = search_values('license_states')
+    license_codes = search_value('license_codes')
+    opening_date = search_value('opening_date')
     
     # Get selected fields for Excel export
     excel_fields = request.POST.getlist('excel_fields')
@@ -2531,4 +2560,3 @@ def export_program_search_results_excel(request):
         
     except Exception as e:
         return HttpResponse(f'Error generating Excel file: {str(e)}', status=500)
-

@@ -33,12 +33,9 @@ logger = logging.getLogger(__name__)
 
 
 def user_can_write_project(user, project=None):
-    if user.is_admin:
+    # These roles have unrestricted access to every project.
+    if user.is_admin or user.is_ceo or user.is_chief_executive:
         return True
-    if user.is_chief_executive:
-        return True
-    if user.is_ceo:
-        return False
     if project is None:
         return user.is_province_manager
     return (
@@ -198,7 +195,8 @@ def project_create(request):
     try:
         program = Program.objects.get(id=program_id)
         # Check if the user has permission to create projects under this program
-        if not (request.user.is_admin or 
+        if not (request.user.is_admin or request.user.is_ceo or
+                request.user.is_chief_executive or
                 program.created_by == request.user or
                 (request.user.is_province_manager and program.province in request.user.get_assigned_provinces())):
             messages.error(request, "شما اجازه ایجاد پروژه برای این طرح را ندارید.")
@@ -437,8 +435,10 @@ def project_delete(request, pk):
 def project_submit(request, pk):
     project = get_object_or_404(Project, pk=pk)
     
-    # Only the project creator can submit projects
-    if project.created_by != request.user:
+    # Full-access roles can submit any project; other users can only submit
+    # projects they created.
+    if not (user_can_write_project(request.user, project) or
+            project.created_by == request.user):
         return HttpResponseForbidden("You don't have permission to submit this project.")
     
     # Update project status
@@ -557,7 +557,8 @@ def project_financials(request, pk):
     project = get_object_or_404(Project, pk=pk)
     
     # Check permissions
-    if not (request.user.is_admin or request.user.is_expert or 
+    if not (request.user.is_admin or request.user.is_ceo or
+            request.user.is_chief_executive or request.user.is_expert or
             (request.user.is_province_manager and (
                 project.created_by == request.user or 
                 project.province in request.user.get_assigned_provinces()
@@ -573,8 +574,9 @@ def project_add_allocation(request, pk):
     project = get_object_or_404(Project, pk=pk)
     
     # Check if user has permission to add allocation to this project
-    if request.user.is_admin:
-        # Admins can add allocation to any project
+    if (request.user.is_admin or request.user.is_ceo or
+            request.user.is_chief_executive):
+        # Full-access roles can add allocations to any project.
         pass
     elif request.user.is_expert:
         # Experts can add allocation to any project
@@ -1364,7 +1366,8 @@ def subproject_delete(request, subproject_id):
     project = subproject.project
     
     # Check permissions
-    if not (request.user.is_admin or 
+    if not (request.user.is_admin or request.user.is_ceo or
+            request.user.is_chief_executive or
             project.created_by == request.user or
             (request.user.is_province_manager and project.province in request.user.get_assigned_provinces())):
         messages.error(request, 'شما اجازه حذف این زیرپروژه را ندارید.')
@@ -1580,4 +1583,4 @@ def delete_gallery_image(request, image_id):
         'gallery_image': gallery_image,
         'project': project,
     }
-    return render(request, 'creator_project/delete_gallery_image_confirm.html', context) 
+    return render(request, 'creator_project/delete_gallery_image_confirm.html', context)
