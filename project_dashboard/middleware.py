@@ -17,6 +17,7 @@ class LoginRequiredMiddleware:
             re.compile(r'^/admin/.*$'),
             re.compile(r'^/static/.*$'),
             re.compile(r'^/media/.*$'),
+            re.compile(r'^/site-logo/?$'),
             # Add other URLs that should be accessible without login
         ]
     
@@ -36,4 +37,4 @@ class LoginRequiredMiddleware:
                 login_url += f'?next={path}'
             return redirect(login_url)
         
-        return self.get_response(request) 
+        return self.get_response(request)

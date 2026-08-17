@@ -59,16 +59,17 @@ os.chdir(BASE_DIR)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_dashboard.production_settings')
 os.environ.setdefault('DEBUG', 'False')
 
-# cPanel exposes this application below /PMD. Use an explicit deployment
-# override if supplied; otherwise force this exact mount prefix. A stale
-# STATIC_URL=/static/ value would request the server root.
-os.environ['STATIC_URL'] = os.environ.get(
-    'DEPLOYMENT_STATIC_URL',
-    '/PMD/static/',
+# Set these before Django is initialized.  Do not overwrite values supplied
+# by an outer cPanel/Passenger wrapper: the filesystem directory (for example
+# /home/.../PMD) is not necessarily the public URL prefix.  For an application
+# mounted at https://ocmp.ir the correct defaults are /static/ and /media/.
+os.environ.setdefault(
+    'STATIC_URL',
+    os.environ.get('DEPLOYMENT_STATIC_URL', '/static/'),
 )
-os.environ['MEDIA_URL'] = os.environ.get(
-    'DEPLOYMENT_MEDIA_URL',
-    '/PMD/media/',
+os.environ.setdefault(
+    'MEDIA_URL',
+    os.environ.get('DEPLOYMENT_MEDIA_URL', '/media/'),
 )
 
 # Load Django only when PyMySQL is patched (otherwise login 500s with MariaDB)
