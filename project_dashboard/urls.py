@@ -21,6 +21,11 @@ from django.conf.urls.static import static
 from django.views.static import serve as static_serve
 from django.views.generic import RedirectView
 from . import views
+import re
+
+def _url_prefix_path(url):
+    """Return a URL path without leading/trailing slashes for regex routes."""
+    return url.split('://', 1)[-1].split('/', 1)[-1].strip('/')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -45,9 +50,15 @@ if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 else:
     # Serve static files in production (logo, CSS, JS) when DEBUG is False
+    static_path = _url_prefix_path(settings.STATIC_URL)
+    media_path = _url_prefix_path(settings.MEDIA_URL)
+    # Passenger may either preserve the mount prefix (/PMD) or strip it before
+    # passing PATH_INFO to Django. Support both request forms.
+    static_route = rf'^(?:{re.escape(static_path)}/|static/)' if static_path != 'static' else r'^static/'
+    media_route = rf'^(?:{re.escape(media_path)}/|media/)' if media_path != 'media' else r'^media/'
     urlpatterns += [
-        re_path(r'^static/(?P<path>.*)$', static_serve, {'document_root': settings.STATIC_ROOT}),
+        re_path(static_route + r'(?P<path>.*)$', static_serve, {'document_root': settings.STATIC_ROOT}),
     ]
     urlpatterns += [
-        re_path(r'^media/(?P<path>.*)$', static_serve, {'document_root': settings.MEDIA_ROOT}),
+        re_path(media_route + r'(?P<path>.*)$', static_serve, {'document_root': settings.MEDIA_ROOT}),
     ]
