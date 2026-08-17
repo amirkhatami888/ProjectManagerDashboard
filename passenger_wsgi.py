@@ -86,7 +86,35 @@ if _PYMYSQL_PATCHED:
         call_command('collectstatic', interactive=False, verbosity=0)
 
         from django.core.wsgi import get_wsgi_application
-        application = get_wsgi_application()
+        _django_application = get_wsgi_application()
+
+        # Passenger/cPanel can route static URLs differently from Django.
+        # Serve the login logo directly so it remains public and independent
+        # of STATIC_URL, WhiteNoise, or LoginRequiredMiddleware.
+        _logo_path = os.path.join(BASE_DIR, 'static', 'image', 'logo.png')
+
+        def application(environ, start_response):
+            request_path = environ.get('PATH_INFO', '').rstrip('/')
+            if request_path in ('/site-logo', '/PMD/site-logo'):
+                try:
+                    with open(_logo_path, 'rb') as logo_file:
+                        logo_data = logo_file.read()
+                    start_response(
+                        '200 OK',
+                        [
+                            ('Content-Type', 'image/png'),
+                            ('Content-Length', str(len(logo_data))),
+                            ('Cache-Control', 'public, max-age=3600'),
+                        ],
+                    )
+                    return [logo_data]
+                except OSError:
+                    start_response(
+                        '404 Not Found',
+                        [('Content-Type', 'text/plain; charset=utf-8')],
+                    )
+                    return [b'Logo file not found']
+            return _django_application(environ, start_response)
     except Exception as e:
         import traceback
         _startup_error = traceback.format_exc()
