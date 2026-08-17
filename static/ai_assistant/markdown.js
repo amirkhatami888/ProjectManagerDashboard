@@ -1,33 +1,54 @@
 (function () {
+  function appendText(parent, value) {
+    // Create a text node explicitly so user/assistant content is never parsed
+    // as markup or HTML.
+    parent.appendChild(document.createTextNode(String(value)));
+  }
+
+  function externalUrl(value) {
+    try {
+      const url = new URL(value);
+      return (url.protocol === 'http:' || url.protocol === 'https:') ? url.href : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
   function inline(parent, value) {
     const pattern = /(\*\*[^*]+\*\*|__[^_]+__|`[^`]+`|\[[^\]]+\]\(https?:\/\/[^)\s]+\)|\*[^*]+\*|_[^_]+_)/g;
     let last = 0;
     let match;
     while ((match = pattern.exec(value))) {
-      if (match.index > last) parent.appendChild(document.createTextNode(value.slice(last, match.index)));
+      if (match.index > last) appendText(parent, value.slice(last, match.index));
       const token = match[0];
       let node;
       if (token.startsWith('**') || token.startsWith('__')) {
         node = document.createElement('strong');
-        node.textContent = token.slice(2, -2);
+        appendText(node, token.slice(2, -2));
       } else if (token.startsWith('`')) {
         node = document.createElement('code');
-        node.textContent = token.slice(1, -1);
+        appendText(node, token.slice(1, -1));
       } else if (token.startsWith('[')) {
         const link = token.match(/^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/);
+        const href = link && externalUrl(link[2]);
+        if (!href) {
+          appendText(parent, token);
+          last = pattern.lastIndex;
+          continue;
+        }
         node = document.createElement('a');
-        node.textContent = link[1];
-        node.href = link[2];
+        appendText(node, link[1]);
+        node.href = href;
         node.target = '_blank';
         node.rel = 'noopener noreferrer';
       } else {
         node = document.createElement('em');
-        node.textContent = token.slice(1, -1);
+        appendText(node, token.slice(1, -1));
       }
       parent.appendChild(node);
       last = pattern.lastIndex;
     }
-    if (last < value.length) parent.appendChild(document.createTextNode(value.slice(last)));
+    if (last < value.length) appendText(parent, value.slice(last));
   }
 
   window.renderAiMarkdown = function (container, markdown) {

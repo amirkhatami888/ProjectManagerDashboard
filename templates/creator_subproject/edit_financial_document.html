@@ -358,6 +358,13 @@
             let totalSize = 0;
             const maxFileSize = 5 * 1024 * 1024; // 5MB
             const maxTotalSize = 15 * 1024 * 1024; // 15MB
+
+            function appendFileSizeMessage(message, textClass) {
+                const messageElement = document.createElement('div');
+                messageElement.className = `file-size-error ${textClass} small mt-1`;
+                messageElement.textContent = message;
+                filesInput[0].parentElement.appendChild(messageElement);
+            }
             
             // Remove any existing error messages
             $('.file-size-error').remove();
@@ -368,23 +375,29 @@
                 
                 // Check individual file size
                 if (file.size > maxFileSize) {
-                    const errorMsg = `<div class="file-size-error text-danger small mt-1">فایل "${file.name}" بزرگتر از 5 مگابایت است (${(file.size / (1024 * 1024)).toFixed(1)} مگابایت)</div>`;
-                    filesInput.parent().append(errorMsg);
+                    appendFileSizeMessage(
+                        `فایل "${file.name}" بزرگتر از 5 مگابایت است (${(file.size / (1024 * 1024)).toFixed(1)} مگابایت)`,
+                        'text-danger'
+                    );
                     return false;
                 }
             }
             
             // Check total size
             if (totalSize > maxTotalSize) {
-                const errorMsg = `<div class="file-size-error text-danger small mt-1">مجموع حجم فایل‌ها بیشتر از 15 مگابایت است (${(totalSize / (1024 * 1024)).toFixed(1)} مگابایت)</div>`;
-                filesInput.parent().append(errorMsg);
+                appendFileSizeMessage(
+                    `مجموع حجم فایل‌ها بیشتر از 15 مگابایت است (${(totalSize / (1024 * 1024)).toFixed(1)} مگابایت)`,
+                    'text-danger'
+                );
                 return false;
             }
             
             // Show current total size
             if (files.length > 0) {
-                const sizeMsg = `<div class="file-size-error text-info small mt-1">مجموع حجم فایل‌ها: ${(totalSize / (1024 * 1024)).toFixed(1)} مگابایت</div>`;
-                filesInput.parent().append(sizeMsg);
+                appendFileSizeMessage(
+                    `مجموع حجم فایل‌ها: ${(totalSize / (1024 * 1024)).toFixed(1)} مگابایت`,
+                    'text-info'
+                );
             }
             
             return true;
@@ -410,4 +423,4 @@
         });
     });
 </script>
-{% endblock %} 
+{% endblock %}

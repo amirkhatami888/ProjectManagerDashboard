@@ -3,8 +3,7 @@ CAPTCHA System for Django Login Protection
 Simple mathematical CAPTCHA to prevent automated brute-force attacks
 """
 import random
-import hashlib
-import time
+import secrets
 from django.core.cache import cache
 from django.conf import settings
 
@@ -34,8 +33,10 @@ class SimpleCaptcha:
             answer = num1 * num2
             question = f"{num1} × {num2}"
         
-        # Create unique ID for this CAPTCHA
-        captcha_id = hashlib.md5(f"{session_key}{time.time()}{random.random()}".encode()).hexdigest()[:8]
+        # Create an unpredictable, collision-resistant ID for this CAPTCHA.
+        # A random token is sufficient here; hashing session data is unnecessary
+        # and could expose it to weak-hash misuse.
+        captcha_id = secrets.token_urlsafe(16)
         
         # Store answer in cache
         cache_key = f"captcha_answer:{captcha_id}"
@@ -73,7 +74,6 @@ class SimpleCaptcha:
         # This would be implemented with a more sophisticated cleanup
         # For now, we rely on cache expiration
         pass
-
 
 
 

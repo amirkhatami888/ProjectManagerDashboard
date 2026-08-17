@@ -9,6 +9,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.views.decorators.csrf import csrf_exempt
 import json
+import logging
 
 from .models import SMSTemplate, SMSSettings, SMSLog, SMSProvider
 from .utils import IPPanelSMSSender
@@ -16,6 +17,8 @@ from .forms import SMSTemplateForm, SMSSettingsForm, SendSMSForm, BulkSMSForm, S
 from accounts.models import User
 from creator_project.models import Project
 from creator_subproject.models import SubProject
+
+logger = logging.getLogger(__name__)
 
 def is_admin_or_chief(user):
     """Check if user is admin, CEO, or chief executive"""
@@ -398,8 +401,7 @@ def send_sms(request):
             
             # Send the SMS
             try:
-                print(f"Attempting to send SMS to {recipient.phone_number} from user {request.user}")
-                print(f"Message: {message}")
+                logger.info("Attempting to send SMS")
                 
                 response = IPPanelSMSSender.send_sms(
                     recipient.phone_number,
@@ -409,11 +411,8 @@ def send_sms(request):
                     template=None
                 )
                 
-                print(f"SMS Response: {response}")
-                
                 if response.get('status') == 'OK':
                     success_msg = _('SMS sent successfully to {}.').format(recipient.get_full_name() or recipient.username)
-                    print(f"Success message: {success_msg}")
                     
                     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                         return JsonResponse({

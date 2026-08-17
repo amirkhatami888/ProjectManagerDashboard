@@ -1,3 +1,4 @@
+from html import escape
 from pathlib import Path
 
 from django.shortcuts import render
@@ -38,7 +39,7 @@ def debug_info(request):
         </ul>
     </body>
     </html>
-    """.format(request.path)
+    """.format(escape(request.path))
     return HttpResponse(html)
 
 def gantt_test(request):

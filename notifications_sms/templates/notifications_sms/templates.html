@@ -873,7 +873,9 @@ function toggleEditMode(templateId) {
 }
 
 function previewTemplate(templateId, content) {
-    document.getElementById('templatePreviewContent').innerHTML = content.replace(/\n/g, '<br>');
+    const previewContent = document.getElementById('templatePreviewContent');
+    previewContent.textContent = content;
+    previewContent.style.whiteSpace = 'pre-wrap';
     $('#templatePreviewModal').modal('show');
 }
 
@@ -939,10 +941,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     row.querySelector('.template-name').textContent = nameText;
                     
                     const previewElement = row.querySelector('.template-preview');
-                    previewElement.innerHTML = contentText.length > 70 ? 
+                    previewElement.textContent = contentText.length > 70 ?
                         contentText.substring(0, 70) + '...' : contentText;
                     previewElement.setAttribute('title', contentText);
-                    previewElement.setAttribute('onclick', `previewTemplate(${templateId}, '${contentText.replace(/'/g, "\\'")}');`);
+                    // Keep untrusted content out of inline JavaScript. Assigning
+                    // a handler directly avoids quote/backslash escaping bugs.
+                    previewElement.onclick = () => previewTemplate(templateId, contentText);
                     
                     // Update default badge if changed
                     const isDefault = formData.get('is_default') === 'on';
@@ -1026,4 +1030,4 @@ function showAlert(type, message) {
     }, 5000);
 }
 </script>
-{% endblock %} 
+{% endblock %}

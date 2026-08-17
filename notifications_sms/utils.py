@@ -53,13 +53,13 @@ class IPPanelSMSSender:
                 "message": f"Credit: {credit}"
             }
         except Error as e:
-            logger.error(f"IPPanel error getting credit: {e.code}, {e.message}")
+            logger.error("IPPanel error getting credit (code=%s)", e.code)
             return {"status": "ERROR", "message": f"Error: {e.message}"}
         except HTTPError as e:
-            logger.error(f"HTTP error getting credit: {e}")
+            logger.error("HTTP error getting credit")
             return {"status": "ERROR", "message": f"HTTP Error: {e}"}
         except Exception as e:
-            logger.error(f"Unexpected error getting credit: {e}")
+            logger.error("Unexpected error getting credit")
             return {"status": "ERROR", "message": f"Unexpected error: {e}"}
     
     @classmethod
@@ -115,8 +115,9 @@ class IPPanelSMSSender:
             
             return {"status": "ERROR", "message": "IPPanel SDK not installed"}
         
-        # Check if this is a test/demo provider (by API key)
-        logger.info(f"Checking API key for simulation: '{provider.api_key[:20]}...'")
+        # Check if this is a test/demo provider (by API key) without logging
+        # the secret or any portion of it.
+        logger.info("Checking SMS provider configuration for simulation mode")
         if provider.api_key == 'your-api-key-here' or provider.api_key.startswith('test-'):
             logger.info("Using simulation mode for SMS sending")
             # Simulate SMS sending for testing
@@ -134,7 +135,10 @@ class IPPanelSMSSender:
                 provider=provider
             )
             
-            logger.info(f"Simulated SMS sent to {recipient_number}: {message[:50]}...")
+            logger.info(
+                "Simulated SMS send completed (message_length=%d)",
+                len(message),
+            )
             
             return {
                 "status": "OK", 
@@ -143,7 +147,6 @@ class IPPanelSMSSender:
             }
         
         logger.info("Using real IPPanel API")
-        print(f"Using real IPPanel API for {recipient_number}")
         
         # Format the phone number (remove any + prefix and ensure it starts with proper country code)
         recipient_number = recipient_number.strip()
@@ -173,12 +176,7 @@ class IPPanelSMSSender:
             sms = Client(provider.api_key)
             
             # Log the request details for debugging
-            logger.info(f"Sending SMS to: {recipient_number}")
-            logger.info(f"Originator: {originator}")
-            logger.info(f"Message length: {len(message)}")
-            print(f"Sending SMS to: {recipient_number}")
-            print(f"Originator: {originator}")
-            print(f"Message: {message[:50]}...")
+            logger.info("Sending SMS request (message_length=%d)", len(message))
             
             # Send the SMS using IPPanel SDK
             message_id = sms.send(
@@ -193,8 +191,7 @@ class IPPanelSMSSender:
             log.message_id = message_id
             log.save()
                     
-            logger.info(f"SMS sent successfully to {recipient_number}. Message ID: {message_id}")
-            print(f"SMS sent successfully to {recipient_number}. Message ID: {message_id}")
+            logger.info("SMS sent successfully (message_length=%d)", len(message))
             
             return {
                 "status": "OK", 
@@ -205,8 +202,7 @@ class IPPanelSMSSender:
         except Error as e:
             # IPPanel SMS error
             error_msg = f"IPPanel error: {e.code}, {e.message}"
-            logger.error(error_msg)
-            print(error_msg)
+            logger.error("IPPanel SMS request failed (code=%s)", e.code)
             
             # Handle specific error cases
             if e.code == ResponseCode.ErrUnprocessableEntity.value:
@@ -224,8 +220,7 @@ class IPPanelSMSSender:
         except HTTPError as e:
             # HTTP error like network error, not found, etc.
             error_msg = f"HTTP error: {e}"
-            logger.error(error_msg)
-            print(error_msg)
+            logger.error("HTTP error while sending SMS")
             
             log.status = 'FAILED'
             log.error_message = error_msg
@@ -236,8 +231,7 @@ class IPPanelSMSSender:
         except json.JSONDecodeError as e:
             # JSON parsing error - likely empty or invalid response
             error_msg = f"Invalid JSON response from API: {e}"
-            logger.error(error_msg)
-            print(error_msg)
+            logger.error("Invalid JSON response from SMS API")
             
             log.status = 'FAILED'
             log.error_message = error_msg
@@ -248,8 +242,7 @@ class IPPanelSMSSender:
         except Exception as e:
             # Unexpected error
             error_msg = f"Unexpected error: {e}"
-            logger.error(error_msg)
-            print(error_msg)
+            logger.error("Unexpected error while sending SMS")
             
             log.status = 'FAILED'
             log.error_message = error_msg
@@ -331,4 +324,4 @@ def format_financing_approved_message(project_name, amount=None):
     content = template.content.replace('{name of project}', project_name)
     if amount:
         content = content.replace('{amount}', str(amount))
-    return content 
+    return content
