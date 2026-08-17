@@ -1,7 +1,9 @@
 """Deterministic, permission-aware tools used by the Persian AI agent."""
+from datetime import timedelta
 from decimal import Decimal
 
 from django.db.models import Q, Sum
+from django.utils import timezone
 
 from creator_program.models import Program
 from creator_project.models import Project, ProjectFinancialAllocation
@@ -226,4 +228,71 @@ def financial_audit(user, project_id):
         "contract_minus_payments_rial": _money(contract_sum - direct_payments),
         "warnings": warnings,
         "calculation_note": "محاسبات قطعی از رکوردهای دیتابیس هستند؛ پیش‌بینی قیمت نیازمند منبع وب و فرضیات زمانی است.",
+    }
+
+
+def project_forecast(user, project_id):
+    """Calculate transparent schedule/cost indicators without an external service.
+
+    This is deliberately deterministic: the model receives the inputs and
+    formulas, while Python performs the arithmetic.  Missing dates or costs
+    are reported rather than guessed.
+    """
+    project = resolve_visible(user, Project, project_id)
+    today = timezone.localdate()
+    rows = []
+    for item in visible_subprojects(user).filter(project=project):
+        progress = max(Decimal("0"), min(Decimal("100"), _decimal(item.physical_progress)))
+        budget = _decimal(item.final_contract_amount or item.contract_amount or item.imagenrary_cost)
+        actual_cost = _decimal(item.total_payments)
+        start = item.contract_start_date or item.start_date
+        finish = item.contract_end_date or item.end_date
+        planned_progress = None
+        spi = None
+        cpi = None
+        forecast_finish = None
+        schedule_variance_days = None
+        if start and finish and finish > start:
+            duration = (finish - start).days
+            elapsed = max(0, min(duration, (today - start).days))
+            planned_progress = (Decimal(elapsed) / Decimal(duration) * 100).quantize(Decimal("0.01"))
+            pv = budget * planned_progress / 100
+            ev = budget * progress / 100
+            if pv > 0:
+                spi = (ev / pv).quantize(Decimal("0.01"))
+            if actual_cost > 0:
+                cpi = (ev / actual_cost).quantize(Decimal("0.01"))
+            if progress > 0 and today >= start and progress < 100:
+                days_needed = (Decimal("100") - progress) / progress * Decimal(max(1, elapsed))
+                forecast_finish = today + timedelta(days=max(1, int(days_needed.to_integral_value())))
+                schedule_variance_days = (forecast_finish - finish).days
+        rows.append({
+            "subproject_id": item.pk,
+            "name": item.name or item.project_stage,
+            "progress_percent": str(progress),
+            "budget_rial": _money(budget),
+            "actual_cost_rial": _money(actual_cost),
+            "planned_progress_percent": str(planned_progress) if planned_progress is not None else None,
+            "spi": str(spi) if spi is not None else None,
+            "cpi": str(cpi) if cpi is not None else None,
+            "forecast_finish": forecast_finish.isoformat() if forecast_finish else None,
+            "planned_finish": finish.isoformat() if finish else None,
+            "schedule_variance_days": schedule_variance_days,
+            "notice": (
+                "SPI/CPI فقط وقتی تاریخ و مبلغ کافی وجود داشته باشد محاسبه شده‌اند؛ "
+                "این برآورد قطعی نیست."
+            ),
+        })
+    return {
+        "project_id": project.pk,
+        "project_code": project.project_id,
+        "project_name": project.name,
+        "calculated_on": today.isoformat(),
+        "formulas": {
+            "EV": "بودجه × پیشرفت واقعی",
+            "PV": "بودجه × پیشرفت برنامه‌ای بر اساس زمان سپری‌شده",
+            "SPI": "EV ÷ PV",
+            "CPI": "EV ÷ هزینه واقعی ثبت‌شده",
+        },
+        "subprojects": rows,
     }

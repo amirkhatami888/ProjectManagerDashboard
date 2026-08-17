@@ -3,7 +3,7 @@ import json
 
 from .domain_tools import (
     financial_audit, read_program, read_project, read_subproject, search_site,
-    system_overview, validate_project,
+    project_forecast, system_overview, validate_project,
 )
 from .search import tavily_search
 from .tools import explain_field
@@ -39,6 +39,9 @@ BASE_TOOL_SCHEMAS = [
         "project_id": {"type": "integer"},
     }, ["project_id"]),
     _function("financial_audit", "ممیزی قطعی تخصیص، قرارداد، سند و پرداخت پروژه", {
+        "project_id": {"type": "integer"},
+    }, ["project_id"]),
+    _function("project_forecast", "محاسبه قطعی و توضیح‌پذیر SPI، CPI و تاریخ احتمالی پایان زیرپروژه‌های یک پروژه", {
         "project_id": {"type": "integer"},
     }, ["project_id"]),
     _function("explain_field", "توضیح کاربرد یک فیلد سامانه", {
@@ -85,6 +88,8 @@ def _execute_tool(user, name, args, allow_web_search, allow_local_js):
         return validate_project(user, args["project_id"])
     if name == "financial_audit":
         return financial_audit(user, args["project_id"])
+    if name == "project_forecast":
+        return project_forecast(user, args["project_id"])
     if name == "explain_field":
         return explain_field(args["entity"], args["field"]) or {"error": "فیلد پیدا نشد."}
     if name == "web_search":
