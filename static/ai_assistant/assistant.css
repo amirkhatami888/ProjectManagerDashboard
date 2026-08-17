@@ -551,9 +551,11 @@
 
 .rcs-ai-form {
     flex: 0 0 auto;
-    padding: 12px 15px calc(14px + env(safe-area-inset-bottom));
-    border-top: 1px solid #e1e7f0;
-    background: #fff;
+    padding: 14px 15px calc(16px + env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(177, 195, 226, .55);
+    background:
+        radial-gradient(circle at 12% 0%, rgba(100, 116, 236, .08), transparent 34%),
+        linear-gradient(180deg, #fbfcff 0%, #f6f8fd 100%);
 }
 
 .rcs-ai-web {
@@ -580,35 +582,49 @@
 }
 
 .rcs-ai-input-wrap {
+    position: relative;
     display: flex;
     align-items: flex-end;
     gap: 8px;
-    padding: 7px 8px 7px 10px;
-    border: 1px solid #dce4f0;
-    border-radius: 15px;
-    background: #f5f7fb;
-    transition: .2s;
+    min-height: 54px;
+    padding: 7px 7px 7px 13px;
+    border: 1px solid rgba(156, 177, 218, .7);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, .82);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .95),
+        0 8px 24px rgba(38, 62, 108, .1);
+    transition: border-color .2s, background .2s, box-shadow .2s, transform .2s;
 }
 
 .rcs-ai-input-wrap:focus-within {
-    border-color: #8294f4;
+    border-color: #6578ee;
     background: #fff;
-    box-shadow: 0 0 0 3px #8294f41c;
+    transform: translateY(-1px);
+    box-shadow:
+        0 0 0 3px rgba(101, 120, 238, .13),
+        0 11px 28px rgba(38, 62, 108, .14);
 }
 
 .rcs-ai-form textarea {
     width: 100%;
     min-width: 0;
+    height: 28px;
     min-height: 28px;
-    max-height: 110px;
+    max-height: 160px;
     resize: none;
+    overflow-y: auto;
     border: 0;
     outline: 0;
     background: transparent;
     color: #253552;
     font-family: inherit;
     font-size: 12px;
+    font-weight: 500;
     line-height: 1.9;
+    overflow-wrap: anywhere;
+    scrollbar-width: thin;
+    scrollbar-color: #aab9e8 transparent;
 }
 
 .rcs-ai-form textarea::placeholder {
@@ -616,24 +632,59 @@
 }
 
 .rcs-ai-input-wrap button {
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-    min-height: 36px;
-    flex: 0 0 36px;
-    display: grid;
-    place-items: center;
-    padding: 0;
-    border: 0;
-    border-radius: 11px;
-    background: linear-gradient(135deg, #6858f3, #247de9);
+    min-width: 118px;
+    min-height: 40px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 15px;
+    border: 1px solid rgba(255, 255, 255, .24);
+    border-radius: 13px;
+    background:
+        linear-gradient(135deg, rgba(119, 100, 246, .98), rgba(35, 119, 230, .98)),
+        #347ce6;
     color: #fff;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: -.1px;
+    white-space: nowrap;
     cursor: pointer;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .26),
+        0 7px 16px rgba(54, 92, 210, .3);
+    transition: transform .2s, box-shadow .2s, filter .2s, opacity .2s;
+}
+
+.rcs-ai-input-wrap button i {
+    font-size: 14px;
+    transition: transform .2s;
 }
 
 .rcs-ai-input-wrap button:hover {
     filter: brightness(1.08);
     transform: translateY(-1px);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .3),
+        0 10px 21px rgba(54, 92, 210, .38);
+}
+
+.rcs-ai-input-wrap button:hover i {
+    transform: translateX(-2px);
+}
+
+.rcs-ai-input-wrap button:focus-visible {
+    outline: 3px solid rgba(101, 86, 232, .28);
+    outline-offset: 2px;
+}
+
+.rcs-ai-input-wrap button:disabled {
+    opacity: .65;
+    cursor: wait;
+    transform: none;
+    box-shadow: none;
 }
 
 .rcs-ai-hint {
@@ -691,5 +742,16 @@
 
     .rcs-ai-form {
         padding-inline: 12px;
+    }
+
+    .rcs-ai-input-wrap button {
+        min-width: 44px;
+        width: 44px;
+        min-height: 40px;
+        padding: 0;
+    }
+
+    .rcs-ai-input-wrap button span {
+        display: none;
     }
 }

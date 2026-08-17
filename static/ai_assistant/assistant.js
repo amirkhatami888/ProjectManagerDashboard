@@ -11,6 +11,12 @@
   let conversationId = null;
   let requestGeneration = 0;
   if (!launcher || !drawer || !form) return;
+  function resizeInput() {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+  }
+  input.addEventListener('input', resizeInput);
+  resizeInput();
   function openDrawer() {
     drawer.classList.add('open');
     if (backdrop) backdrop.classList.add('open');
@@ -35,6 +41,7 @@
       '<p>سؤال خود را درباره طرح، پروژه یا زیرپروژه بنویسید.</p>' +
       '</div>';
     input.value = '';
+    resizeInput();
     input.disabled = false;
     input.focus();
   }
@@ -124,12 +131,12 @@
     const text = input.value.trim();
     if (!text) return;
     const generation = requestGeneration;
-    addMessage(text, 'user'); input.value = ''; input.disabled = true;
+    addMessage(text, 'user'); input.value = ''; resizeInput(); input.disabled = true;
     const originalButtonHtml = sendButton ? sendButton.innerHTML : '';
     if (sendButton) {
       sendButton.disabled = true;
       sendButton.setAttribute('aria-busy', 'true');
-      sendButton.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+      sendButton.innerHTML = '<i class="bi bi-hourglass-split"></i><span>در حال ارسال</span>';
     }
     const loading = addMessage('در حال بررسی اطلاعات سامانه...', 'assistant rcs-ai-loading');
     const controller = new AbortController();
