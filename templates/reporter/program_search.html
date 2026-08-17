@@ -175,7 +175,7 @@
     
     .results-table tbody td {
         padding: 1rem 0.75rem;
-        vertical-align: middle;
+        vertical-align: top;
     }
     
     .results-table tbody tr:hover {
@@ -877,7 +877,7 @@
                                 {% for program in programs %}
                                 <tr>
                                     <td>
-                                        <span class="badge bg-primary">{{ program.program_id }}</span>
+                                        {{ program.program_id }}
                                     </td>
                                     <td>
                                         <strong>{{ program.title }}</strong>
@@ -885,17 +885,7 @@
                                     <td>{{ program.program_type }}</td>
                                     <td>{{ program.province }}</td>
                                     <td>{{ program.city|default:"-" }}</td>
-                                    <td>
-                                        {% if program.license_state == "دارد" %}
-                                            <span class="badge bg-success">{{ program.license_state }}</span>
-                                        {% elif program.license_state == "ندارد" %}
-                                            <span class="badge bg-danger">{{ program.license_state }}</span>
-                                        {% elif program.license_state == "دردست اقدام" %}
-                                            <span class="badge bg-warning">{{ program.license_state }}</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">{{ program.license_state }}</span>
-                                        {% endif %}
-                                    </td>
+                                    <td>{{ program.license_state|default:"-" }}</td>
                                     <td>{{ program.license_code|default:"-" }}</td>
                                     <td>
                                         {% if program.program_opening_date %}
