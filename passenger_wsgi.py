@@ -67,6 +67,16 @@ os.environ.setdefault('DEBUG', 'False')
 # Load Django only when PyMySQL is patched (otherwise login 500s with MariaDB)
 if _PYMYSQL_PATCHED:
     try:
+        # Passenger does not run Django management commands during deployment.
+        # STATIC_ROOT is intentionally ignored by git, so collect the checked-in
+        # files from static/ before serving the application.  Without this step
+        # production returns 404 for assets such as static/image/logo.png while
+        # DEBUG-mode local development can still find them directly.
+        import django
+        django.setup()
+        from django.core.management import call_command
+        call_command('collectstatic', interactive=False, verbosity=0)
+
         from django.core.wsgi import get_wsgi_application
         application = get_wsgi_application()
     except Exception as e:
