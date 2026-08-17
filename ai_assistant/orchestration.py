@@ -107,7 +107,7 @@ def _execute_tool(user, name, args, allow_web_search, allow_local_js):
 
 
 def run_tool_loop(user, messages, provider, allow_web_search=False,
-                  allow_local_js=False, max_rounds=5):
+                  allow_local_js=False, max_rounds=3):
     """Return final text and a safe trace; authorization is repeated per tool."""
     current = list(messages)
     schemas = list(BASE_TOOL_SCHEMAS)

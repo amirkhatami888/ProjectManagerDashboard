@@ -120,7 +120,7 @@ def assistant_chat(request):
         )
         result = run_tool_loop(
             request.user, messages, provider,
-            allow_web_search=use_web, allow_local_js=use_local_js, max_rounds=5,
+            allow_web_search=use_web, allow_local_js=use_local_js, max_rounds=3,
         )
         answer, options, requested_action = _extract_agent_directives(result["content"])
         action = None
