@@ -10,6 +10,9 @@ urlpatterns = [
     # Admin dashboard
     path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),
     path('dashboard/admin/turnstile/', views.toggle_turnstile, name='toggle_turnstile'),
+    path('dashboard/admin/ai/toggle/', views.toggle_ai_platform, name='toggle_ai_platform'),
+    path('dashboard/admin/ai/', views.ai_control_center, name='ai_control_center'),
+    path('dashboard/admin/ai/action/', views.ai_control_action, name='ai_control_action'),
     
     # CEO dashboard
     path('dashboard/ceo/', views.ceo_dashboard, name='ceo_dashboard'),
@@ -25,4 +28,4 @@ urlpatterns = [
     
     # Province Manager dashboard
     path('dashboard/province-manager/', views.province_manager_dashboard, name='province_manager_dashboard'),
-] 
+]

@@ -36,6 +36,7 @@ urlpatterns = [
     path('reporter/', include('reporter.urls')),
     path("webhooks/", include("webhooks.urls")),
     path("activity-monitor/", include("activity_monitor.urls", namespace="activity_monitor")),
+    path("ai-assistant/", include("ai_assistant.urls", namespace="ai_assistant")),
     path('gantt-test/', views.gantt_test, name='gantt_test'),
 ]
 

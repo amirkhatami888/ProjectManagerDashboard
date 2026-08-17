@@ -1,0 +1,41 @@
+{
+  "version": "2026-08-17",
+  "hierarchy": ["creator_program.Program", "creator_project.Project", "creator_subproject.SubProject"],
+  "models": {
+    "Program": {
+      "label": "طرح",
+      "key": "program_id",
+      "province_field": "province",
+      "relations": {"projects": "Project.program"}
+    },
+    "Project": {
+      "label": "پروژه",
+      "key": "project_id",
+      "province_field": "province",
+      "relations": {"program": "Program", "subprojects": "SubProject.project", "allocations": "ProjectFinancialAllocation.project"}
+    },
+    "SubProject": {
+      "label": "زیرپروژه",
+      "key": "id",
+      "province_field": "project.province",
+      "number_field": "sub_project_number",
+      "number_note": "مدل validator صریح ۱ تا ۵ ندارد؛ Project ظرفیت ۱۰ زیرپروژه را پیاده می‌کند.",
+      "contract_without_contract_rule": "فاقد قرارداد از imagenary_duration و imagenrary_cost استفاده می‌کند"
+    },
+    "ProjectFinancialAllocation": {"label": "تخصیص مالی", "amount": "amount", "type": "allocation_type", "letter": "letter_number"},
+    "FinancialDocument": {"label": "سند مالی", "number": "document_number", "contractor_date": "contractor_date", "submit_date": "contractor_submit_date"},
+    "SituationReport": {"label": "صورت وضعیت کارکرد", "amount": "payment_amount_field", "types": ["موقت", "دائم"]},
+    "AdjustmentSituationReport": {"label": "صورت وضعیت تعدیل", "amount": "payment_amount_field", "types": ["موقت", "دائم"]}
+  },
+  "known_enum_drift": {
+    "SubProject.contract_type": "مقدار واقعی «فرست بها» است، نه «فهرست‌بها».",
+    "SubProject.execution_method": "گزینه‌های سه عاملی و نظارت دفترفنی استان در مدل وجود دارند.",
+    "SituationReport": "این مدل صورت وضعیت کارکرد است، نه فهرست مستقیم اسناد مالی."
+  },
+  "rules": [
+    "physical_progress بین صفر و صد",
+    "تاریخ پایان قبل از تاریخ شروع نباشد",
+    "مبلغ‌ها منفی نباشند",
+    "زیرپروژه قراردادی اطلاعات قرارداد لازم دارد"
+  ]
+}

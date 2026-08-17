@@ -2713,3 +2713,678 @@ Traceback (most recent call last):
     raise errorclass(errno, errval, sqlstate=sqlstate)
 django.db.utils.OperationalError: (1054, "Unknown column 'creator_subproject_subproject.project_stage' in 'SELECT'")
 ERROR 2026-08-17 11:00:49,691 basehttp 24142 131162006595264 "GET /projects/148/ HTTP/1.1" 500 145
+ERROR 2026-08-17 13:48:25,180 log 40829 128219065874112 Internal Server Error: /ai-assistant/chat/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/views/decorators/http.py", line 64, in inner
+    return func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/ai_assistant/views.py", line 28, in assistant_chat
+    if not policy.can_use():
+           ^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/ai_assistant/models.py", line 46, in can_use
+    and self.messages_today() < self.daily_message_limit
+        ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/ai_assistant/models.py", line 31, in messages_today
+    created_at__date=timezone.localdate(),
+                     ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 13:48:25,180 log 40829 128219065874112 Internal Server Error: /ai-assistant/chat/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/views/decorators/http.py", line 64, in inner
+    return func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/ai_assistant/views.py", line 28, in assistant_chat
+    if not policy.can_use():
+           ^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/ai_assistant/models.py", line 46, in can_use
+    and self.messages_today() < self.daily_message_limit
+        ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/ai_assistant/models.py", line 31, in messages_today
+    created_at__date=timezone.localdate(),
+                     ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 13:48:25,250 basehttp 40829 128219065874112 "POST /ai-assistant/chat/ HTTP/1.1" 500 145
+ERROR 2026-08-17 13:51:30,800 log 40829 128219065874112 Internal Server Error: /ai-assistant/chat/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/views/decorators/http.py", line 64, in inner
+    return func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/ai_assistant/views.py", line 28, in assistant_chat
+    if not policy.can_use():
+           ^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/ai_assistant/models.py", line 46, in can_use
+    and self.messages_today() < self.daily_message_limit
+        ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/ai_assistant/models.py", line 31, in messages_today
+    created_at__date=timezone.localdate(),
+                     ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 13:51:30,800 log 40829 128219065874112 Internal Server Error: /ai-assistant/chat/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/views/decorators/http.py", line 64, in inner
+    return func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/ai_assistant/views.py", line 28, in assistant_chat
+    if not policy.can_use():
+           ^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/ai_assistant/models.py", line 46, in can_use
+    and self.messages_today() < self.daily_message_limit
+        ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/ai_assistant/models.py", line 31, in messages_today
+    created_at__date=timezone.localdate(),
+                     ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 13:51:30,934 basehttp 40829 128219065874112 "POST /ai-assistant/chat/ HTTP/1.1" 500 145
+ERROR 2026-08-17 14:14:33,683 log 47790 137509753321152 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:14:33,683 log 47790 137509753321152 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:14:33,742 basehttp 47790 137509753321152 "GET /dashboard/dashboard/admin/ HTTP/1.1" 500 145
+ERROR 2026-08-17 14:14:51,632 log 48001 129591238833856 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:14:51,632 log 48001 129591238833856 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:14:51,644 basehttp 48001 129591238833856 "GET /dashboard/dashboard/admin/ HTTP/1.1" 500 145
+ERROR 2026-08-17 14:14:54,966 log 48001 129591238833856 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:14:54,966 log 48001 129591238833856 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:14:54,977 basehttp 48001 129591238833856 "GET /dashboard/dashboard/admin/ HTTP/1.1" 500 145
+ERROR 2026-08-17 14:14:57,372 log 48001 129591238833856 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:14:57,372 log 48001 129591238833856 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:14:57,383 basehttp 48001 129591238833856 "GET /dashboard/dashboard/admin/ HTTP/1.1" 500 145
+ERROR 2026-08-17 14:14:57,658 log 48001 129591238833856 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:14:57,658 log 48001 129591238833856 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:14:57,671 basehttp 48001 129591238833856 "GET /dashboard/dashboard/admin/ HTTP/1.1" 500 145
+ERROR 2026-08-17 14:15:08,441 log 48001 129591238833856 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:15:08,441 log 48001 129591238833856 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:15:08,516 basehttp 48001 129591238833856 "GET /dashboard/dashboard/admin/ HTTP/1.1" 500 145
+ERROR 2026-08-17 14:15:09,267 log 48001 129591238833856 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:15:09,267 log 48001 129591238833856 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:15:09,279 basehttp 48001 129591238833856 "GET /dashboard/dashboard/admin/ HTTP/1.1" 500 145
+ERROR 2026-08-17 14:15:25,223 log 48010 137956011538112 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:15:25,223 log 48010 137956011538112 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:15:25,235 basehttp 48010 137956011538112 "GET /dashboard/dashboard/admin/ HTTP/1.1" 500 145
+ERROR 2026-08-17 14:15:25,539 log 48010 137956011538112 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:15:25,539 log 48010 137956011538112 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:15:25,598 basehttp 48010 137956011538112 "GET /dashboard/dashboard/admin/ HTTP/1.1" 500 145
+ERROR 2026-08-17 14:15:37,670 log 48010 137955993704128 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:15:37,670 log 48010 137955993704128 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:15:37,726 basehttp 48010 137955993704128 "GET /dashboard/dashboard/admin/ HTTP/1.1" 500 145
+ERROR 2026-08-17 14:18:43,787 log 48106 124686199842496 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:18:43,787 log 48106 124686199842496 Internal Server Error: /dashboard/dashboard/admin/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 135, in admin_dashboard
+    today = timezone.localdate()
+            ^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 197, in localdate
+    return localtime(value, timezone).date()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/timezone.py", line 183, in localtime
+    raise ValueError("localtime() cannot be applied to a naive datetime")
+ValueError: localtime() cannot be applied to a naive datetime
+ERROR 2026-08-17 14:18:43,853 basehttp 48106 124686199842496 "GET /dashboard/dashboard/admin/ HTTP/1.1" 500 145
+ERROR 2026-08-17 14:35:45,342 log 50377 128816716412608 Internal Server Error: /dashboard/dashboard/admin/ai/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 228, in ai_control_center
+    usage_totals = month_usage.aggregate(
+                   ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 588, in aggregate
+    return self.query.chain().get_aggregation(self.db, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/sql/query.py", line 626, in get_aggregation
+    result = compiler.execute_sql(SINGLE)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1610, in execute_sql
+    sql, params = self.as_sql()
+                  ^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 766, in as_sql
+    extra_select, order_by, group_by = self.pre_sql_setup(
+                                       ^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 85, in pre_sql_setup
+    self.setup_query(with_col_aliases=with_col_aliases)
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 74, in setup_query
+    self.select, self.klass_info, self.annotation_col_map = self.get_select(
+                                                            ^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 329, in get_select
+    sql, params = col.select_format(self, sql, params)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/expressions.py", line 498, in select_format
+    if hasattr(self.output_field, "select_format"):
+               ^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/functional.py", line 47, in __get__
+    res = instance.__dict__[self.name] = self.func(instance)
+                                         ^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/expressions.py", line 327, in output_field
+    output_field = self._resolve_output_field()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/expressions.py", line 365, in _resolve_output_field
+    raise FieldError(
+django.core.exceptions.FieldError: Expression contains mixed types: FloatField, IntegerField. You must set output_field.
+ERROR 2026-08-17 14:35:45,342 log 50377 128816716412608 Internal Server Error: /dashboard/dashboard/admin/ai/
+Traceback (most recent call last):
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/contrib/auth/decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/dashboard/views.py", line 228, in ai_control_center
+    usage_totals = month_usage.aggregate(
+                   ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 588, in aggregate
+    return self.query.chain().get_aggregation(self.db, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/sql/query.py", line 626, in get_aggregation
+    result = compiler.execute_sql(SINGLE)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1610, in execute_sql
+    sql, params = self.as_sql()
+                  ^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 766, in as_sql
+    extra_select, order_by, group_by = self.pre_sql_setup(
+                                       ^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 85, in pre_sql_setup
+    self.setup_query(with_col_aliases=with_col_aliases)
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 74, in setup_query
+    self.select, self.klass_info, self.annotation_col_map = self.get_select(
+                                                            ^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 329, in get_select
+    sql, params = col.select_format(self, sql, params)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/expressions.py", line 498, in select_format
+    if hasattr(self.output_field, "select_format"):
+               ^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/utils/functional.py", line 47, in __get__
+    res = instance.__dict__[self.name] = self.func(instance)
+                                         ^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/expressions.py", line 327, in output_field
+    output_field = self._resolve_output_field()
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/pc/ProjectManagerDashboard/.venv/lib/python3.12/site-packages/django/db/models/expressions.py", line 365, in _resolve_output_field
+    raise FieldError(
+django.core.exceptions.FieldError: Expression contains mixed types: FloatField, IntegerField. You must set output_field.
+ERROR 2026-08-17 14:35:45,399 basehttp 50377 128816716412608 "GET /dashboard/dashboard/admin/ai/ HTTP/1.1" 500 145
+ERROR 2026-08-17 15:13:56,019 log 55783 126328358237888 Bad Gateway: /ai-assistant/chat/
+ERROR 2026-08-17 15:13:56,019 log 55783 126328358237888 Bad Gateway: /ai-assistant/chat/
+ERROR 2026-08-17 15:13:56,072 basehttp 55783 126328358237888 "POST /ai-assistant/chat/ HTTP/1.1" 502 195
+ERROR 2026-08-17 15:21:13,892 log 58185 126080165865152 Bad Gateway: /ai-assistant/chat/
+ERROR 2026-08-17 15:21:13,892 log 58185 126080165865152 Bad Gateway: /ai-assistant/chat/
+ERROR 2026-08-17 15:21:13,924 basehttp 58185 126080165865152 "POST /ai-assistant/chat/ HTTP/1.1" 502 195
+ERROR 2026-08-17 15:29:19,914 provider 59676 135375101818560 GapGPT request failed: status=400 endpoint=https://api.gapgpt.app/v1/chat/completions model=gpt-5.6-luna body={"error":{"message":"An assistant message with 'tool_calls' must be followed by tool messages responding to each 'tool_call_id'. The following tool_call_ids did not have response messages: call_KFXRZrHYtXJObIw57ocB2zBh, call_w2IK4NT6jRwevooSMWlwot6Y, call_e3vz67yCT06eWqF97FsGrnml, call_YoeYuRbp4A7P6s6xzlhuJye9, call_Pu7dQJ8MZqC4HfWBrRkNg5XH, call_MIPDraWVEeHThMCjUGsyqL4v, call_QEfPU0m9uG56dzQBalwy7yHC, call_gxzTNNdViOZU5Hw1Maj4fI9L, call_JK6xMYNw4Hzdt5T36lKaiFff (request id: 20260817115900944117
+ERROR 2026-08-17 15:29:20,044 log 59676 135375101818560 Bad Gateway: /ai-assistant/chat/
+ERROR 2026-08-17 15:29:20,044 log 59676 135375101818560 Bad Gateway: /ai-assistant/chat/
+ERROR 2026-08-17 15:29:20,045 basehttp 59676 135375101818560 "POST /ai-assistant/chat/ HTTP/1.1" 502 231
+ERROR 2026-08-17 15:31:56,958 log 59836 128823977948864 Internal Server Error: /ai-assistant/chat/
+ERROR 2026-08-17 15:31:56,958 log 59836 128823977948864 Internal Server Error: /ai-assistant/chat/
+ERROR 2026-08-17 15:31:56,990 basehttp 59836 128823977948864 "POST /ai-assistant/chat/ HTTP/1.1" 500 370

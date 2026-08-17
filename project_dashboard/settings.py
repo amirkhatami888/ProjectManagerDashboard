@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'webhooks',
     'activity_monitor',
     'session_manager',
+    'ai_assistant',
 ]
 
 MIDDLEWARE = [
@@ -80,6 +81,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "ai_assistant.context_processors.availability",
             ],
         },
     },
@@ -166,7 +168,9 @@ LANGUAGES = [
 TIME_ZONE = "Asia/Tehran"
 USE_I18N = True
 USE_L10N = True  # Enable localization
-USE_TZ = False
+# Keep Django datetime values timezone-aware.  The application uses
+# timezone.localdate()/timezone.now() throughout its views and models.
+USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
@@ -288,6 +292,11 @@ LOGGING = {
             'handlers': ['file', 'console'],
             'level': 'INFO',
             'propagate': True,
+        },
+        'ai_assistant': {
+            'handlers': ['file', 'console'],
+            'level': 'ERROR',
+            'propagate': False,
         },
     },
 }

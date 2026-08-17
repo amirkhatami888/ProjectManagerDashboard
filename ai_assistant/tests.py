@@ -1,0 +1,251 @@
+from django.test import TestCase
+from django.urls import reverse
+from accounts.models import User
+from creator_program.models import Program
+from unittest.mock import Mock, patch
+import requests
+
+from .orchestration import run_tool_loop
+from .tools import preview_update
+from .views import _extract_agent_directives
+from .models import AIPlatformSettings, AIUserPolicy, AIRolePolicy
+from .provider import GapGPTProvider, ProviderError
+
+
+class AIAssistantTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="ai-test", email="ai-test@example.com", password="test-pass-123"
+        )
+
+    def test_policy_limits_usage(self):
+        policy = AIUserPolicy.objects.create(user=self.user, daily_message_limit=0)
+        self.assertFalse(policy.can_use())
+
+    def test_panel_requires_login(self):
+        response = self.client.get(reverse("ai_assistant:panel"))
+        self.assertEqual(response.status_code, 302)
+
+    def test_role_policy_disables_assistant(self):
+        self.user.role = "EXPERT"
+        self.user.save(update_fields=["role"])
+        AIRolePolicy.objects.create(role="EXPERT", is_enabled=False)
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("ai_assistant:panel"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "دستیار هوشمند برای نقش یا حساب کاربری شما غیرفعال است")
+
+    def test_admin_can_update_role_policy_from_control_center(self):
+        admin = User.objects.create_superuser(
+            username="ai-admin", email="ai-admin@example.com", password="test-pass-123"
+        )
+        self.client.force_login(admin)
+        response = self.client.post(reverse("dashboard:ai_control_action"), {
+            "action": "save_role_policy",
+            "role": "PROVINCE_MANAGER",
+            "daily_message_limit": 30,
+            "monthly_message_limit": 500,
+        })
+        self.assertRedirects(response, reverse("dashboard:ai_control_center"))
+        self.assertFalse(AIRolePolicy.objects.get(role="PROVINCE_MANAGER").is_enabled)
+
+    def test_province_manager_role_policy_disables_assistant(self):
+        self.user.role = "PROVINCE_MANAGER"
+        self.user.save(update_fields=["role"])
+        AIRolePolicy.objects.create(role="PROVINCE_MANAGER", is_enabled=False)
+        self.client.force_login(self.user)
+
+        panel = self.client.get(reverse("ai_assistant:panel"))
+        self.assertContains(panel, "دستیار هوشمند برای نقش یا حساب کاربری شما غیرفعال است")
+
+        response = self.client.post(
+            reverse("ai_assistant:chat"),
+            data='{"message":"سلام"}',
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(response.json()["ok"])
+
+    def test_role_reenable_preserves_user_policy(self):
+        self.user.role = "PROVINCE_MANAGER"
+        self.user.save(update_fields=["role"])
+        user_policy = AIUserPolicy.objects.create(user=self.user, is_enabled=True)
+        role_policy = AIRolePolicy.objects.create(role="PROVINCE_MANAGER", is_enabled=False)
+        self.client.force_login(self.user)
+
+        self.assertFalse(self.client.get(reverse("ai_assistant:panel")).context["ai_policy"].is_enabled)
+        role_policy.is_enabled = True
+        role_policy.save(update_fields=["is_enabled", "updated_at"])
+
+        self.assertTrue(self.client.get(reverse("ai_assistant:panel")).context["ai_policy"].is_enabled)
+        self.assertTrue(AIUserPolicy.objects.get(pk=user_policy.pk).is_enabled)
+
+    def test_agent_directives_are_removed_from_visible_answer(self):
+        answer, options, action = _extract_agent_directives(
+            'کدام پروژه؟ <options>["پروژه الف","پروژه ب"]</options>'
+            '<action>{"type":"update_field","entity":"project","id":2,'
+            '"field":"name","value":"نام جدید"}</action>'
+        )
+        self.assertEqual(answer, "کدام پروژه؟")
+        self.assertEqual(options, ["پروژه الف", "پروژه ب"])
+        self.assertEqual(action["field"], "name")
+
+    def test_tool_loop_executes_allowlisted_tool_then_returns_answer(self):
+        provider = Mock()
+        provider.complete.side_effect = [
+            {
+                "content": "",
+                "message": {"role": "assistant", "content": None, "tool_calls": [{
+                    "id": "call-1", "function": {
+                        "name": "explain_field",
+                        "arguments": '{"entity":"project","field":"name"}',
+                    },
+                }]},
+                "usage": {},
+            },
+            {
+                "content": "نام پروژه برای شناسایی پروژه استفاده می‌شود.",
+                "message": {"role": "assistant",
+                            "content": "نام پروژه برای شناسایی پروژه استفاده می‌شود."},
+                "usage": {},
+            },
+        ]
+        result = run_tool_loop(
+            self.user, [{"role": "user", "content": "نام پروژه چیست؟"}],
+            provider, allow_web_search=False,
+        )
+        self.assertIn("شناسایی پروژه", result["content"])
+        self.assertEqual(result["trace"], [{"tool": "explain_field", "ok": True}])
+        self.assertEqual(provider.complete.call_count, 2)
+
+    def test_tool_loop_responds_to_all_tool_calls_when_execution_is_limited(self):
+        calls = [
+            {"id": f"call-{index}", "function": {
+                "name": "explain_field",
+                "arguments": '{"entity":"project","field":"name"}',
+            }}
+            for index in range(7)
+        ]
+        provider = Mock()
+        provider.complete.side_effect = [
+            {
+                "content": "",
+                "message": {"role": "assistant", "content": None, "tool_calls": calls},
+                "usage": {},
+            },
+            {
+                "content": "پاسخ نهایی",
+                "message": {"role": "assistant", "content": "پاسخ نهایی"},
+                "usage": {},
+            },
+        ]
+
+        result = run_tool_loop(
+            self.user, [{"role": "user", "content": "توضیح بده"}],
+            provider, allow_web_search=False,
+        )
+
+        sent_messages = provider.complete.call_args_list[1].args[0]
+        tool_messages = [message for message in sent_messages if message["role"] == "tool"]
+        self.assertEqual(len(tool_messages), 7)
+        self.assertEqual(
+            {message["tool_call_id"] for message in tool_messages},
+            {f"call-{index}" for index in range(7)},
+        )
+        self.assertEqual(result["trace"][-1], {
+            "tool": "explain_field", "ok": False, "error": "tool_limit",
+        })
+
+    def test_tool_loop_uses_tool_free_fallback_after_round_limit(self):
+        provider = Mock()
+        repeated_tool_response = {
+            "content": "",
+            "message": {"role": "assistant", "content": None, "tool_calls": [{
+                "id": "call-1",
+                "function": {
+                    "name": "explain_field",
+                    "arguments": '{"entity":"project","field":"name"}',
+                },
+            }]},
+            "usage": {},
+        }
+        provider.complete.side_effect = [
+            repeated_tool_response,
+            {"content": "پاسخ نهایی بدون ابزار", "message": {
+                "role": "assistant", "content": "پاسخ نهایی بدون ابزار",
+            }, "usage": {}},
+        ]
+
+        result = run_tool_loop(
+            self.user, [{"role": "user", "content": "توضیح بده"}],
+            provider, allow_web_search=False, max_rounds=1,
+        )
+
+        self.assertEqual(result["content"], "پاسخ نهایی بدون ابزار")
+        self.assertEqual(provider.complete.call_args_list[1].kwargs["tools"], [])
+        self.assertEqual(result["trace"][-1]["error"], "tool_round_limit")
+
+    def test_expert_cannot_prepare_update_for_someone_elses_program(self):
+        owner = User.objects.create_user(
+            username="owner", email="owner@example.com", password="test-pass-123"
+        )
+        program = Program.objects.create(
+            title="طرح آزمایشی", program_type="پایگاه امداد جادهای",
+            province="تهران", city="تهران", license_state="دارد",
+            license_code="L-1", created_by=owner,
+        )
+        self.user.role = "EXPERT"
+        self.user.province = "تهران"
+        self.user.save(update_fields=["role", "province"])
+        with self.assertRaises(PermissionError):
+            preview_update(self.user, "program", program.pk, "title", "عنوان جدید")
+
+    def test_user_api_key_can_be_rotated_without_plaintext_storage(self):
+        policy = AIUserPolicy.objects.create(user=self.user, api_key="first-secret")
+        first_encrypted = policy.api_key_encrypted
+        policy.api_key = "second-secret"
+        policy.save()
+        policy.refresh_from_db()
+        self.assertEqual(policy.api_key, "")
+        self.assertNotEqual(policy.api_key_encrypted, first_encrypted)
+        self.assertEqual(policy.get_api_key(), "second-secret")
+
+    @patch("ai_assistant.provider.time.sleep")
+    @patch("ai_assistant.provider.requests.post")
+    def test_provider_retries_transient_gateway_errors(self, post, sleep):
+        AIPlatformSettings.objects.create(
+            provider_endpoint="https://api.example.test/v1",
+            provider_model="test-model",
+            request_timeout_seconds=5,
+        )
+        first = Mock(status_code=502, text="temporary gateway failure")
+        second = Mock(status_code=200)
+        second.json.return_value = {
+            "choices": [{"message": {"role": "assistant", "content": "سلام"}}],
+            "usage": {},
+        }
+        post.side_effect = [first, second]
+
+        result = GapGPTProvider(api_key="test-key").complete(
+            [{"role": "user", "content": "سلام"}], user=self.user
+        )
+
+        self.assertEqual(result["content"], "سلام")
+        self.assertEqual(post.call_count, 2)
+        sleep.assert_called_once_with(0.5)
+
+    @patch("ai_assistant.provider.requests.post")
+    def test_provider_reports_authentication_errors(self, post):
+        AIPlatformSettings.objects.create(
+            provider_endpoint="https://api.example.test/v1",
+            provider_model="test-model",
+        )
+        response = Mock(status_code=401, text="invalid api key")
+        response.raise_for_status.side_effect = requests.HTTPError("401")
+        post.return_value = response
+
+        with self.assertRaisesMessage(ProviderError, "کلید دسترسی"):
+            GapGPTProvider(api_key="test-key").complete(
+                [{"role": "user", "content": "سلام"}], user=self.user
+            )

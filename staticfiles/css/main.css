@@ -1,26 +1,282 @@
 /* Main CSS file for Project Manager Dashboard */
 
+/* Responsive foundation */
+:root {
+    --content-gutter: clamp(.75rem, 2vw, 2rem);
+    --surface-radius: clamp(.5rem, 1vw, 1rem);
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html {
+    min-width: 320px;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+}
+
 /* RTL Support */
 body {
     direction: rtl;
     text-align: right;
     font-family: 'Vazir', 'Tahoma', Arial, sans-serif;
+    font-size: clamp(.875rem, .82rem + .15vw, 1rem);
+    line-height: 1.65;
+    overflow-x: hidden;
+    overflow-wrap: anywhere;
+}
+
+img, svg, video, canvas, iframe {
+    max-width: 100%;
+    height: auto;
+}
+
+button, .btn, .nav-link, .dropdown-item, input[type="checkbox"],
+input[type="radio"], select {
+    min-height: 44px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+h1 { font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.35rem); }
+h2 { font-size: clamp(1.3rem, 1.1rem + .8vw, 2rem); }
+h3 { font-size: clamp(1.15rem, 1rem + .55vw, 1.6rem); }
+
+.container-fluid {
+    width: 100%;
+    max-width: 100%;
+    padding-inline: var(--content-gutter);
+}
+
+.row {
+    --bs-gutter-x: clamp(.75rem, 1.5vw, 1.5rem);
+}
+
+.content {
+    min-width: 0;
+    padding: var(--content-gutter) !important;
+}
+
+.content > * {
+    max-width: 100%;
+}
+
+.navbar {
+    min-height: 56px;
+    padding-inline: var(--content-gutter);
+}
+
+.navbar .container-fluid {
+    padding-inline: 0;
+    gap: .5rem;
+}
+
+.navbar-brand {
+    min-width: 0;
+    max-width: min(70vw, 22rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.navbar-toggler, .sidebar-toggle {
+    min-width: 44px;
+    padding: .5rem .7rem;
+}
+
+.sidebar {
+    min-width: 0;
+    min-height: auto;
+    padding: .75rem;
+    z-index: 1020;
+}
+
+.sidebar .nav-link {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    border-radius: .375rem;
+}
+
+.collapse-inner {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.collapse-item {
+    white-space: normal;
+    min-height: 44px;
+}
+
+.card, .alert, .modal-content, .form-control, .form-select {
+    max-width: 100%;
+}
+
+.card-header, .card-body {
+    overflow-wrap: anywhere;
+}
+
+.form-control, .form-select, textarea {
+    width: 100%;
+    min-height: 44px;
+    font-size: 1rem;
+}
+
+textarea {
+    max-width: 100%;
+}
+
+.btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+
+.table-responsive {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive > .table {
+    min-width: 38rem;
+}
+
+table {
+    max-width: 100%;
+}
+
+.modal-dialog {
+    width: min(calc(100% - 1.5rem), 800px);
+    max-width: 100%;
+    margin-inline: auto;
+}
+
+.modal-body {
+    overflow-wrap: anywhere;
+}
+
+.pagination {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem;
+}
+
+.pagination .page-link {
+    min-width: 44px;
+    min-height: 44px;
+    display: grid;
+    place-items: center;
+}
+
+.dropdown-menu {
+    max-width: min(calc(100vw - 1.5rem), 22rem);
+    overflow-wrap: anywhere;
+}
+
+@media (min-width: 576px) {
+    .content {
+        padding: clamp(1rem, 2vw, 1.5rem) !important;
+    }
+}
+
+@media (min-width: 768px) {
+    .sidebar {
+        min-height: calc(100vh - 56px);
+        padding-top: 1.25rem;
+    }
+
+    .content {
+        padding: clamp(1.25rem, 2vw, 2rem) !important;
+    }
+}
+
+@media (min-width: 992px) {
+    .sidebar {
+        position: sticky;
+        top: 0;
+        align-self: flex-start;
+        height: calc(100vh - 56px);
+        overflow-y: auto;
+    }
+}
+
+@media (min-width: 1200px) {
+    .content {
+        padding-inline: clamp(1.5rem, 2.5vw, 2.5rem) !important;
+    }
+}
+
+@media (min-width: 1400px) {
+    .content {
+        padding-inline: clamp(2rem, 3vw, 4rem) !important;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .sidebar {
+        background-color: #343a40;
+        border-top: 1px solid rgba(255,255,255,.12);
+    }
+
+    .sidebar.collapse:not(.show) {
+        display: none;
+    }
+
+    .sidebar .nav {
+        max-height: min(70vh, 34rem);
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .navbar-brand {
+        font-size: 1rem;
+    }
+
+    .content {
+        padding-inline: .75rem !important;
+    }
+
+    .card-body, .card-header {
+        padding: .75rem;
+    }
+
+    .table-responsive > .table {
+        min-width: 34rem;
+    }
+
+    .btn-group,
+    .btn-group > .btn {
+        width: 100%;
+    }
+
+    .btn-group > .btn + .btn {
+        margin-inline-start: 0;
+        margin-top: .35rem;
+    }
+
+    .modal-dialog {
+        width: calc(100% - 1rem);
+        margin: .5rem auto;
+    }
 }
 
 /* Bootstrap RTL overrides */
 .container-fluid {
-    padding-right: 15px;
-    padding-left: 15px;
+    padding-right: var(--content-gutter);
+    padding-left: var(--content-gutter);
 }
 
 .row {
     margin-right: -15px;
     margin-left: -15px;
-}
-
-.col-md-6, .col-12 {
-    padding-right: 15px;
-    padding-left: 15px;
 }
 
 /* Form styling */
@@ -150,4 +406,4 @@ body {
 .currency-input {
     text-align: left;
     direction: ltr;
-} 
+}

@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-
 {% block title %}Admin Dashboard{% endblock %}
 
 {% block content %}
@@ -153,6 +152,95 @@
                 </div>
             </div>
         </div>
+
+        <div class="col-12 mb-4">
+            <section class="ai-control-panel">
+                <div class="ai-control-panel__header">
+                    <div>
+                        <span class="ai-control-panel__eyebrow"><i class="bi bi-stars"></i> AI Administration</span>
+                        <h2>AI Control Center</h2>
+                        <p>Manage provider access, user policies, limits, permissions, and consumption.</p>
+                    </div>
+                    <div class="ai-control-panel__header-actions">
+                        <span class="ai-control-panel__status {% if ai_settings.enabled %}is-on{% endif %}">
+                            <span></span>{% if ai_settings.enabled %}Service enabled{% else %}Service disabled{% endif %}
+                        </span>
+                        <a class="btn btn-light btn-sm" href="{% url 'admin:ai_assistant_aiplatformsettings_change' ai_settings.pk %}">
+                            <i class="bi bi-sliders"></i> Provider settings
+                        </a>
+                    </div>
+                </div>
+
+                <div class="ai-control-panel__body">
+                    <div class="ai-control-panel__topline">
+                        <form method="post" action="{% url 'dashboard:toggle_ai_platform' %}" class="ai-control-panel__switch">
+                            {% csrf_token %}
+                            <div>
+                                <strong>Global AI service</strong>
+                                <small>Pause all AI requests without deleting configuration or usage history.</small>
+                            </div>
+                            <label class="form-switch">
+                                <input type="checkbox" name="ai_enabled" {% if ai_settings.enabled %}checked{% endif %} onchange="this.form.submit()">
+                                <span></span>
+                            </label>
+                        </form>
+                        <div class="ai-control-panel__provider">
+                            <span>Provider</span><strong>{{ ai_settings.provider_name|default:"Not configured" }}</strong>
+                            <span>Model</span><strong>{{ ai_settings.provider_model|default:"Default" }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="ai-metric-grid">
+                        <div class="ai-metric"><span><i class="bi bi-chat-dots"></i> Requests today</span><strong>{{ ai_usage_today.requests|default:0 }}</strong><small>{{ ai_messages_today }} user messages</small></div>
+                        <div class="ai-metric"><span><i class="bi bi-calendar3"></i> Requests this month</span><strong>{{ ai_usage_month.requests|default:0 }}</strong><small>{{ ai_messages_month }} user messages</small></div>
+                        <div class="ai-metric"><span><i class="bi bi-people"></i> Managed users</span><strong>{{ ai_policy_count }}</strong><small>{{ ai_enabled_policy_count }} enabled policies</small></div>
+                        <div class="ai-metric"><span><i class="bi bi-shield-exclamation"></i> Attention needed</span><strong>{{ ai_error_count }}</strong><small>errors this month</small></div>
+                    </div>
+
+                    <div class="ai-control-panel__columns">
+                        <div>
+                            <h6>Administration</h6>
+                            <div class="ai-admin-links">
+                                <a href="{% url 'admin:ai_assistant_aiplatformsettings_change' ai_settings.pk %}"><i class="bi bi-key"></i><span><strong>API & provider settings</strong><small>Configure provider, model, API keys, and quotas</small></span><i class="bi bi-chevron-left"></i></a>
+                                <a href="{% url 'admin:ai_assistant_aiuserpolicy_changelist' %}"><i class="bi bi-person-lock"></i><span><strong>User policies</strong><small>Enable users, set daily/monthly limits, web and write permissions</small></span><i class="bi bi-chevron-left"></i></a>
+                                <a href="{% url 'admin:ai_assistant_airolepolicy_changelist' %}"><i class="bi bi-diagram-3"></i><span><strong>Role policies</strong><small>Set default AI permissions and limits by role</small></span><i class="bi bi-chevron-left"></i></a>
+                                <a href="{% url 'admin:ai_assistant_aiusagerecord_changelist' %}"><i class="bi bi-bar-chart-line"></i><span><strong>Usage records</strong><small>{{ ai_usage_month.input_tokens|default:0 }} input / {{ ai_usage_month.output_tokens|default:0 }} output tokens this month</small></span><i class="bi bi-chevron-left"></i></a>
+                            </div>
+                        </div>
+                        <div>
+                            <h6>Operational monitoring</h6>
+                            <div class="ai-admin-links">
+                                <a href="{% url 'admin:ai_assistant_aiauditlog_changelist' %}"><i class="bi bi-journal-check"></i><span><strong>Audit log</strong><small>Review AI requests, confirmations, and errors</small></span><i class="bi bi-chevron-left"></i></a>
+                                <a href="{% url 'admin:ai_assistant_aiconversation_changelist' %}"><i class="bi bi-chat-square-text"></i><span><strong>Conversations</strong><small>{{ ai_active_conversations }} conversations active this month</small></span><i class="bi bi-chevron-left"></i></a>
+                                <a href="{% url 'admin:ai_assistant_aipendingaction_changelist' %}"><i class="bi bi-hourglass-split"></i><span><strong>Pending actions</strong><small>{{ ai_pending_actions }} awaiting confirmation</small></span><i class="bi bi-chevron-left"></i></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ai-users-table">
+                        <div class="ai-users-table__heading"><h6>Top users by AI requests this month</h6><a href="{% url 'admin:ai_assistant_aiuserpolicy_changelist' %}">Manage all users <i class="bi bi-arrow-up-left"></i></a></div>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead><tr><th>User</th><th>Role</th><th>Requests</th><th>Policy</th><th>Limits</th></tr></thead>
+                                <tbody>
+                                {% for ai_user in ai_users %}
+                                    <tr>
+                                        <td><strong>{{ ai_user.get_full_name|default:ai_user.username }}</strong><small>{{ ai_user.email }}</small></td>
+                                        <td>{{ ai_user.get_role_display|default:ai_user.role }}</td>
+                                        <td><strong>{{ ai_user.ai_requests }}</strong></td>
+                                        <td>{% if ai_user.ai_policy.is_enabled %}<span class="badge text-bg-success">Enabled</span>{% else %}<span class="badge text-bg-secondary">Disabled</span>{% endif %}</td>
+                                        <td>{{ ai_user.ai_policy.daily_message_limit }}/day · {{ ai_user.ai_policy.monthly_message_limit }}/month</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr><td colspan="5" class="text-center text-muted py-3">No user AI policies have been created yet.</td></tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

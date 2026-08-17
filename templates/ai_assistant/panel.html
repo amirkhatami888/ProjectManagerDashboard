@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<main class="container py-4" dir="rtl">
+  {% if not ai_policy.is_enabled %}
+    <div class="alert alert-warning">دستیار هوشمند برای نقش یا حساب کاربری شما غیرفعال است.</div>
+  {% endif %}
+  <section class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>دستیار هوشمند پروژه</span>
+      <div class="d-flex align-items-center gap-2">
+        <small class="text-muted">پاسخ‌ها بر اساس محدوده دسترسی شما تولید می‌شوند</small>
+        <button id="newAiChat" type="button" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-plus-lg"></i> گفتگوی جدید
+        </button>
+      </div>
+    </div>
+    <div id="aiMessages" class="card-body" style="min-height: 320px"></div>
+    <form id="aiChatForm" class="card-footer d-flex gap-2">
+      {% csrf_token %}
+      <input id="aiMessage" class="form-control" autocomplete="off"
+             placeholder="سؤال خود را درباره طرح، پروژه یا زیرپروژه بنویسید…" required>
+      <button class="btn btn-primary" type="submit">ارسال</button>
+    </form>
+  </section>
+</main>
+<script>
+(() => {
+  const form = document.getElementById('aiChatForm');
+  const input = document.getElementById('aiMessage');
+  const messages = document.getElementById('aiMessages');
+  const csrf = form.querySelector('[name=csrfmiddlewaretoken]').value;
+  let conversationId = null;
+  document.getElementById('newAiChat').addEventListener('click', () => {
+    conversationId = null;
+    messages.innerHTML = '';
+    input.value = '';
+    input.focus();
+  });
+  function addMessage(label, text) {
+    const row = document.createElement('p');
+    const title = document.createElement('b');
+    title.textContent = label + ': ';
+    row.append(title, document.createTextNode(text));
+    messages.appendChild(row);
+  }
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const message = input.value.trim();
+    if (!message) return;
+    addMessage('شما', message);
+    input.value = '';
+    const response = await fetch('{% url "ai_assistant:chat" %}', {
+      method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrf},
+      body: JSON.stringify({message, conversation_id: conversationId})
+    });
+    const data = await response.json();
+    conversationId = data.conversation_id || conversationId;
+    const answer = data.answer || data.error || '';
+    const row = document.createElement('div');
+    const title = document.createElement('strong');
+    title.textContent = 'دستیار: ';
+    row.appendChild(title);
+    if (data.answer && window.renderAiMarkdown) {
+      const formatted = document.createElement('div');
+      window.renderAiMarkdown(formatted, answer);
+      row.appendChild(formatted);
+    } else {
+      row.appendChild(document.createTextNode(answer));
+    }
+    messages.appendChild(row);
+    messages.scrollTop = messages.scrollHeight;
+  });
+})();
+</script>
+<script src="{% static 'ai_assistant/markdown.js' %}"></script>
+{% endblock %}
