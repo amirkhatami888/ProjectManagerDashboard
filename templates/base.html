@@ -109,7 +109,6 @@
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     <link rel="stylesheet" href="{% static 'css/rtl.css' %}">
     <link rel="stylesheet" href="{% static 'css/currency-input.css' %}">
-    <link rel="stylesheet" href="{% static 'ai_assistant/assistant.css' %}">
     {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -167,11 +166,6 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'admin:index' %}">
                             <i class="bi bi-gear"></i> پنل مدیریت
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if '/dashboard/admin/ai/' in request.path %}active{% endif %}" href="{% url 'dashboard:ai_control_center' %}">
-                            <i class="bi bi-stars"></i> مرکز کنترل هوش مصنوعی
                         </a>
                     </li>
                     {% endif %}
@@ -336,53 +330,6 @@
             </main>
         </div>
     </div>
-
-    {% if user.is_authenticated %}
-    <button type="button" class="rcs-ai-launcher" id="rcsAiLauncher" aria-label="باز کردن دستیار هوشمند">
-        <span class="rcs-ai-orbit"></span>
-        <span class="rcs-ai-launcher-icon"><i class="bi bi-stars"></i></span>
-        <span class="rcs-ai-launcher-label">دستیار هوشمند</span>
-    </button>
-    <div class="rcs-ai-backdrop" id="rcsAiBackdrop"></div>
-    <aside class="rcs-ai-drawer" id="rcsAiDrawer" aria-label="دستیار هوشمند فارسی">
-        <div class="rcs-ai-header">
-            <div class="rcs-ai-brand">
-                <span class="rcs-ai-brand-icon"><i class="bi bi-stars"></i></span>
-                <span><strong>دستیار هوشمند</strong><small>سامانه مدیریت پروژه RCS</small></span>
-            </div>
-            <div class="rcs-ai-header-actions">
-                <button type="button" class="rcs-ai-new-chat" id="rcsAiNewChat" aria-label="گفتگوی جدید" title="گفتگوی جدید">
-                    <i class="bi bi-plus-lg"></i><span>گفتگوی جدید</span>
-                </button>
-                <button type="button" class="rcs-ai-close" id="rcsAiClose" aria-label="بستن"><i class="bi bi-x-lg"></i></button>
-            </div>
-        </div>
-        <div class="rcs-ai-status"><span class="rcs-ai-online-dot"></span><span>آنلاین و آماده پاسخگویی</span><small>داده‌ها بر اساس سطح دسترسی شما تحلیل می‌شوند</small></div>
-        <div class="rcs-ai-messages" id="rcsAiMessages">
-            <div class="rcs-ai-welcome">
-                <span class="rcs-ai-welcome-sparkle"><i class="bi bi-stars"></i></span>
-                <h5>سلام، چه کمکی از من برمی‌آید؟</h5>
-                <p>می‌توانم طرح‌ها، پروژه‌ها، پیشرفت و وضعیت مالی را برایتان بررسی کنم.</p>
-            </div>
-        </div>
-        <form class="rcs-ai-form" id="rcsAiForm">
-            {% csrf_token %}
-            {% if ai_web_search_enabled %}
-            <label class="rcs-ai-web"><input type="checkbox" id="rcsAiWeb"><span>استفاده از جستجوی وب</span><i class="bi bi-globe2"></i></label>
-            {% endif %}
-            {% if ai_local_js_enabled %}
-            <label class="rcs-ai-web"><input type="checkbox" id="rcsAiLocalJs"><span>اجرای اسکریپت محلی</span><i class="bi bi-terminal"></i></label>
-            {% endif %}
-            <div class="rcs-ai-input-wrap">
-                <textarea id="rcsAiInput" rows="1" placeholder="پیام خود را بنویسید..." required></textarea>
-                <button type="submit" aria-label="ارسال"><i class="bi bi-send-fill"></i></button>
-            </div>
-            <div class="rcs-ai-hint"><i class="bi bi-shield-check"></i> پاسخ‌ها با توجه به دسترسی شما ارائه می‌شوند</div>
-        </form>
-    </aside>
-    <script src="{% static 'ai_assistant/markdown.js' %}"></script>
-    <script src="{% static 'ai_assistant/assistant.js' %}"></script>
-    {% endif %}
 
     <!-- Footer -->
     <footer class="bg-light py-3 text-center">
