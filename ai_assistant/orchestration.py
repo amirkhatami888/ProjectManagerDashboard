@@ -7,6 +7,8 @@ from .domain_tools import (
 )
 from .search import tavily_search
 from .tools import explain_field
+from .js_runner import run_local_js
+import os
 
 
 def _function(name, description, properties=None, required=None):
@@ -47,13 +49,28 @@ BASE_TOOL_SCHEMAS = [
 
 WEB_TOOL_SCHEMA = _function(
     "web_search",
-    "جستجوی اینترنت برای قیمت روز، ضوابط یا اطلاعات بیرون سامانه؛ نتیجه وب قابل اعتماد قطعی نیست",
-    {"query": {"type": "string"}, "limit": {"type": "integer", "minimum": 1, "maximum": 8}},
+    "جستجوی اینترنت با نتیجه، امتیاز، تاریخ و دامنه منبع؛ پاسخ باید با ارجاع به URL و تاریخ منبع ارائه شود",
+    {
+        "query": {"type": "string"},
+        "limit": {"type": "integer", "minimum": 1, "maximum": 8},
+        "domains": {"type": "array", "items": {"type": "string"}, "maxItems": 10},
+        "days": {"type": "integer", "minimum": 1, "maximum": 3650},
+    },
     ["query"],
 )
 
+LOCAL_JS_TOOL_SCHEMA = _function(
+    "run_local_js",
+    "اجرای یک فایل JavaScript محلی از پوشه مجاز سامانه؛ فقط برای اسکریپت‌های از پیش موجود و غیرتغییردهنده",
+    {
+        "file_path": {"type": "string", "description": "مسیر نسبی فایل .js در پوشه مجاز"},
+        "arguments": {"type": "array", "items": {"type": "string"}, "maxItems": 20},
+    },
+    ["file_path"],
+)
 
-def _execute_tool(user, name, args, allow_web_search):
+
+def _execute_tool(user, name, args, allow_web_search, allow_local_js):
     if name == "system_overview":
         return system_overview(user)
     if name == "search_site":
@@ -73,16 +90,26 @@ def _execute_tool(user, name, args, allow_web_search):
     if name == "web_search":
         if not allow_web_search:
             raise PermissionError("جستجوی وب برای این حساب یا این درخواست فعال نیست.")
-        return tavily_search(args["query"], limit=args.get("limit", 5), user=user)
+        return tavily_search(
+            args["query"], limit=args.get("limit", 5),
+            domains=args.get("domains"), days=args.get("days"), user=user,
+        )
+    if name == "run_local_js":
+        if not allow_local_js:
+            raise PermissionError("اجرای JavaScript محلی برای این حساب یا سرور فعال نیست.")
+        return run_local_js(args["file_path"], args.get("arguments", []))
     raise ValueError("ابزار ناشناخته است.")
 
 
-def run_tool_loop(user, messages, provider, allow_web_search=False, max_rounds=5):
+def run_tool_loop(user, messages, provider, allow_web_search=False,
+                  allow_local_js=False, max_rounds=5):
     """Return final text and a safe trace; authorization is repeated per tool."""
     current = list(messages)
     schemas = list(BASE_TOOL_SCHEMAS)
     if allow_web_search:
         schemas.append(WEB_TOOL_SCHEMA)
+    if allow_local_js and os.getenv("AI_LOCAL_JS_ENABLED", "false").lower() in {"1", "true", "yes"}:
+        schemas.append(LOCAL_JS_TOOL_SCHEMA)
     trace = []
     for _round in range(max_rounds):
         result = provider.complete(current, tools=schemas, user=user)
@@ -102,7 +129,7 @@ def run_tool_loop(user, messages, provider, allow_web_search=False, max_rounds=5
             else:
                 try:
                     args = json.loads(function.get("arguments") or "{}")
-                    value = _execute_tool(user, name, args, allow_web_search)
+                    value = _execute_tool(user, name, args, allow_web_search, allow_local_js)
                     trace.append({"tool": name, "ok": True})
                 except Exception as exc:
                     value = {"error": str(exc)}

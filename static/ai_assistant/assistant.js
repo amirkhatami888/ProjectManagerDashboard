@@ -142,7 +142,8 @@
           message: text,
           conversation_id: conversationId,
           context_type: window.location.pathname.slice(0, 30),
-          use_web: Boolean(document.getElementById('rcsAiWeb')?.checked)
+          use_web: Boolean(document.getElementById('rcsAiWeb')?.checked),
+          use_local_js: Boolean(document.getElementById('rcsAiLocalJs')?.checked)
         })
       });
       const responseText = await response.text();

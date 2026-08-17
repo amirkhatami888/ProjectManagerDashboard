@@ -10,6 +10,10 @@ from .tools import preview_update
 from .views import _extract_agent_directives
 from .models import AIPlatformSettings, AIUserPolicy, AIRolePolicy
 from .provider import GapGPTProvider, ProviderError
+from .search import tavily_search
+from .js_runner import run_local_js
+import tempfile
+from pathlib import Path
 
 
 class AIAssistantTests(TestCase):
@@ -249,3 +253,53 @@ class AIAssistantTests(TestCase):
             GapGPTProvider(api_key="test-key").complete(
                 [{"role": "user", "content": "سلام"}], user=self.user
             )
+
+    @patch("ai_assistant.search.requests.post")
+    def test_web_search_returns_citation_ready_results(self, post):
+        AIPlatformSettings.objects.create(
+            tavily_api_key_encrypted="",
+            request_timeout_seconds=5,
+        )
+        response = Mock(status_code=200)
+        response.json.return_value = {
+            "answer": "خلاصه منبع",
+            "results": [{
+                "title": "منبع رسمی",
+                "url": "https://example.gov/rule",
+                "content": "متن منبع",
+                "score": 0.91,
+                "published_date": "2026-08-01",
+            }],
+        }
+        post.return_value = response
+        with patch.dict("os.environ", {"TAVILY_API_KEY": "test-key"}):
+            result = tavily_search("ضابطه جدید", user=self.user)
+        self.assertEqual(result["results"][0]["domain"], "example.gov")
+        self.assertEqual(result["results"][0]["source_type"], "government")
+        self.assertEqual(result["answer"], "خلاصه منبع")
+        self.assertEqual(post.call_args.kwargs["json"]["search_depth"], "advanced")
+
+    @patch("ai_assistant.js_runner.subprocess.run")
+    def test_local_js_runner_restricts_path_and_uses_node_without_shell(self, run):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            script = root / "hello.js"
+            script.write_text("console.log('ok')", encoding="utf-8")
+            completed = Mock(returncode=0, stdout="ok\n", stderr="")
+            run.return_value = completed
+            with patch.dict("os.environ", {
+                "AI_LOCAL_JS_ENABLED": "true",
+                "AI_JS_WORKSPACE_ROOT": str(root),
+            }):
+                result = run_local_js("hello.js", ["one"])
+        self.assertTrue(result["ok"])
+        self.assertEqual(run.call_args.args[0][3:], [str(script), "one"])
+        self.assertFalse(run.call_args.kwargs["shell"])
+
+    def test_local_js_runner_rejects_path_traversal(self):
+        with patch.dict("os.environ", {
+            "AI_LOCAL_JS_ENABLED": "true",
+            "AI_JS_WORKSPACE_ROOT": tempfile.gettempdir(),
+        }):
+            with self.assertRaises(PermissionError):
+                run_local_js("../outside.js")

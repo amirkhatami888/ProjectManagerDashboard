@@ -370,6 +370,9 @@
             {% if ai_web_search_enabled %}
             <label class="rcs-ai-web"><input type="checkbox" id="rcsAiWeb"><span>استفاده از جستجوی وب</span><i class="bi bi-globe2"></i></label>
             {% endif %}
+            {% if ai_local_js_enabled %}
+            <label class="rcs-ai-web"><input type="checkbox" id="rcsAiLocalJs"><span>اجرای اسکریپت محلی</span><i class="bi bi-terminal"></i></label>
+            {% endif %}
             <div class="rcs-ai-input-wrap">
                 <textarea id="rcsAiInput" rows="1" placeholder="پیام خود را بنویسید..." required></textarea>
                 <button type="submit" aria-label="ارسال"><i class="bi bi-send-fill"></i></button>

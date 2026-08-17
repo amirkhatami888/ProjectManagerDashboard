@@ -91,6 +91,9 @@ def assistant_chat(request):
         history = [{"role": m.role, "content": m.content}
                    for m in conversation.messages.filter(role__in=["user", "assistant"]).order_by("created_at")]
         use_web = bool(payload.get("use_web")) and policy.allow_web_search
+        use_local_js = bool(payload.get("use_local_js")) and bool(
+            getattr(request.user, "is_staff", False)
+        )
         messages = make_messages(history, query, conversation.context_type, conversation.context_id)
         provider = GapGPTProvider(
             api_key=policy.get_api_key() or None,
@@ -98,7 +101,7 @@ def assistant_chat(request):
         )
         result = run_tool_loop(
             request.user, messages, provider,
-            allow_web_search=use_web, max_rounds=5,
+            allow_web_search=use_web, allow_local_js=use_local_js, max_rounds=5,
         )
         answer, options, requested_action = _extract_agent_directives(result["content"])
         action = None
@@ -119,11 +122,12 @@ def assistant_chat(request):
                 answer += f"\n\nامکان آماده‌سازی این تغییر وجود ندارد: {exc}"
         AIMessage.objects.create(conversation=conversation, role="user", content=query)
         AIMessage.objects.create(conversation=conversation, role="assistant", content=answer,
-                                 metadata={"web_search": use_web, "tools": result["trace"],
+                                 metadata={"web_search": use_web, "local_js": use_local_js,
+                                           "tools": result["trace"],
                                            "options": options})
         AIAuditLog.objects.create(
             user=request.user, action="chat",
-            details={"web_search": use_web, "tools": result["trace"],
+            details={"web_search": use_web, "local_js": use_local_js, "tools": result["trace"],
                      "conversation_id": conversation.pk},
         )
         return JsonResponse({"ok": True, "answer": answer, "action": action,
