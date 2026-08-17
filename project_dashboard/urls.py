@@ -29,6 +29,7 @@ def _url_prefix_path(url):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('site-logo/', views.site_logo, name='site_logo'),
     path('accounts/', include('accounts.urls')),
     path('', RedirectView.as_view(url='/accounts/login/', permanent=True), name='home'),
     path('user/login/', RedirectView.as_view(url='/accounts/login/', permanent=True), name='old_login'),

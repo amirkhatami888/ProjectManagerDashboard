@@ -1,11 +1,23 @@
+from pathlib import Path
+
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.conf import settings
+from django.http import FileResponse, HttpResponse, Http404
 
 def home(request):
     """
     Render the login page directly.
     """
     return render(request, 'accounts/login.html')
+
+
+def site_logo(request):
+    """Serve the login logo through Django when web-server static mapping fails."""
+    logo_path = Path(settings.BASE_DIR) / 'static' / 'image' / 'logo.png'
+    if not logo_path.is_file():
+        raise Http404("Logo file not found")
+    return FileResponse(logo_path.open('rb'), content_type='image/png')
+
 
 def debug_info(request):
     """
@@ -34,4 +46,4 @@ def gantt_test(request):
     return render(request, 'gantt_test.html')
 
 def index(request):
-    return HttpResponse("Project Dashboard - Index") 
+    return HttpResponse("Project Dashboard - Index")
