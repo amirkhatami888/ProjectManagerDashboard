@@ -3388,3 +3388,7 @@ ERROR 2026-08-17 15:29:20,045 basehttp 59676 135375101818560 "POST /ai-assistant
 ERROR 2026-08-17 15:31:56,958 log 59836 128823977948864 Internal Server Error: /ai-assistant/chat/
 ERROR 2026-08-17 15:31:56,958 log 59836 128823977948864 Internal Server Error: /ai-assistant/chat/
 ERROR 2026-08-17 15:31:56,990 basehttp 59836 128823977948864 "POST /ai-assistant/chat/ HTTP/1.1" 500 370
+ERROR 2026-08-17 18:04:35,377 provider 69827 127153066526400 GapGPT request failed: status=401 endpoint=https://api.gapgpt.app/v1/chat/completions model=gpt-5.6-luna body={"error":{"code":"","message":"Invalid token (request id: 202608171434349414793668268d9d68SKNU7cH)","type":"api_provider_error"}}
+ERROR 2026-08-17 18:04:35,532 log 69827 127153066526400 Bad Gateway: /ai-assistant/chat/
+ERROR 2026-08-17 18:04:35,532 log 69827 127153066526400 Bad Gateway: /ai-assistant/chat/
+ERROR 2026-08-17 18:04:35,533 basehttp 69827 127153066526400 "POST /ai-assistant/chat/ HTTP/1.1" 502 349

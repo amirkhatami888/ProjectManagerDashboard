@@ -32,7 +32,7 @@
             const response = await fetch('/ai-assistant/chat/', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
-                body: JSON.stringify({message: text})
+                body: JSON.stringify({message: text, use_web: true})
             });
             const data = await response.json();
             loading.remove();

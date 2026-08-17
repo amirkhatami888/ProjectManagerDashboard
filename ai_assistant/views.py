@@ -13,6 +13,16 @@ from .services import make_messages
 from .tools import explain_field, preview_update, confirm_update
 
 
+def _asks_for_web(query):
+    """Detect explicit requests for current Internet/web information."""
+    text = (query or "").lower()
+    markers = (
+        "از روی اینترنت", "اینترنت", "جستجوی وب", "روی وب", "منبع وب",
+        "internet", "web search", "online", "search the web",
+    )
+    return any(marker in text for marker in markers)
+
+
 def get_policy(user):
     policy, _ = AIUserPolicy.objects.get_or_create(user=user)
     return policy
@@ -97,7 +107,9 @@ def assistant_chat(request):
 
         history = [{"role": m.role, "content": m.content}
                    for m in conversation.messages.filter(role__in=["user", "assistant"]).order_by("created_at")]
-        use_web = bool(payload.get("use_web")) and policy.allow_web_search
+        # Explicit wording such as «از روی اینترنت بگو» should not depend on
+        # a hidden checkbox, especially in the admin/CEO quick panel.
+        use_web = (bool(payload.get("use_web")) or _asks_for_web(query)) and policy.allow_web_search
         use_local_js = bool(payload.get("use_local_js")) and bool(
             getattr(request.user, "is_staff", False)
         )

@@ -53,6 +53,11 @@ class AIAssistantTests(TestCase):
         self.assertTrue(policy.allow_write_actions)
         self.assertTrue(policy.can_use())
 
+    def test_explicit_internet_request_enables_web_search(self):
+        from .views import _asks_for_web
+        self.assertTrue(_asks_for_web("از روی اینترنت بگو ساختمان صلح کجاست"))
+        self.assertFalse(_asks_for_web("پیشرفت پروژه را بگو"))
+
     def test_panel_requires_login(self):
         response = self.client.get(reverse("ai_assistant:panel"))
         self.assertEqual(response.status_code, 302)
@@ -305,6 +310,18 @@ class AIAssistantTests(TestCase):
         self.assertEqual(result["results"][0]["source_type"], "government")
         self.assertEqual(result["answer"], "خلاصه منبع")
         self.assertEqual(post.call_args.kwargs["json"]["search_depth"], "advanced")
+
+    @patch("ai_assistant.search.requests.get")
+    def test_web_search_uses_no_key_public_fallback(self, get):
+        AIPlatformSettings.objects.create(request_timeout_seconds=5)
+        response = Mock(status_code=200, text=(
+            '<a class="result__a" href="https://example.org/address">ساختمان صلح</a>'
+            '<div class="result__snippet">تهران، خیابان ولیعصر</div>'
+        ))
+        get.return_value = response
+        result = tavily_search("ساختمان صلح", user=self.user)
+        self.assertEqual(result["results"][0]["title"], "ساختمان صلح")
+        self.assertEqual(result["results"][0]["domain"], "example.org")
 
     @patch("ai_assistant.js_runner.subprocess.run")
     def test_local_js_runner_restricts_path_and_uses_node_without_shell(self, run):
