@@ -24,8 +24,8 @@
                             <td>{{ subproject.project.name }}</td>
                         </tr>
                         <tr>
-                            <th>نوع زیرپروژه:</th>
-                            <td>{{ subproject.get_sub_project_type_display }}</td>
+                            <th>مرحله جاری پروژه:</th>
+                            <td>{{ subproject.get_project_stage_display }}</td>
                         </tr>
                         <tr>
                             <th>اولویت زیرپروژه:</th>
@@ -48,8 +48,8 @@
                             <td>{{ subproject.physical_progress }}%</td>
                         </tr>
                         <tr>
-                            <th>نوع زیرپروژه:</th>
-                            <td>{{ subproject.sub_project_type }}</td>
+                            <th>مرحله جاری پروژه:</th>
+                            <td>{{ subproject.project_stage }}</td>
                         </tr>
                     </table>
                 </div>
@@ -78,7 +78,7 @@
                             <th>ارتباط زیر پروژه:</th>
                             <td>
                                 {{ subproject.get_relationship_type_display|default:"-" }} 
-                                {{ subproject.related_subproject.sub_project_type }} #{{ subproject.related_subproject.sub_project_number }}
+                                {{ subproject.related_subproject.project_stage }} #{{ subproject.related_subproject.sub_project_number }}
                             </td>
                         </tr>
                         <tr>

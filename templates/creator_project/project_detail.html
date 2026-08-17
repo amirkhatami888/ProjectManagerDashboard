@@ -1089,7 +1089,7 @@
                         <a href="{% url 'creator_subproject:subproject_detail' subproject.id %}" class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">
-                                    {{ subproject.sub_project_type }}
+                                    {{ subproject.project_stage }}
                                     {% if subproject.name %}- {{ subproject.name }}{% endif %}
                                 </h6>
                                 <small>#{{ subproject.sub_project_number }}</small>
@@ -1247,7 +1247,7 @@
             {% for subproject in subprojects %}
             {
                 id: {{ subproject.id }},
-                name: "{{ subproject.sub_project_type }}{% if subproject.name %} - {{ subproject.name }}{% endif %}",
+                name: "{{ subproject.project_stage }}{% if subproject.name %} - {{ subproject.name }}{% endif %}",
                 start: {% if subproject.contract_amount and subproject.start_date %}"{{ subproject.start_date|date:'Y-m-d' }}"{% else %}""{% endif %},
                 end: {% if subproject.contract_amount and subproject.end_date %}"{{ subproject.end_date|date:'Y-m-d' }}"{% else %}""{% endif %},
                 progress: {{ subproject.physical_progress }},

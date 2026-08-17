@@ -59,7 +59,7 @@ class SubProject(models.Model):
         ('تامین اعتبار', 'تامین اعتبار'),
     ]
     
-    # EXECUTIVE_STAGE_CHOICES removed - field moved to sub_project_type
+    # EXECUTIVE_STAGE_CHOICES removed - field moved to project_stage
     
     CONTRACT_TYPE_CHOICES = [
         ('سرجمع', 'سرجمع'),
@@ -134,13 +134,13 @@ class SubProject(models.Model):
     # Main fields
     project = models.ForeignKey('creator_project.Project', on_delete=models.CASCADE, related_name='subprojects')
     name = models.CharField(max_length=255, blank=True, null=True, verbose_name="نام زیرپروژه")
-    sub_project_type = models.CharField(max_length=100, choices=SUB_PROJECT_TYPE_CHOICES, verbose_name="نوع زیرپروژه")
+    project_stage = models.CharField(max_length=100, choices=SUB_PROJECT_TYPE_CHOICES, verbose_name="مرحله جاری پروژه")
     sub_project_number = models.PositiveSmallIntegerField(help_text="Must be between 1-5")
     start_date = models.DateField(null=True, blank=True, verbose_name="تاریخ شروع زیر پروژه")
     end_date = models.DateField(null=True, blank=True, verbose_name="تاریخ پایان زیر پروژه")
     state = models.CharField(max_length=100, choices=STATE_CHOICES)
     physical_progress = models.DecimalField(max_digits=5, decimal_places=2, default=0,null=True, blank=True)
-    # executive_stage field removed - functionality moved to sub_project_type
+    # executive_stage field removed - functionality moved to project_stage
     remaining_work = models.TextField(null=True, blank=True)
     is_suportting_charity = models.CharField(max_length=25, choices=CHARITY_STATE_CHOICES, default='ندارد', verbose_name="مشارکت خیرین")
     description = models.TextField(null=True, blank=True, verbose_name="توضیحات")
@@ -164,6 +164,21 @@ class SubProject(models.Model):
     # Adjustment fields - updated field names
     has_adjustment = models.CharField(max_length=10, choices=HAS_ADJUSTMENT_CHOICES, default='ندارد', verbose_name="افزایش 25 درصدی قرار داد")
     adjustment_coefficient = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True, verbose_name="درصد افزایش مبلغ قرار داد")
+
+    has_tax_insurance_increase = models.CharField(
+        max_length=10,
+        choices=HAS_ADJUSTMENT_CHOICES,
+        default='ندارد',
+        verbose_name="افزایش مبلغ برای مالیات ارزش افزوده و بیمه",
+    )
+    tax_insurance_increase_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        default=0,
+        verbose_name="درصد افزایش قرارداد مالیات ارزش افزوده و بیمه",
+    )
     
     # 25% Increase fields
     has_25_percent_increase = models.CharField(
@@ -228,8 +243,8 @@ class SubProject(models.Model):
     
     def __str__(self):
         if self.name:
-            return f"{self.name} - {self.project.name} - {self.sub_project_type} ({self.sub_project_number})"
-        return f"{self.project.name} - {self.sub_project_type} ({self.sub_project_number})"
+            return f"{self.name} - {self.project.name} - {self.project_stage} ({self.sub_project_number})"
+        return f"{self.project.name} - {self.project_stage} ({self.sub_project_number})"
     
     def get_total_allocation(self):
         """Returns the total sum of all allocations for this subproject"""
@@ -492,11 +507,17 @@ class SubProject(models.Model):
         if base_amount == 0:
             base_amount = to_float(getattr(self, 'imagenrary_cost', 0))
 
-        # 2. Apply adjustment percentage
+        # 2. Apply contract adjustment and tax/insurance increases as
+        # additive percentages of the original contract amount.
+        total_increase_decimal = 0.0
         if self.has_adjustment == 'دارد':
             coeff = to_float(self.adjustment_coefficient)
-            adjustment_decimal = coeff / 100.0
-            base_amount = base_amount * (1 + adjustment_decimal)
+            total_increase_decimal += coeff / 100.0
+
+        if self.has_tax_insurance_increase == 'دارد':
+            total_increase_decimal += to_float(self.tax_insurance_increase_percentage) / 100.0
+
+        base_amount = base_amount * (1 + total_increase_decimal)
             
         # 3. Apply 25% increase coefficient
         if self.has_25_percent_increase == 'دارد':
@@ -915,7 +936,7 @@ def track_subproject_changes(sender, instance, **kwargs):
             
     # Fields to track
     fields_to_track = [
-        'sub_project_type', 'state', 'physical_progress',
+        'project_stage', 'state', 'physical_progress',
         'remaining_work', 'contract_start_date', 'contract_end_date', 
         'contract_amount', 'contract_type', 'execution_method', 
         'has_adjustment', 'adjustment_coefficient', 'start_date', 'end_date',
@@ -989,7 +1010,7 @@ def trigger_gantt_refresh_on_subproject_change(sender, instance, created, **kwar
     
     # Check if this is a significant change that affects Gantt chart
     significant_fields = [
-        'sub_project_type', 'name', 'start_date', 'end_date', 
+        'project_stage', 'name', 'start_date', 'end_date',
         'physical_progress', 'contract_start_date', 'contract_end_date',
         'relationship_type', 'related_subproject', 'relationship_delay',
         'imagenary_duration', 'contract_amount'

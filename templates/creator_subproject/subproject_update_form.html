@@ -372,25 +372,25 @@
                         </div>
                         
                         <div class="col-md-6 mb-3">
-                            <label for="sub_project_type" class="form-label form-label-enhanced">نوع زیرپروژه <span class="text-danger">*</span></label>
-                            <select name="sub_project_type" id="sub_project_type" class="form-select form-select-enhanced" required>
-                                <option value="">انتخاب نوع زیرپروژه...</option>
-                                <option value="فاز مطالعاتی" {% if subproject.sub_project_type == 'فاز مطالعاتی' %}selected{% endif %}>فاز مطالعاتی</option>
-                                <option value="طراحی نقشه های فاز 1و2" {% if subproject.sub_project_type == 'طراحی نقشه های فاز 1و2' %}selected{% endif %}>طراحی نقشه های فاز 1و2</option>
-                                <option value="برگزاری مناقصه" {% if subproject.sub_project_type == 'برگزاری مناقصه' %}selected{% endif %}>برگزاری مناقصه</option>
-                                <option value="انعقاد قرار داد و تحویل زمین" {% if subproject.sub_project_type == 'انعقاد قرار داد و تحویل زمین' %}selected{% endif %}>انعقاد قرار داد و تحویل زمین</option>
-                                <option value="تجهیزات کارگاهی" {% if subproject.sub_project_type == 'تجهیزات کارگاهی' %}selected{% endif %}>تجهیزات کارگاهی</option>
-                                <option value="گودبرداری" {% if subproject.sub_project_type == 'گودبرداری' %}selected{% endif %}>گودبرداری</option>
-                                <option value="فونداسیون" {% if subproject.sub_project_type == 'فونداسیون' %}selected{% endif %}>فونداسیون</option>
-                                <option value="اسکلت" {% if subproject.sub_project_type == 'اسکلت' %}selected{% endif %}>اسکلت</option>
-                                <option value="سفت کاری" {% if subproject.sub_project_type == 'سفت کاری' %}selected{% endif %}>سفت کاری</option>
-                                <option value="نما" {% if subproject.sub_project_type == 'نما' %}selected{% endif %}>نما</option>
-                                <option value="اجرای تاسیسات" {% if subproject.sub_project_type == 'اجرای تاسیسات' %}selected{% endif %}>اجرای تاسیسات</option>
-                                <option value="نازک کاری" {% if subproject.sub_project_type == 'نازک کاری' %}selected{% endif %}>نازک کاری</option>
-                                <option value="اجرای نصبیات برقی و مکانیکی" {% if subproject.sub_project_type == 'اجرای نصبیات برقی و مکانیکی' %}selected{% endif %}>اجرای نصبیات برقی و مکانیکی</option>
-                                <option value="محوطه سازی" {% if subproject.sub_project_type == 'محوطه سازی' %}selected{% endif %}>محوطه سازی</option>
-                                <option value="دیوارکشی" {% if subproject.sub_project_type == 'دیوارکشی' %}selected{% endif %}>دیوارکشی</option>
-                                <option value="محوطه سازی و دیوار کشی" {% if subproject.sub_project_type == 'محوطه سازی و دیوار کشی' %}selected{% endif %}>محوطه سازی و دیوار کشی</option>
+                            <label for="project_stage" class="form-label form-label-enhanced">مرحله جاری پروژه <span class="text-danger">*</span></label>
+                            <select name="project_stage" id="project_stage" class="form-select form-select-enhanced" required>
+                                <option value="">انتخاب مرحله جاری پروژه...</option>
+                                <option value="فاز مطالعاتی" {% if subproject.project_stage == 'فاز مطالعاتی' %}selected{% endif %}>فاز مطالعاتی</option>
+                                <option value="طراحی نقشه های فاز 1و2" {% if subproject.project_stage == 'طراحی نقشه های فاز 1و2' %}selected{% endif %}>طراحی نقشه های فاز 1و2</option>
+                                <option value="برگزاری مناقصه" {% if subproject.project_stage == 'برگزاری مناقصه' %}selected{% endif %}>برگزاری مناقصه</option>
+                                <option value="انعقاد قرار داد و تحویل زمین" {% if subproject.project_stage == 'انعقاد قرار داد و تحویل زمین' %}selected{% endif %}>انعقاد قرار داد و تحویل زمین</option>
+                                <option value="تجهیزات کارگاهی" {% if subproject.project_stage == 'تجهیزات کارگاهی' %}selected{% endif %}>تجهیزات کارگاهی</option>
+                                <option value="گودبرداری" {% if subproject.project_stage == 'گودبرداری' %}selected{% endif %}>گودبرداری</option>
+                                <option value="فونداسیون" {% if subproject.project_stage == 'فونداسیون' %}selected{% endif %}>فونداسیون</option>
+                                <option value="اسکلت" {% if subproject.project_stage == 'اسکلت' %}selected{% endif %}>اسکلت</option>
+                                <option value="سفت کاری" {% if subproject.project_stage == 'سفت کاری' %}selected{% endif %}>سفت کاری</option>
+                                <option value="نما" {% if subproject.project_stage == 'نما' %}selected{% endif %}>نما</option>
+                                <option value="اجرای تاسیسات" {% if subproject.project_stage == 'اجرای تاسیسات' %}selected{% endif %}>اجرای تاسیسات</option>
+                                <option value="نازک کاری" {% if subproject.project_stage == 'نازک کاری' %}selected{% endif %}>نازک کاری</option>
+                                <option value="اجرای نصبیات برقی و مکانیکی" {% if subproject.project_stage == 'اجرای نصبیات برقی و مکانیکی' %}selected{% endif %}>اجرای نصبیات برقی و مکانیکی</option>
+                                <option value="محوطه سازی" {% if subproject.project_stage == 'محوطه سازی' %}selected{% endif %}>محوطه سازی</option>
+                                <option value="دیوارکشی" {% if subproject.project_stage == 'دیوارکشی' %}selected{% endif %}>دیوارکشی</option>
+                                <option value="محوطه سازی و دیوار کشی" {% if subproject.project_stage == 'محوطه سازی و دیوار کشی' %}selected{% endif %}>محوطه سازی و دیوار کشی</option>
                             </select>
                         </div>
                     </div>
@@ -408,6 +408,7 @@
                                     1: کمترین اولویت | 5: بیشترین اولویت
                                 </small>
                             </div>
+
                         </div>
                         
                         <div class="col-md-3 mb-3">
@@ -698,6 +699,21 @@
                                     <small class="form-text text-muted">درصد افزایش را وارد کنید (مثلاً 25 برای 25% - حداکثر 25 درصد مجاز است)</small>
                                 </div>
                             </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="has_tax_insurance_increase" class="form-label">افزایش مبلغ برای مالیات ارزش افزوده و بیمه</label>
+                                    <select name="has_tax_insurance_increase" id="has_tax_insurance_increase" class="form-select" onchange="toggleTaxInsuranceIncrease()">
+                                        <option value="دارد" {% if subproject.has_tax_insurance_increase == 'دارد' %}selected{% endif %}>دارد</option>
+                                        <option value="ندارد" {% if subproject.has_tax_insurance_increase != 'دارد' %}selected{% endif %}>ندارد</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3" id="tax_insurance_increase_container" {% if subproject.has_tax_insurance_increase != 'دارد' %}style="display: none;"{% endif %}>
+                                    <label for="tax_insurance_increase_percentage" class="form-label">درصد افزایش قرارداد مالیات ارزش افزوده و بیمه (%)</label>
+                                    <input type="number" name="tax_insurance_increase_percentage" id="tax_insurance_increase_percentage" class="form-control" step="0.01" min="0" max="15" value="{{ subproject.tax_insurance_increase_percentage|default:0 }}" onchange="calculateFinalAmount()">
+                                    <small class="form-text text-muted">حداکثر ۱۵ درصد مجاز است.</small>
+                                </div>
+                            </div>
                             
                             <!-- Predicted Adjustment Amount -->
                             <div class="row">
@@ -766,7 +782,7 @@
                             {% for other_subproject in subproject.project.subprojects.all %}
                                 {% if other_subproject.id != subproject.id %}
                                     <option value="{{ other_subproject.id }}" {% if subproject.related_subproject and subproject.related_subproject.id == other_subproject.id %}selected{% endif %}>
-                                        {{ other_subproject.sub_project_type }} - {% if other_subproject.name %}{{ other_subproject.name }}{% endif %} (#{{ other_subproject.sub_project_number }})
+                                        {{ other_subproject.project_stage }} - {% if other_subproject.name %}{{ other_subproject.name }}{% endif %} (#{{ other_subproject.sub_project_number }})
                                     </option>
                                 {% endif %}
                             {% endfor %}
@@ -997,7 +1013,8 @@ function clearContractFields() {
     const contractFieldsIds = [
         'contract_start_date', 'contract_end_date', 'contract_amount',
         'contract_type', 'execution_method', 'contractor_name', 'contractor_id',
-        'has_adjustment', 'adjustment_coefficient', 'predicted_adjustment_amount',
+        'has_adjustment', 'adjustment_coefficient', 'has_tax_insurance_increase',
+        'tax_insurance_increase_percentage', 'predicted_adjustment_amount',
         'consultant_name', 'consultant_national_id'
     ];
     
@@ -1084,6 +1101,15 @@ function toggleAdjustmentCoefficient() {
     }
 }
 
+function toggleTaxInsuranceIncrease() {
+    const select = document.getElementById('has_tax_insurance_increase');
+    const container = document.getElementById('tax_insurance_increase_container');
+    if (select && container) {
+        container.style.display = select.value === 'دارد' ? 'block' : 'none';
+        calculateFinalAmount();
+    }
+}
+
 // Calculate final contract amount based on adjustment coefficient
 function calculateFinalAmount() {
     const contractAmountElement = document.getElementById('contract_amount');
@@ -1101,12 +1127,30 @@ function calculateFinalAmount() {
             parseFloat(adjustmentCoefficientElement.value || 0) : 0;
         
         // Calculate final amount
-        const finalAmount = contractAmount * (1 + adjustmentCoefficient / 100);
+        const taxInsuranceSelect = document.getElementById('has_tax_insurance_increase');
+        const taxInsuranceElement = document.getElementById('tax_insurance_increase_percentage');
+        const taxInsuranceCoefficient = taxInsuranceSelect && taxInsuranceSelect.value === 'دارد' && taxInsuranceElement
+            ? parseFloat(taxInsuranceElement.value || 0) : 0;
+        // مبلغ نهایی قرارداد = مبلغ قرارداد ×
+        // (1 + (درصد افزایش قرارداد مالیات و بیمه + درصد افزایش مبلغ قرارداد) ÷ 100)
+        const finalAmount = contractAmount * (
+            1 + (taxInsuranceCoefficient + adjustmentCoefficient) / 100
+        );
     
         // Format and display final amount
         finalContractAmountElement.value = finalAmount.toLocaleString();
     }
 }
+
+// Recalculate immediately while the user edits any amount or percentage.
+['contract_amount', 'adjustment_coefficient', 'tax_insurance_increase_percentage',
+ 'has_adjustment', 'has_tax_insurance_increase'].forEach(function(fieldId) {
+    const field = document.getElementById(fieldId);
+    if (field) {
+        field.addEventListener('input', calculateFinalAmount);
+        field.addEventListener('change', calculateFinalAmount);
+    }
+});
 
 // Handle relationship changes
 let relationshipChanged = false;

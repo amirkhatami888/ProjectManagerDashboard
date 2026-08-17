@@ -7,7 +7,7 @@
 {% block content %}
 <div class="container-fluid mt-3">
     <div class="d-flex justify-content-between mb-3">
-        <h4 class="mb-0">کاردکس مالی زیرپروژه: {{ subproject.name|default:subproject.sub_project_type }}</h4>
+        <h4 class="mb-0">کاردکس مالی زیرپروژه: {{ subproject.name|default:subproject.project_stage }}</h4>
         <div class="d-flex gap-2">
             <button type="button" class="btn btn-sm btn-outline-success" onclick="exportToExcel()">
                 <i class="bi bi-file-earmark-excel me-1"></i>
@@ -351,7 +351,7 @@ function exportToExcel() {
         ['سامانه مدیریت پروژه'],
         [''],
         ['اطلاعات پروژه:'],
-        ['نام زیرپروژه', '{{ subproject.name|default:subproject.sub_project_type }}'],
+        ['نام زیرپروژه', '{{ subproject.name|default:subproject.project_stage }}'],
         ['پروژه اصلی', '{% if subproject.project %}{{ subproject.project.name }}{% else %}-{% endif %}'],
         ['سازنده', '{% if subproject.creator %}{{ subproject.creator.get_full_name|default:subproject.creator.username }}{% else %}-{% endif %}'],
         ['تاریخ ایجاد', '{{ subproject.created_at|to_jalali:"%Y/%m/%d" }}'],

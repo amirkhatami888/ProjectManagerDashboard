@@ -214,7 +214,7 @@ def subproject_pre_save_handler(sender, instance, **kwargs):
             old_instance = sender.objects.get(pk=instance.pk)
             instance._old_values = {}
             tracked_fields = [
-                'sub_project_type', 'state', 'physical_progress',
+                'project_stage', 'state', 'physical_progress',
                 'remaining_work', 'description', 'contract_amount',
                 'contract_type', 'execution_method', 'contractor_name',
                 'contractor_id', 'has_adjustment', 'adjustment_coefficient',
@@ -238,11 +238,11 @@ def subproject_change_handler(sender, instance, created, **kwargs):
                 project_id=instance.project.project_id if instance.project else '',
                 project_name=instance.project.name if instance.project else '',
                 change_type='CREATE',
-                change_description=f'زیرپروژه جدید ایجاد شد: {instance.name or instance.sub_project_type}',
+                change_description=f'زیرپروژه جدید ایجاد شد: {instance.name or instance.project_stage}',
                 user=instance.created_by if hasattr(instance, 'created_by') else None,
                 field_name='',
                 old_value='',
-                new_value=instance.name or instance.sub_project_type,
+                new_value=instance.name or instance.project_stage,
                 related_object_type='SubProject',
                 related_object_id=str(instance.id)
             )
@@ -250,7 +250,7 @@ def subproject_change_handler(sender, instance, created, **kwargs):
             # Subproject updated - track specific field changes
             if hasattr(instance, '_old_values'):
                 tracked_fields = [
-                    'sub_project_type', 'state', 'physical_progress',
+                    'project_stage', 'state', 'physical_progress',
                     'remaining_work', 'description', 'contract_amount',
                     'contract_type', 'execution_method', 'contractor_name',
                     'contractor_id', 'has_adjustment', 'adjustment_coefficient',
@@ -278,7 +278,7 @@ def subproject_change_handler(sender, instance, created, **kwargs):
                         project_id=instance.project.project_id if instance.project else '',
                         project_name=instance.project.name if instance.project else '',
                         change_type='UPDATE',
-                        change_description=f'فیلد {get_persian_field_label(field, "subproject")} در زیرپروژه {instance.name or instance.sub_project_type} تغییر یافت',
+                        change_description=f'فیلد {get_persian_field_label(field, "subproject")} در زیرپروژه {instance.name or instance.project_stage} تغییر یافت',
                         user=instance.created_by if hasattr(instance, 'created_by') else None,
                         field_name=field,
                         old_value=str(old_value) if old_value is not None else '',

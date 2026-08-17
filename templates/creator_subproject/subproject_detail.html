@@ -4,7 +4,7 @@
 {% load jalali_tags %}
 {% load static %}
 
-{% block title %}{{ subproject.sub_project_type }} - {{ subproject.project.name }}{% endblock %}
+{% block title %}{{ subproject.project_stage }} - {{ subproject.project.name }}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -20,7 +20,7 @@
 {% block content %}
 <div class="container-fluid my-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>{{ subproject.name|default:subproject.sub_project_type }} <small class="text-muted">#{{ subproject.sub_project_number }}</small></h1>
+        <h1>{{ subproject.name|default:subproject.project_stage }} <small class="text-muted">#{{ subproject.sub_project_number }}</small></h1>
         
         <div class="btn-group">
             {% if user.is_admin or subproject.created_by == user %}
@@ -87,7 +87,7 @@
                                 <i class="bi bi-file-text text-muted me-2"></i>
                                 <div>
                                     <small class="text-muted fw-bold">نام زیرپروژه</small>
-                                    <p class="mb-0 fw-bold text-dark">{{ subproject.name|default:subproject.sub_project_type }}</p>
+                                    <p class="mb-0 fw-bold text-dark">{{ subproject.name|default:subproject.project_stage }}</p>
                                 </div>
                             </div>
                         </div>
@@ -95,8 +95,8 @@
                             <div class="d-flex align-items-center">
                                 <i class="bi bi-tag text-muted me-2"></i>
                                 <div>
-                                    <small class="text-muted fw-bold">نوع زیرپروژه</small>
-                                    <p class="mb-0">{{ subproject.sub_project_type }}</p>
+                                    <small class="text-muted fw-bold">مرحله جاری پروژه</small>
+                                    <p class="mb-0">{{ subproject.project_stage }}</p>
                                 </div>
                             </div>
                         </div>
@@ -231,7 +231,7 @@
                                     <small class="text-muted fw-bold">ارتباط زیرپروژه</small>
                                     <p class="mb-0">
                                         <span class="badge bg-primary">{{ subproject.get_relationship_type_display|default:"-" }}</span>
-                                        {{ subproject.related_subproject.sub_project_type }} #{{ subproject.related_subproject.sub_project_number }}
+                                        {{ subproject.related_subproject.project_stage }} #{{ subproject.related_subproject.sub_project_number }}
                                     </p>
                                 </div>
                             </div>
@@ -407,6 +407,24 @@
                                     <div>
                                         <small class="text-muted fw-bold">درصد افزایش مبلغ قرارداد</small>
                                         <p class="mb-0">{{ subproject.adjustment_coefficient }}%</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if subproject.contract_amount or subproject.has_tax_insurance_increase == 'دارد' %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-shield-check text-muted me-2"></i>
+                                    <div>
+                                        <small class="text-muted fw-bold">افزایش مبلغ برای مالیات ارزش افزوده و بیمه</small>
+                                        <p class="mb-0">
+                                            {% if subproject.has_tax_insurance_increase == 'دارد' %}
+                                                دارد — {{ subproject.tax_insurance_increase_percentage|default:0 }}%
+                                            {% else %}
+                                                ندارد
+                                            {% endif %}
+                                        </p>
                                     </div>
                                 </div>
                             </div>

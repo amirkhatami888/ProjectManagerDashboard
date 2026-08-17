@@ -18,7 +18,7 @@ def generate_unique_project_id():
 
 
 class Project(models.Model):
-    # Changed to match SubProject's sub_project_type choices
+    # Changed to match SubProject's project_stage choices
     PROJECT_TYPE_CHOICES = [
         ('احداث', 'احداث'),
         ('تکمیل', 'تکمیل'),
@@ -171,14 +171,14 @@ class Project(models.Model):
                 return i
         return None
     
-    def create_subproject(self, sub_project_type, start_date, state, remaining_work, 
+    def create_subproject(self, project_stage, start_date, state, remaining_work,
                          estimated_opening_time, contract_start_date, contract_end_date, contract_amount,
                          contract_type, execution_method, is_suportting_charity='ندارد', user=None):
         """
         Create a new subproject for this project.
         
         Args:
-            sub_project_type: Type of subproject
+            project_stage: Type of subproject
             start_date: Start date
             state: State of subproject
             remaining_work: Remaining work description
@@ -212,7 +212,7 @@ class Project(models.Model):
         # Create the new subproject
         subproject = SubProject.objects.create(
             project=self,
-            sub_project_type=sub_project_type,
+            project_stage=project_stage,
             sub_project_number=sub_project_number,
             start_date=start_date,
             state=state,
@@ -682,7 +682,7 @@ class ALL_Project(models.Model):
         # We just need to retrieve it
         return project, project.summary
     
-    def create_subproject(self, sub_project_type, start_date, state, remaining_work, 
+    def create_subproject(self, project_stage, start_date, state, remaining_work,
                          estimated_opening_time, contract_start_date, contract_end_date, contract_amount,
                          contract_type, execution_method, is_suportting_charity='ندارد', user=None):
         """
@@ -696,7 +696,7 @@ class ALL_Project(models.Model):
             The created SubProject instance, or None if max subproject limit reached
         """
         return self.project.create_subproject(
-            sub_project_type=sub_project_type,
+            project_stage=project_stage,
             start_date=start_date,
             state=state,
             remaining_work=remaining_work,

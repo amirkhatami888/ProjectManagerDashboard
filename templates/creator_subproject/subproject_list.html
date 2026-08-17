@@ -39,7 +39,7 @@
                                 <a href="{% url 'creator_project:project_detail' subproject.project.id %}">{{ subproject.project.name }}</a>
                                 <small class="text-muted">({{ subproject.project.project_id }})</small>
                             </td>
-                            <td>{{ subproject.sub_project_type }}</td>
+                            <td>{{ subproject.project_stage }}</td>
                             <td>{{ subproject.sub_project_number }}</td>
                             <td>{{ subproject.state }}</td>
                             <td style="width: 150px;">

@@ -250,7 +250,7 @@ def subproject_create(request, project_id):
             subproject = SubProject(
                 project=project,
                 name=request.POST.get('name', ''),
-                sub_project_type=request.POST.get('sub_project_type'),
+                project_stage=request.POST.get('project_stage'),
                 sub_project_number=int(request.POST.get('sub_project_number')),
                 is_suportting_charity=request.POST.get('is_suportting_charity'),
                 created_by=request.user,
@@ -349,6 +349,24 @@ def subproject_create(request, project_id):
                     subproject.adjustment_coefficient = adjustment_coefficient_decimal
                 else:
                     subproject.adjustment_coefficient = 0
+
+                subproject.has_tax_insurance_increase = request.POST.get(
+                    'has_tax_insurance_increase', 'ندارد'
+                )
+                if subproject.has_tax_insurance_increase == 'دارد':
+                    raw_tax_insurance = request.POST.get(
+                        'tax_insurance_increase_percentage', '0'
+                    ).replace(',', '')
+                    try:
+                        tax_insurance_percentage = Decimal(raw_tax_insurance or '0')
+                    except InvalidOperation:
+                        tax_insurance_percentage = Decimal('0')
+                    if tax_insurance_percentage > 15:
+                        messages.error(request, "درصد افزایش مالیات ارزش افزوده و بیمه نمی‌تواند بیشتر از 15 درصد باشد.")
+                        return redirect('creator_subproject:subproject_create', project_id=project.id)
+                    subproject.tax_insurance_increase_percentage = tax_insurance_percentage
+                else:
+                    subproject.tax_insurance_increase_percentage = 0
                 
                 # Save the subproject with contract information
                 subproject.save()
@@ -510,7 +528,7 @@ def subproject_update(request, subproject_id):
         try:
             # Update basic fields
             subproject.name = request.POST.get('name', '')
-            subproject.sub_project_type = request.POST.get('sub_project_type')
+            subproject.project_stage = request.POST.get('project_stage')
             subproject.sub_project_number = int(request.POST.get('sub_project_number'))
             subproject.is_suportting_charity = request.POST.get('is_suportting_charity')
             
@@ -616,6 +634,25 @@ def subproject_update(request, subproject_id):
                     subproject.adjustment_coefficient = adjustment_coefficient_decimal
                 else:
                     subproject.adjustment_coefficient = 0
+
+                subproject.has_tax_insurance_increase = request.POST.get(
+                    'has_tax_insurance_increase', 'ندارد'
+                )
+                if subproject.has_tax_insurance_increase == 'دارد' and request.POST.get(
+                    'tax_insurance_increase_percentage'
+                ):
+                    try:
+                        tax_insurance_percentage = Decimal(
+                            request.POST.get('tax_insurance_increase_percentage').replace(',', '')
+                        )
+                    except InvalidOperation:
+                        tax_insurance_percentage = Decimal('0')
+                    if tax_insurance_percentage > 15:
+                        messages.error(request, "درصد افزایش مالیات ارزش افزوده و بیمه نمی‌تواند بیشتر از 15 درصد باشد.")
+                        return redirect('creator_subproject:subproject_update', subproject_id=subproject.id)
+                    subproject.tax_insurance_increase_percentage = tax_insurance_percentage
+                else:
+                    subproject.tax_insurance_increase_percentage = 0
             else:
                 # Without contract information, use relationship system
                 # Relationship Type: After, Start With, Before, End With
@@ -1365,7 +1402,7 @@ def get_project_gantt_data(request, project_id):
         for sp in subprojects:
             subproject_list.append({
                 'id': sp.id,
-                'name': f"{sp.sub_project_type}" + (f" - {sp.name}" if sp.name else ""),
+                'name': f"{sp.project_stage}" + (f" - {sp.name}" if sp.name else ""),
                 'start': sp.start_date.strftime('%Y-%m-%d') if sp.start_date else '',
                 'end': sp.end_date.strftime('%Y-%m-%d') if sp.end_date else '',
                 'progress': float(sp.physical_progress) if sp.physical_progress else 0,

@@ -11,13 +11,13 @@ from django.contrib import messages
 class SubProjectAdmin(admin.ModelAdmin):
     list_display = (
         'project', 
-        'sub_project_type', 
+        'project_stage',
         'sub_project_number', 
         'state', 
         'physical_progress'
     )
-    list_filter = ('state', 'sub_project_type')
-    search_fields = ('project__name', 'sub_project_type')
+    list_filter = ('state', 'project_stage')
+    search_fields = ('project__name', 'project_stage')
     readonly_fields = ('created_by', 'created_at', 'updated_at', 'get_final_contract_amount')
     
     def get_final_contract_amount(self, obj):
@@ -38,7 +38,7 @@ class FinancialDocumentAdmin(admin.ModelAdmin):
         'created_by'
     )
     list_filter = ('document_type', 'approval_date', 'created_at')
-    search_fields = ('subproject__project__name', 'subproject__sub_project_type', 'document_number', 'description')
+    search_fields = ('subproject__project__name', 'subproject__project_stage', 'document_number', 'description')
     readonly_fields = ('created_at', 'updated_at', 'created_by')
     ordering = ('-created_at',)
     actions = ['delete_selected_documents']
@@ -84,7 +84,7 @@ class PaymentAdmin(admin.ModelAdmin):
         'created_by'
     )
     list_filter = ('payment_date', 'created_at')
-    search_fields = ('subproject__project__name', 'subproject__sub_project_type', 'description')
+    search_fields = ('subproject__project__name', 'subproject__project_stage', 'description')
     readonly_fields = ('created_at', 'updated_at', 'created_by')
     ordering = ('-payment_date',)
     

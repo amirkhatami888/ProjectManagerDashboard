@@ -7,7 +7,7 @@
 {% block content %}
 <div class="container mt-4">
     <div class="d-flex justify-content-between mb-4">
-        <h2>لیست سند مالی زیرپروژه: {{ subproject.name|default:subproject.sub_project_type }}</h2>
+        <h2>لیست سند مالی زیرپروژه: {{ subproject.name|default:subproject.project_stage }}</h2>
         <div>
             <a href="{% url 'creator_subproject:add_financial_document' subproject.id %}" class="btn btn-primary">
                 <i class="bi bi-plus-lg me-1"></i>

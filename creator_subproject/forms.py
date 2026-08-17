@@ -85,7 +85,7 @@ class SubProjectForm(forms.ModelForm):
     class Meta:
         model = SubProject
         fields = [
-            'sub_project_type', 
+            'project_stage',
             'project', 
             'sub_project_number',
             # Date fields removed from model fields and handled separately
@@ -104,13 +104,15 @@ class SubProjectForm(forms.ModelForm):
             'contractor_id',
             'has_adjustment',
             'adjustment_coefficient',
+            'has_tax_insurance_increase',
+            'tax_insurance_increase_percentage',
             'imagenary_duration',
             'imagenrary_cost',
             'predicted_adjustment_amount',
         ]
         
         labels = {
-            'sub_project_type': _('نوع زیرپروژه'),
+            'project_stage': _('مرحله جاری پروژه'),
             'project': _('پروژه اصلی'),
             'sub_project_number': _('اولویت زیرپروژه'),
             'state': _('وضعیت'),
@@ -125,6 +127,8 @@ class SubProjectForm(forms.ModelForm):
             'contractor_id': _('شناسه پیمانکار'),
             'has_adjustment': _('افزایش 25 درصدی قرار داد'),
             'adjustment_coefficient': _('درصد افزایش مبلغ قرار داد'),
+            'has_tax_insurance_increase': _('افزایش مبلغ برای مالیات ارزش افزوده و بیمه'),
+            'tax_insurance_increase_percentage': _('درصد افزایش قرارداد مالیات ارزش افزوده و بیمه'),
             'imagenary_duration': _('مدت تخمینی (روز)'),
             'imagenrary_cost': _('هزینه تخمینی (ریال)'),
             'predicted_adjustment_amount': _('مجموع مبلغ پیشبینی شده ی تعدیل های تا انتهای پروژه'),
@@ -164,7 +168,7 @@ class SubProjectForm(forms.ModelForm):
 
 class SubProjectRejectionForm(forms.Form):
     FIELD_CHOICES = [
-        ('sub_project_type', 'نوع زیرپروژه'),
+        ('project_stage', 'مرحله جاری پروژه'),
         ('sub_project_number', 'اولویت زیرپروژه'),
         ('start_date', 'تاریخ شروع'),
         ('state', 'وضعیت'),

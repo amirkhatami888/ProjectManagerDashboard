@@ -513,7 +513,7 @@ def search_history_view(request):
         # Apply subproject-specific filters
         selected_subproject_types = request.GET.getlist('subproject_types')
         if selected_subproject_types:
-             subproject_updates = subproject_updates.filter(subproject__sub_project_type__in=selected_subproject_types)
+             subproject_updates = subproject_updates.filter(subproject__project_stage__in=selected_subproject_types)
 
         if subproject_states:
             subproject_updates = subproject_updates.filter(subproject__state__in=subproject_states)

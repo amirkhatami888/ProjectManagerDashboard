@@ -2,7 +2,7 @@
 {% load jalali_tags %}
 {% load humanize %}
 
-{% block title %}حذف زیرپروژه - {{ subproject.sub_project_type }}{% endblock %}
+{% block title %}حذف زیرپروژه - {{ subproject.project_stage }}{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -87,7 +87,7 @@
                         </h6>
                         <div class="row">
                             <div class="col-md-6">
-                                <p><strong>نوع زیرپروژه:</strong> {{ subproject.sub_project_type }}</p>
+                                <p><strong>مرحله جاری پروژه:</strong> {{ subproject.project_stage }}</p>
                                 <p><strong>شماره:</strong> #{{ subproject.sub_project_number }}</p>
                                 {% if subproject.name %}
                                 <p><strong>نام:</strong> {{ subproject.name }}</p>
@@ -153,7 +153,7 @@
                         <p>زیرپروژه‌های زیر به این زیرپروژه مرتبط هستند و ابتدا باید ارتباط آنها قطع شود:</p>
                         {% for related in related_subprojects %}
                         <div class="related-item">
-                            <strong>{{ related.sub_project_type }} #{{ related.sub_project_number }}</strong>
+                            <strong>{{ related.project_stage }} #{{ related.sub_project_number }}</strong>
                             {% if related.name %}- {{ related.name }}{% endif %}
                             <br>
                             <small class="text-muted">نوع ارتباط: {{ related.get_relationship_type_display|default:"نامشخص" }}</small>

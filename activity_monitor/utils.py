@@ -109,7 +109,7 @@ def get_persian_field_label(field_name: str, model_type: str = 'project') -> str
             'debt': 'دیون',
         },
         'subproject': {
-            'sub_project_type': 'نوع زیرپروژه',
+            'project_stage': 'مرحله جاری پروژه',
             'state': 'وضعیت',
             'physical_progress': 'پیشرفت فیزیکی',
             'remaining_work': 'کار باقیمانده',

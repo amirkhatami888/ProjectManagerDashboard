@@ -17,82 +17,151 @@
             font-style: normal;
         }
         
+        :root {
+            --ink: #172554;
+            --muted: #64748b;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --surface: rgba(255, 255, 255, .9);
+        }
+
+        * { box-sizing: border-box; }
+
         body {
             font-family: 'Vazir', Tahoma, Arial, sans-serif;
             min-height: 100vh;
             display: flex;
             align-items: center;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            justify-content: center;
+            overflow-x: hidden;
+            background:
+                radial-gradient(circle at 12% 18%, rgba(59, 130, 246, .22), transparent 30%),
+                radial-gradient(circle at 88% 82%, rgba(14, 165, 233, .18), transparent 28%),
+                #eef4ff;
         }
-        
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            z-index: -1;
+            border-radius: 50%;
+            filter: blur(2px);
+            opacity: .5;
+        }
+        body::before { width: 340px; height: 340px; background: #bfdbfe; top: -120px; right: -100px; }
+        body::after { width: 280px; height: 280px; background: #bae6fd; bottom: -120px; left: -80px; }
+
         .login-container {
-            width: 100%;
-            max-width: 420px;
-            padding: 15px;
+            width: min(100%, 1030px);
+            padding: 24px;
             margin: auto;
         }
-        
+
         .form-signin {
-            padding: 30px;
-            border-radius: 12px;
-            background-color: white;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: grid;
+            grid-template-columns: .95fr 1.05fr;
+            overflow: hidden;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, .75);
+            border-radius: 28px;
+            background: var(--surface);
+            box-shadow: 0 28px 80px rgba(30, 64, 175, .16);
+            backdrop-filter: blur(18px);
         }
-        
-        .logo {
-            width: 120px;
-            height: 120px;
-            margin-bottom: 20px;
-            border-radius: 60px;
-            padding: 10px;
-            background-color: white;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+
+        .login-visual {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 620px;
+            padding: 46px 40px;
+            overflow: hidden;
+            color: white;
+            text-align: right;
+            background: linear-gradient(145deg, #1e3a8a, #2563eb 56%, #0ea5e9);
         }
-        
+        .login-visual::before,
+        .login-visual::after {
+            content: "";
+            position: absolute;
+            border: 1px solid rgba(255, 255, 255, .2);
+            border-radius: 50%;
+        }
+        .login-visual::before { width: 360px; height: 360px; top: -120px; left: -130px; }
+        .login-visual::after { width: 270px; height: 270px; bottom: -120px; right: -100px; }
+        .visual-content, .visual-footer { position: relative; z-index: 1; }
+        .visual-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            padding: 8px 13px;
+            border: 1px solid rgba(255,255,255,.25);
+            border-radius: 999px;
+            color: #dbeafe;
+            font-size: .78rem;
+            background: rgba(255,255,255,.1);
+        }
+        .visual-title { margin: 34px 0 16px; font-size: 2.1rem; font-weight: 800; line-height: 1.5; }
+        .visual-description { max-width: 320px; color: #dbeafe; line-height: 2; font-size: .94rem; }
+        .visual-points { display: grid; gap: 14px; margin-top: 34px; }
+        .visual-point { display: flex; align-items: center; gap: 12px; color: #eff6ff; font-size: .88rem; }
+        .visual-point i { display: grid; place-items: center; width: 29px; height: 29px; border-radius: 9px; color: #bfdbfe; background: rgba(255,255,255,.14); }
+        .visual-footer { color: #dbeafe; font-size: .78rem; }
+
+        .login-form-panel { padding: 48px 52px 38px; background: rgba(255,255,255,.72); }
+        .brand-mark { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; text-align: right; }
+        .logo { width: 64px; height: 64px; margin: 0; padding: 7px; border: 1px solid #dbeafe; border-radius: 18px; background: white; box-shadow: 0 9px 22px rgba(37, 99, 235, .12); }
+        .brand-name { margin: 0; color: var(--ink); font-size: 1.25rem; font-weight: 800; }
+        .brand-caption { margin: 4px 0 0; color: var(--muted); font-size: .78rem; }
+        .header-text { margin-bottom: 8px; color: var(--ink); font-size: 1.75rem; font-weight: 800; }
+        .welcome-text { margin-bottom: 28px; color: var(--muted); font-size: .88rem; }
+
+        .form-floating { position: relative; }
         .form-floating input {
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            padding: 15px;
-            height: calc(3.5rem + 2px);
+            height: 60px;
+            padding: 20px 48px 6px 18px;
+            border: 1px solid #dbe4f0;
+            border-radius: 14px;
+            color: var(--ink);
+            background: rgba(248, 250, 252, .76);
+            transition: .2s ease;
         }
-        
-        .form-floating label {
-            padding-right: 15px;
+        .form-floating input:focus {
+            border-color: #60a5fa;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, .12);
         }
-        
+        .form-floating label { right: 0; padding: 18px 48px 0 18px; color: #94a3b8; }
+        .form-floating input:focus ~ label,
+        .form-floating input:not(:placeholder-shown) ~ label { color: var(--primary); }
+        .input-icon { position: absolute; z-index: 3; top: 21px; right: 17px; color: #94a3b8; pointer-events: none; }
+        .password-field-wrap .form-control { padding-left: 52px; }
+        .password-toggle { left: 14px; top: 50%; color: #94a3b8; transition: color .2s ease; }
+        .password-toggle:hover, .password-toggle:focus { color: var(--primary); }
+
         .btn-primary {
-            background-color: #0d6efd;
+            padding: 15px;
             border: none;
-            padding: 12px;
-            border-radius: 8px;
+            border-radius: 14px;
             font-weight: bold;
-            margin-top: 10px;
-            transition: all 0.3s ease;
+            letter-spacing: .1px;
+            background: linear-gradient(135deg, var(--primary), #0ea5e9);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, .2);
+            transition: all .25s ease;
         }
-        
-        .btn-primary:hover {
-            background-color: #0b5ed7;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(13, 110, 253, 0.2);
-        }
-        
-        .header-text {
-            color: #444;
-            margin-bottom: 25px;
-        }
-        
-        .footer-text {
-            color: #6c757d;
-            font-size: 0.85rem;
-            margin-top: 25px;
-        }
+        .btn-primary:hover { background: linear-gradient(135deg, var(--primary-dark), #0284c7); transform: translateY(-2px); box-shadow: 0 14px 25px rgba(37, 99, 235, .28); }
+        .header-text + .welcome-text { text-align: right; }
+        .footer-text { margin-top: 27px; color: var(--muted); font-size: .76rem; line-height: 2; }
         
         .disclaimer-link {
             display: inline-flex;
             align-items: center;
             gap: 8px;
             font-size: 0.9rem;
-            color: #0d6efd;
+            color: var(--primary);
             cursor: pointer;
             text-decoration: none;
             margin-top: 15px;
@@ -143,20 +212,46 @@
 
         .password-toggle:hover,
         .password-toggle:focus {
-            color: #0d6efd;
             outline: none;
+        }
+
+        .alert { border: 0; border-radius: 13px; font-size: .82rem; }
+        @media (max-width: 760px) {
+            .login-container { padding: 14px; }
+            .form-signin { display: block; border-radius: 22px; }
+            .login-visual { display: none; }
+            .login-form-panel { padding: 32px 24px 25px; }
         }
     </style>
 </head>
 <body class="text-center">
     <div class="login-container">
         <div class="form-signin">
-            <!-- logo in the folder static/image/logo.png -->
-            <div class="logo-wrap mb-4">
+            <aside class="login-visual">
+                <div class="visual-content">
+                    <span class="visual-badge"><i class="fas fa-sparkles"></i> محیط امن و حرفه‌ای</span>
+                    <h2 class="visual-title">مدیریت پروژه‌ها،<br>ساده‌تر از همیشه</h2>
+                    <p class="visual-description">به سامانه مدیریت پروژه وارد شوید و همه‌چیز را با نظم، سرعت و اطمینان بیشتری پیش ببرید.</p>
+                    <div class="visual-points">
+                        <div class="visual-point"><i class="fas fa-chart-line"></i><span>دسترسی سریع به گزارش‌ها و داشبورد</span></div>
+                        <div class="visual-point"><i class="fas fa-users"></i><span>همکاری بهتر بین اعضای تیم</span></div>
+                        <div class="visual-point"><i class="fas fa-shield-halved"></i><span>امنیت و کنترل دسترسی کاربران</span></div>
+                    </div>
+                </div>
+                <div class="visual-footer"><i class="fas fa-circle-check me-1"></i> یک قدم تا مدیریت هوشمند پروژه</div>
+            </aside>
+
+            <main class="login-form-panel">
+            <div class="brand-mark">
                 <img class="logo" src="{% static 'image/logo.png' %}?v={% now 'U' %}" alt="لوگو" onerror="this.style.display='none'; var s=this.nextElementSibling; if(s) s.style.display='block';">
                 <span class="logo-placeholder" style="display:none;width:120px;height:120px;line-height:120px;font-size:1.5rem;border-radius:60px;background:#0d6efd;color:white;">لوگو</span>
+                <div>
+                    <p class="brand-name">سامانه مدیریت پروژه</p>
+                    <p class="brand-caption">ورود به پنل کاربری</p>
+                </div>
             </div>
-            <h1 class="h3 mb-4 fw-normal header-text">سامانه مدیریت پروژه</h1>
+            <h1 class="h3 header-text">خوش آمدید</h1>
+            <p class="welcome-text">برای ادامه، اطلاعات حساب کاربری خود را وارد کنید.</p>
             
             {% if form.errors %}
             <div class="alert alert-danger" role="alert">
@@ -189,10 +284,12 @@
                 {% csrf_token %}
                 <div class="form-floating mb-3">
                     <input type="text" name="username" class="form-control" id="id_username" placeholder="نام کاربری" required autofocus>
+                    <i class="input-icon fas fa-user"></i>
                     <label for="id_username"><i class="fas fa-user me-2"></i>نام کاربری</label>
                 </div>
                 <div class="form-floating mb-4 password-field-wrap">
                     <input type="password" name="password" class="form-control" id="id_password" placeholder="رمز عبور" required>
+                    <i class="input-icon fas fa-lock"></i>
                     <label for="id_password"><i class="fas fa-lock me-2"></i>رمز عبور</label>
                     <button type="button" class="password-toggle" id="togglePassword" aria-label="نمایش یا مخفی کردن رمز عبور" title="نمایش رمز عبور">
                         <i class="fas fa-eye" id="togglePasswordIcon"></i>
@@ -231,6 +328,7 @@
                 <p class="mb-0">برای بازیابی رمز عبور با مدیر سیستم تماس بگیرید</p>
                 <p class="mb-0">سامانه مدیریت پروژه ها - نسخه 1.0</p>
             </div>
+            </main>
         </div>
     </div>
     

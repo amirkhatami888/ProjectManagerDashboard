@@ -1381,7 +1381,7 @@ def subproject_delete(request, subproject_id):
     # Check if other subprojects are related to this one
     related_subprojects = SubProject.objects.filter(related_subproject=subproject)
     if related_subprojects.exists():
-        related_names = [f"{sp.sub_project_type} #{sp.sub_project_number}" for sp in related_subprojects]
+        related_names = [f"{sp.project_stage} #{sp.sub_project_number}" for sp in related_subprojects]
         messages.error(request, f'این زیرپروژه به زیرپروژه‌های دیگر مرتبط است و قابل حذف نیست. زیرپروژه‌های مرتبط: {", ".join(related_names)}')
         return redirect('creator_project:subproject_list', project_id=project.id)
     
@@ -1394,7 +1394,7 @@ def subproject_delete(request, subproject_id):
     if request.method == 'POST':
         # Require double confirmation
         confirmation_text = request.POST.get('confirmation_text', '').strip()
-        expected_confirmation = f"{subproject.sub_project_type} #{subproject.sub_project_number}"
+        expected_confirmation = f"{subproject.project_stage} #{subproject.sub_project_number}"
         
         if confirmation_text != expected_confirmation:
             messages.error(request, f'تایید نادرست. لطفاً "{expected_confirmation}" را وارد کنید.')
@@ -1411,7 +1411,7 @@ def subproject_delete(request, subproject_id):
         'related_subprojects': related_subprojects,
         'gallery_images_count': gallery_images_count,
         'update_history_count': update_history_count,
-        'expected_confirmation': f"{subproject.sub_project_type} #{subproject.sub_project_number}",
+        'expected_confirmation': f"{subproject.project_stage} #{subproject.sub_project_number}",
     }
     return render(request, 'creator_project/subproject_delete_confirm.html', context)
 
