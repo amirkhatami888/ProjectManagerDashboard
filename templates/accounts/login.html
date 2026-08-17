@@ -243,8 +243,7 @@
 
             <main class="login-form-panel">
             <div class="brand-mark">
-                <img class="logo" src="{% url 'site_logo' %}?v={% now 'U' %}" alt="لوگو" onerror="this.style.display='none'; var s=this.nextElementSibling; if(s) s.style.display='block';">
-                <span class="logo-placeholder" style="display:none;width:120px;height:120px;line-height:120px;font-size:1.5rem;border-radius:60px;background:#0d6efd;color:white;">لوگو</span>
+                <img class="logo" src="{% static 'image/logo.png' %}" alt="لوگو">
                 <div>
                     <p class="brand-name">سامانه مدیریت پروژه</p>
                     <p class="brand-caption">ورود به پنل کاربری</p>
