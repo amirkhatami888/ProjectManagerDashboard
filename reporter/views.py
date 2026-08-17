@@ -62,6 +62,11 @@ class ProjectReportDetailView(LoginRequiredMixin, DetailView):
     template_name = 'reporter/project_report_detail.html'
     context_object_name = 'report'
 
+    def get_queryset(self):
+        # Keep object-level authorization in the queryset so an authenticated
+        # user cannot read another user's report by changing the URL pk.
+        return ProjectReport.objects.filter(created_by=self.request.user)
+
 class ProjectReportCreateView(LoginRequiredMixin, CreateView):
     model = ProjectReport
     form_class = ProjectReportForm
@@ -127,6 +132,11 @@ class SubProjectReportDetailView(LoginRequiredMixin, DetailView):
     model = SubProjectReport
     template_name = 'reporter/subproject_report_detail.html'
     context_object_name = 'report'
+
+    def get_queryset(self):
+        # Keep object-level authorization in the queryset so an authenticated
+        # user cannot read another user's report by changing the URL pk.
+        return SubProjectReport.objects.filter(created_by=self.request.user)
 
 class SubProjectReportCreateView(LoginRequiredMixin, CreateView):
     model = SubProjectReport
