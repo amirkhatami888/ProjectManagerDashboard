@@ -26,6 +26,8 @@
 </style>
 {% endblock %}
 
+{% load static %}
+
 {# Use this macro to create a date input field #}
 {% block date_input_field %}
 {# Parameters: field_id, field_name, field_label, field_value, is_required #}
@@ -36,7 +38,7 @@
                placeholder="انتخاب تاریخ{% if not is_required %} (اختیاری){% endif %}" 
                value="{{ field_value }}" {% if is_required %}required{% endif %}>
         <span class="input-group-text calendar-icon-container" data-input="{{ field_id }}">
-            <img src="/staticfiles/admin/img/icon-calendar.svg" alt="calendar">
+            <img src="{% static 'admin/img/icon-calendar.svg' %}" alt="calendar">
         </span>
     </div>
 </div>
@@ -120,4 +122,4 @@
         initializePersianDatepickers();
     });
 </script>
-{% endblock %} 
+{% endblock %}

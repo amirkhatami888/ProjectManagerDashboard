@@ -173,7 +173,10 @@ USE_L10N = True  # Enable localization
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/'
+# Keep this configurable because cPanel/Passenger installations may expose
+# the application below a URL prefix (for example /PMD).  In that case set
+# STATIC_URL=/PMD/static/ in the Python application's environment.
+STATIC_URL = config('STATIC_URL', default='/static/')
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
