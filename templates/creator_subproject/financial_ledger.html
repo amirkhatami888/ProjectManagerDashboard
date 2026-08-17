@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% load jalali_tags %}
 {% load humanize %}
 
@@ -338,8 +339,8 @@
     {% endif %}
 </div>
 
-<!-- Include required libraries -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Load the pinned library locally instead of executing code from a CDN. -->
+<script src="{% static 'js/xlsx.full.min.js' %}"></script>
 
 <script>
 function exportToExcel() {
@@ -428,4 +429,4 @@ function exportToExcel() {
     XLSX.writeFile(wb, fileName);
 }
 </script>
-{% endblock %} 
+{% endblock %}
