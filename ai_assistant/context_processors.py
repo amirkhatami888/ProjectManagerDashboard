@@ -11,6 +11,16 @@ def availability(request):
     if platform and not platform.enabled:
         return {"ai_policy_enabled": False, "ai_web_search_enabled": False,
                 "ai_local_js_enabled": False}
+    if getattr(request.user, "role", None) == "CEO":
+        return {
+            "ai_policy_enabled": True,
+            "ai_web_search_enabled": True,
+            "ai_local_js_enabled": (
+                request.user.is_staff
+                and os.getenv("AI_LOCAL_JS_ENABLED", "false").lower() in {"1", "true", "yes"}
+            ),
+        }
+
     policy = AIUserPolicy.objects.filter(user=request.user).only("is_enabled").first()
     # Users without a policy receive the default policy on first use.
     role = AIRolePolicy.objects.filter(role=getattr(request.user, "role", "")).only(

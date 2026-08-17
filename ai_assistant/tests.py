@@ -7,7 +7,7 @@ import requests
 
 from .orchestration import run_tool_loop
 from .tools import preview_update
-from .views import _extract_agent_directives
+from .views import _extract_agent_directives, effective_policy
 from .models import AIPlatformSettings, AIUserPolicy, AIRolePolicy
 from .provider import GapGPTProvider, ProviderError
 from .search import tavily_search
@@ -25,6 +25,33 @@ class AIAssistantTests(TestCase):
     def test_policy_limits_usage(self):
         policy = AIUserPolicy.objects.create(user=self.user, daily_message_limit=0)
         self.assertFalse(policy.can_use())
+
+    def test_ceo_has_unlimited_full_access(self):
+        self.user.role = "CEO"
+        self.user.save(update_fields=["role"])
+        AIUserPolicy.objects.create(
+            user=self.user,
+            is_enabled=False,
+            daily_message_limit=0,
+            monthly_message_limit=0,
+            allow_web_search=False,
+            allow_write_actions=False,
+        )
+        AIRolePolicy.objects.create(
+            role="CEO",
+            is_enabled=False,
+            daily_message_limit=0,
+            monthly_message_limit=0,
+            allow_web_search=False,
+            allow_write_actions=False,
+        )
+
+        policy = effective_policy(self.user)
+
+        self.assertTrue(policy.is_enabled)
+        self.assertTrue(policy.allow_web_search)
+        self.assertTrue(policy.allow_write_actions)
+        self.assertTrue(policy.can_use())
 
     def test_panel_requires_login(self):
         response = self.client.get(reverse("ai_assistant:panel"))

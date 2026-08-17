@@ -21,6 +21,13 @@ def get_policy(user):
 def effective_policy(user):
     """Return the effective policy without mutating the stored user policy."""
     policy = get_policy(user)
+    if getattr(user, "role", None) == "CEO":
+        # CEO access is intentionally independent of persisted user/role limits.
+        policy.is_enabled = True
+        policy.allow_web_search = True
+        policy.allow_write_actions = True
+        return policy
+
     role = AIRolePolicy.objects.filter(role=getattr(user, "role", "")).first()
     if not role:
         return policy

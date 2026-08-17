@@ -41,10 +41,17 @@ class AIUserPolicy(models.Model):
             created_at__month=today.month,
         ).count()
 
+    @property
+    def has_unlimited_access(self):
+        """CEOs have full assistant access regardless of stored policy limits."""
+        return getattr(self.user, "role", None) == "CEO"
+
     def can_use(self):
         platform = AIPlatformSettings.objects.filter(pk=1).first()
         if platform and not platform.enabled:
             return False
+        if self.has_unlimited_access:
+            return True
         return (
             self.is_enabled
             and self.messages_today() < self.daily_message_limit
