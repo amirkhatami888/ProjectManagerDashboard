@@ -2,23 +2,18 @@
 WSGI configuration for cPanel/Passenger deployment
 This file is used as the "Application startup file" in cPanel Python App setup.
 
-cPanel Configuration (avoid double path – use ONE of these):
+cPanel Configuration:
 
-  Option A – App under public_html/PMD:
-  - Application root: PMD/ProjectManagerDashboard
-    (relative to your home dir; full path = ~/PMD/ProjectManagerDashboard)
+  - Application root: public_html/PMD
+  - Application URL: ocmp.ir
   - Startup file: passenger_wsgi.py
   - Entry point: application
 
-  Option B – If your app is inside public_html already:
-  - Application root: public_html/PMD/ProjectManagerDashboard
-    (do NOT set root to "public_html/PMD" and then add "public_html/PMD" again)
-  - Startup file: passenger_wsgi.py
-  - Entry point: application
+  The deployed file must be:
+  /home/ufvuikiv/public_html/PMD/passenger_wsgi.py
 
-  The path to this file must be exactly:
-  /home/ufvuikiv/public_html/PMD/ProjectManagerDashboard/passenger_wsgi.py
-  (no duplicate "public_html/PMD" in the path).
+  This assumes manage.py and this file are uploaded directly inside
+  public_html/PMD.
 """
 
 # MUST run before any other imports: use PyMySQL as MySQLdb so DECIMAL columns
@@ -64,12 +59,17 @@ os.chdir(BASE_DIR)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_dashboard.production_settings')
 os.environ.setdefault('DEBUG', 'False')
 
-# cPanel exposes this application below /PMD.  Use an explicit deployment
-# override if supplied; otherwise force the known cPanel mount prefix.  A
-# stale STATIC_URL=/static/ in .env would otherwise make {% static %} request
-# the server root instead of /PMD/static/....
-os.environ['STATIC_URL'] = os.environ.get('DEPLOYMENT_STATIC_URL', '/PMD/static/')
-os.environ['MEDIA_URL'] = os.environ.get('DEPLOYMENT_MEDIA_URL', '/PMD/media/')
+# cPanel exposes this application below /PMD. Use an explicit deployment
+# override if supplied; otherwise force this exact mount prefix. A stale
+# STATIC_URL=/static/ value would request the server root.
+os.environ['STATIC_URL'] = os.environ.get(
+    'DEPLOYMENT_STATIC_URL',
+    '/PMD/static/',
+)
+os.environ['MEDIA_URL'] = os.environ.get(
+    'DEPLOYMENT_MEDIA_URL',
+    '/PMD/media/',
+)
 
 # Load Django only when PyMySQL is patched (otherwise login 500s with MariaDB)
 if _PYMYSQL_PATCHED:

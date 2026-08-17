@@ -7,8 +7,9 @@ Execute this in your cPanel Python App interface.
 
 import os
 import sys
-import django
-from django.core.management import execute_from_command_line
+import argparse
+import shutil
+from pathlib import Path
 
 def print_status(message, status="INFO"):
     """Print formatted status message"""
@@ -20,15 +21,31 @@ def print_status(message, status="INFO"):
     }
     print(f"{symbols.get(status, 'ℹ️')} {message}")
 
-def main():
+def sync_directory(source, destination, label):
+    """Copy collected files into a web-server document-root directory."""
+    source_path = Path(source)
+    destination_path = Path(destination)
+
+    if not source_path.exists():
+        raise FileNotFoundError(f"{label} source directory does not exist: {source_path}")
+
+    destination_path.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(source_path, destination_path, dirs_exist_ok=True)
+    print_status(f"{label} synchronized to {destination_path}", "SUCCESS")
+
+
+def main(document_root=None):
     """Main static files collection function"""
     print_status("Django Project Manager Dashboard - Static Files Collection", "INFO")
     print("="*60)
     
     # Set Django settings
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_dashboard.production_settings')
-    
+
     try:
+        import django
+        from django.core.management import execute_from_command_line
+
         # Setup Django
         django.setup()
         print_status("Django environment configured", "SUCCESS")
@@ -37,7 +54,18 @@ def main():
         print_status("Collecting static files...", "INFO")
         execute_from_command_line(['manage.py', 'collectstatic', '--noinput'])
         print_status("Static files collected successfully!", "SUCCESS")
-        
+
+        if document_root:
+            project_dir = Path(__file__).resolve().parent
+            public_dir = Path(document_root).expanduser().resolve()
+            sync_directory(project_dir / 'staticfiles', public_dir / 'static', 'Static files')
+            sync_directory(project_dir / 'media', public_dir / 'media', 'Media files')
+        else:
+            print_status(
+                "No document root supplied; static files remain in staticfiles/",
+                "INFO",
+            )
+
         # Show information
         print()
         print_status("Static files collection completed!", "SUCCESS")
@@ -53,7 +81,19 @@ def main():
 
 if __name__ == "__main__":
     try:
-        success = main()
+        parser = argparse.ArgumentParser(
+            description="Collect Django static files and optionally publish them."
+        )
+        parser.add_argument(
+            "--document-root",
+            default=os.environ.get("DEPLOYMENT_DOCUMENT_ROOT"),
+            help=(
+                "Web document root for publishing /static and /media "
+                "(or set DEPLOYMENT_DOCUMENT_ROOT)."
+            ),
+        )
+        args = parser.parse_args()
+        success = main(document_root=args.document_root)
         if success:
             print_status("🎉 Static files collection completed successfully!", "SUCCESS")
             sys.exit(0)
@@ -65,4 +105,4 @@ if __name__ == "__main__":
         sys.exit(1)
     except Exception as e:
         print_status(f"Unexpected error: {e}", "ERROR")
-        sys.exit(1) 
+        sys.exit(1)

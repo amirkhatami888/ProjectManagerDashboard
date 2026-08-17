@@ -25,5 +25,8 @@ git stash
 git pull origin main
 
 echo ""
-echo "✅ Done!"
+echo "Collecting and publishing static/media files..."
+python collect_static.py --document-root ~/public_html
 
+echo ""
+echo "✅ Done!"
