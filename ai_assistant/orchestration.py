@@ -4,6 +4,8 @@ import json
 from .domain_tools import (
     financial_audit, read_program, read_project, read_subproject, search_site,
     project_forecast, system_overview, validate_project,
+    get_program_json_template, get_project_json_template,
+    get_subproject_json_template,
 )
 from .search import tavily_search
 from .tools import explain_field
@@ -38,6 +40,18 @@ BASE_TOOL_SCHEMAS = [
     _function("read_subproject", "خواندن جزئیات قراردادی و مالی یک زیرپروژه مجاز", {
         "subproject_id": {"type": "integer"},
     }, ["subproject_id"]),
+    _function("get_subproject_json_template",
+        "بازگشت قالب JSON کامل و پویا برای یک زیرپروژه؛ به‌صورت لحظه‌ای از دیتابیس ساخته می‌شود، روی سرور ذخیره نمی‌شود و به‌طور خودکار آزاد می‌شود", {
+        "subproject_id": {"type": "integer"},
+    }, ["subproject_id"]),
+    _function("get_project_json_template",
+        "بازگشت قالب JSON کامل و پویا برای یک پروژه به‌همراه همه زیرپروژه‌های داخلش؛ به‌صورت لحظه‌ای ساخته می‌شود", {
+        "project_id": {"type": "integer"},
+    }, ["project_id"]),
+    _function("get_program_json_template",
+        "بازگشت قالب JSON کامل و پویا برای یک طرح به‌همراه همه پروژه‌ها و زیرپروژه‌های داخلش در یک پاسخ؛ به‌صورت لحظه‌ای ساخته می‌شود و جایی ذخیره نمی‌شود", {
+        "program_id": {"type": "integer"},
+    }, ["program_id"]),
     _function("validate_project", "کنترل صحت تعریف پروژه و زیرپروژه‌های آن", {
         "project_id": {"type": "integer"},
     }, ["project_id"]),
@@ -124,6 +138,12 @@ def _execute_tool(user, name, args, allow_web_search, allow_local_js):
         return read_project(user, args["project_id"])
     if name == "read_subproject":
         return read_subproject(user, args["subproject_id"])
+    if name == "get_subproject_json_template":
+        return get_subproject_json_template(user, args["subproject_id"])
+    if name == "get_project_json_template":
+        return get_project_json_template(user, args["project_id"])
+    if name == "get_program_json_template":
+        return get_program_json_template(user, args["program_id"])
     if name == "validate_project":
         return validate_project(user, args["project_id"])
     if name == "financial_audit":

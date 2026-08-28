@@ -20,6 +20,10 @@ from mcp.server.fastmcp import FastMCP  # noqa: E402
 from accounts.models import User  # noqa: E402
 
 from . import reporter_tools  # noqa: E402
+from .domain_tools import (  # noqa: E402
+    get_program_json_template, get_project_json_template,
+    get_subproject_json_template,
+)
 
 mcp = FastMCP("pmd-reporter-search")
 
@@ -89,6 +93,24 @@ def search_history(search_type: str = "", limit: int = 20, viewer: dict = None):
     u"""فهرست تاریخچه جستجوهای گزارش‌گیر خود کاربر جاری."""
     return reporter_tools.search_history(
         _guard_user(viewer), search_type=search_type, limit=limit)
+
+
+@mcp.tool()
+def get_subproject_json_template(subproject_id: int, viewer: dict = None):
+    u"""قالب JSON کامل و پویا برای یک زیرپروژه (به‌صورت لحظه‌ای، بدون ذخیره روی سرور)."""
+    return get_subproject_json_template(_guard_user(viewer), subproject_id)
+
+
+@mcp.tool()
+def get_project_json_template(project_id: int, viewer: dict = None):
+    u"""قالب JSON کامل و پویا برای یک پروژه به‌همراه همه زیرپروژه‌های داخلش."""
+    return get_project_json_template(_guard_user(viewer), project_id)
+
+
+@mcp.tool()
+def get_program_json_template(program_id: int, viewer: dict = None):
+    u"""قالب JSON کامل و پویا برای یک طرح به‌همراه همه پروژه‌ها و زیرپروژه‌های داخلش."""
+    return get_program_json_template(_guard_user(viewer), program_id)
 
 
 def main():

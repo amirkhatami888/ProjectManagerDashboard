@@ -1,5 +1,6 @@
 """Deterministic, permission-aware tools used by the Persian AI agent."""
-from datetime import timedelta
+import json
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from django.db.models import Q, Sum
@@ -296,3 +297,184 @@ def project_forecast(user, project_id):
         },
         "subprojects": rows,
     }
+
+
+def _json_safe(value):
+    """Convert any model value into a JSON-safe primitive."""
+    if value is None:
+        return None
+    if isinstance(value, (Decimal, float)):
+        return float(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    return str(value)
+
+
+def _subproject_template(item):
+    """A self-contained JSON command/template for one subproject."""
+    return {
+        "entity": "subproject",
+        "id": item.pk,
+        "name": item.name,
+        "number": item.sub_project_number,
+        "stage": item.project_stage,
+        "state": item.state,
+        "physical_progress": _json_safe(item.physical_progress) or 0,
+        "start_date": _json_safe(item.start_date),
+        "end_date": _json_safe(item.end_date),
+        "remaining_work": item.remaining_work,
+        "charity": item.is_suportting_charity,
+        "description": item.description,
+        "relationship": {
+            "related_subproject_id": _json_safe(item.related_subproject_id),
+            "relationship_type": item.relationship_type,
+            "relationship_delay_days": item.relationship_delay,
+        },
+        "estimate": {
+            "estimated_duration_days": item.imagenary_duration,
+            "estimated_cost_rial": _json_safe(item.imagenrary_cost),
+            "cost_calculation_method": item.cost_calculation_method,
+        },
+        "contract": {
+            "contract_type": item.contract_type,
+            "contract_amount_rial": _json_safe(item.contract_amount),
+            "final_contract_amount_rial": _json_safe(item.final_contract_amount),
+            "contract_start_date": _json_safe(item.contract_start_date),
+            "contract_end_date": _json_safe(item.contract_end_date),
+            "execution_method": item.execution_method,
+            "has_25_percent_increase": item.has_25_percent_increase,
+            "increase_coefficient_25_percent": _json_safe(item.increase_coefficient_25_percent),
+            "has_adjustment": item.has_adjustment,
+            "adjustment_coefficient": _json_safe(item.adjustment_coefficient),
+            "has_tax_insurance_increase": item.has_tax_insurance_increase,
+            "tax_insurance_increase_percentage": _json_safe(item.tax_insurance_increase_percentage),
+        },
+        "contractor": {
+            "contractor_name": item.contractor_name,
+            "contractor_id": item.contractor_id,
+        },
+        "consultant": {
+            "has_consultant": item.has_consultant,
+            "consultant_name": item.consultant_name,
+            "consultant_national_id": item.consultant_national_id,
+        },
+        "financial": {
+            "total_payments_rial": _json_safe(item.total_payments),
+            "total_prepayments_rial": _json_safe(item.total_prepayments),
+            "situation_amount_rial": _json_safe(item.situation_amount),
+            "total_adjustment_amount_rial": _json_safe(item.total_adjustment_amount),
+            "predicted_adjustment_amount_rial": _json_safe(item.predicted_adjustment_amount),
+            "subproject_debt_rial": _json_safe(item.subproject_debt),
+            "required_credit_for_contract_completion_rial":
+                _json_safe(item.required_credit_for_contract_completion),
+            "financial_progress_percent": _json_safe(item.financial_progress_percentage),
+        },
+        "procurement": {
+            "transaction_threshold": item.transaction_threshold,
+            "tender_type": item.tender_type,
+        },
+    }
+
+
+def _project_template(project, with_subprojects=True, user=None):
+    """A self-contained JSON command/template for one project."""
+    subprojects = visible_subprojects(user).filter(project=project)
+    return {
+        "entity": "project",
+        "id": project.pk,
+        "project_id": project.project_id,
+        "name": project.name,
+        "project_type": project.project_type,
+        "province": project.province,
+        "city": project.city,
+        "overall_status": project.overall_status,
+        "physical_progress": _json_safe(project.physical_progress) or 0,
+        "financial_progress": _json_safe(project.calculate_financial_progress()) or 0,
+        "area_size": _json_safe(project.area_size),
+        "notables": _json_safe(project.notables),
+        "site_area": _json_safe(project.site_area),
+        "wall_length": _json_safe(project.wall_length),
+        "floor": project.floor,
+        "estimated_opening_time": _json_safe(project.estimated_opening_time),
+        "program": {
+            "program_id": project.program.program_id if project.program_id else None,
+            "program_title": project.program.title if project.program_id else None,
+        },
+        "allocations": {
+            "cash_national_rial": _json_safe(project.allocation_credit_cash_national),
+            "cash_province_rial": _json_safe(project.allocation_credit_cash_province),
+            "cash_charity_rial": _json_safe(project.allocation_credit_cash_charity),
+            "cash_travel_rial": _json_safe(project.allocation_credit_cash_travel),
+            "treasury_national_rial": _json_safe(project.allocation_credit_treasury_national),
+            "treasury_province_rial": _json_safe(project.allocation_credit_treasury_province),
+            "treasury_travel_rial": _json_safe(project.allocation_credit_treasury_travel),
+            "debt_rial": _json_safe(project.cached_total_debt),
+            "required_credit_contracts_rial": _json_safe(project.cached_required_credit_contracts),
+            "required_credit_project_rial": _json_safe(project.cached_required_credit_project),
+        },
+        "subprojects": [
+            _subproject_template(item) for item in subprojects
+        ] if with_subprojects else [],
+    }
+
+
+def _program_template(program, with_children=True, user=None):
+    """A self-contained JSON command/template for one program."""
+    projects = visible_projects(user).filter(program=program)
+    return {
+        "entity": "program",
+        "id": program.pk,
+        "program_id": program.program_id,
+        "title": program.title,
+        "program_type": program.program_type,
+        "province": program.province,
+        "city": program.city,
+        "license_state": program.license_state,
+        "license_code": program.license_code,
+        "address": program.address,
+        "longitude": _json_safe(program.longitude),
+        "latitude": _json_safe(program.latitude),
+        "description": program.description,
+        "program_opening_date": _json_safe(program.program_opening_date),
+        "projects": [
+            _project_template(project, with_subprojects=True, user=user)
+            for project in projects
+        ] if with_children else [],
+    }
+
+
+def get_subproject_json_template(user, subproject_id):
+    """بازگشت قالب JSON کامل و به‌صورت پویا برای یک زیرپروژه.
+
+    داده به‌صورت لحظه‌ای از دیتابیس ساخته می‌شود، روی سرور ذخیره نمی‌شود و
+    پس از پاسخ به‌طور خودکار از حافظه آزاد می‌شود.
+    """
+    item = resolve_visible(user, SubProject, subproject_id)
+    return _subproject_template(item)
+
+
+def get_project_json_template(user, project_id):
+    """بازگشت قالب JSON کامل و به‌صورت پویا برای یک پروژه به‌همراه زیرپروژه‌هایش."""
+    project = resolve_visible(user, Project, project_id)
+    return _project_template(project, with_subprojects=True, user=user)
+
+
+def get_program_json_template(user, program_id):
+    """بازگشت قالب JSON کامل و به‌صورت پویا برای یک طرح.
+
+    وقتی این تابع فراخوانی می‌شود همه پروژه‌ها و زیرپروژه‌های داخل همان طرح نیز
+    برای بازیابی در همان پاسخ قرار می‌گیرند؛ داده به‌صورت پویا تولید می‌شود،
+    در دیتابیسِ جداگانه‌ای ذخیره نمی‌شود و نیازی به پاک‌سازی ندارد.
+    """
+    program = resolve_visible(user, Program, program_id)
+    return _program_template(program, with_children=True, user=user)
+
+
+def dump_program_json_text(user, program_id):
+    """بازگشت قالب JSON طرح به‌صورت رشته JSON برای ارسال مستقیم به ماشین."""
+    return json.dumps(get_program_json_template(user, program_id),
+                      ensure_ascii=False, default=_json_safe)
