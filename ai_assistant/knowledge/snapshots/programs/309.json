@@ -1,0 +1,22 @@
+{
+  "id": 309,
+  "title": "اردوگاه بین المللی چاف",
+  "program_id": "880076",
+  "program_type": "ساختمان اداری آموزشی درمانی وفرهنگی",
+  "province": "گیلان",
+  "city": "لنگرود",
+  "license_state": "ندارد",
+  "license_code": "0000",
+  "address": "لنگرود، اردوگاه بین المللی چاف",
+  "longitude": "50.232758",
+  "latitude": "37.280317",
+  "description": "",
+  "program_opening_date": null,
+  "created_at": "2026-08-08T09:36:34.206911+00:00",
+  "updated_at": "2026-08-08T09:36:34.206921+00:00",
+  "is_approved": 0,
+  "is_submitted": 0,
+  "is_expert_approved": 0,
+  "entity": "program",
+  "projects": []
+}

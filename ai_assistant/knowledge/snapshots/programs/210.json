@@ -1,0 +1,22 @@
+{
+  "id": 210,
+  "title": "پایگاه امداد شهری سروستان",
+  "program_id": "891395",
+  "program_type": "ساختمان اداری آموزشی درمانی وفرهنگی",
+  "province": "فارس",
+  "city": "سروستان",
+  "license_state": "دارد",
+  "license_code": "-",
+  "address": "میدان معلم",
+  "longitude": "53.199480",
+  "latitude": "29.278450",
+  "description": "",
+  "program_opening_date": null,
+  "created_at": "2026-02-25T10:18:06.061193+00:00",
+  "updated_at": "2026-02-25T10:18:06.061205+00:00",
+  "is_approved": 0,
+  "is_submitted": 0,
+  "is_expert_approved": 0,
+  "entity": "program",
+  "projects": []
+}

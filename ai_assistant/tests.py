@@ -347,3 +347,93 @@ class AIAssistantTests(TestCase):
         }):
             with self.assertRaises(PermissionError):
                 run_local_js("../outside.js")
+
+
+class ReporterToolsTests(TestCase):
+    """Province-scoping and reporter-style filters for the AI search tools."""
+
+    def setUp(self):
+        from django.utils import timezone
+        from creator_program.models import Program
+        from creator_project.models import Project
+
+        self.admin = User.objects.create_superuser(
+            username="reporter-admin", email="r-admin@example.com",
+            password="test-pass-123")
+        self.province_user = User.objects.create_user(
+            username="province-manager", email="prov@example.com",
+            password="test-pass-123", province="تهران")
+        self.province_user.role = "PROVINCE_MANAGER"
+        self.province_user.save(update_fields=["role"])
+
+        self.program = Program.objects.create(
+            title="طرح تهران", program_id="100001", program_type="احداث",
+            province="تهران", license_state="دارد", license_code="L1",
+            created_by=self.admin,
+            program_opening_date=timezone.now().date())
+        self.other_program = Program.objects.create(
+            title="طرح فارس", program_id="100002", program_type="احداث",
+            province="فارس", license_state="ندارد", license_code="L2",
+            created_by=self.admin)
+        self.project = Project.objects.create(
+            program=self.program, name="پروژه تهران", project_id="200001",
+            province="تهران", created_by=self.admin)
+
+    def test_program_search_scoped_by_province(self):
+        from .reporter_tools import search_programs
+        admin_results = search_programs(self.admin, limit=50)
+        self.assertEqual(admin_results["count"], 2)
+        province_results = search_programs(self.province_user, limit=50)
+        self.assertEqual(province_results["count"], 1)
+        self.assertEqual(province_results["results"][0]["title"], "طرح تهران")
+
+    def test_program_search_filters(self):
+        from .reporter_tools import search_programs
+        self.assertEqual(
+            search_programs(self.province_user, program_types=["احداث"])["count"], 1)
+        self.assertEqual(
+            search_programs(self.province_user, license_states=["ندارد"])["count"], 0)
+
+    def test_project_search_scoped(self):
+        from .reporter_tools import search_projects
+        self.assertEqual(search_projects(self.admin)["count"], 1)
+        self.assertEqual(search_projects(self.province_user)["count"], 1)
+        self.assertEqual(search_projects(self.province_user, provinces=["فارس"])["count"], 0)
+
+    def test_search_history_listing(self):
+        from reporter.models import SearchHistory
+        from .reporter_tools import search_history
+        SearchHistory.objects.create(
+            user=self.admin, query_text="پروژه", search_type="project",
+            results_count=1)
+        result = search_history(self.admin)
+        self.assertEqual(len(result["results"]), 1)
+        self.assertEqual(search_history(self.province_user)["results"], [])
+
+    def test_tools_registered_in_orchestration(self):
+        from .orchestration import BASE_TOOL_SCHEMAS
+        names = {s["function"]["name"] for s in BASE_TOOL_SCHEMAS}
+        self.assertTrue({"program_search", "project_search",
+                         "subproject_search", "search_history"} <= names)
+
+
+class SnapshotTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            username="snap-admin", email="snap-admin@example.com",
+            password="test-pass-123")
+        from creator_program.models import Program
+        self.program = Program.objects.create(
+            title="طرح اسنپ", program_id="300001", program_type="احداث",
+            province="تهران", license_state="دارد", license_code="L9",
+            created_by=self.admin)
+
+    def test_snapshot_generation_writes_file(self):
+        from .snapshots import SNAPSHOT_DIR, write_program_snapshot
+        payload = write_program_snapshot(self.program.pk)
+        self.assertEqual(payload["id"], self.program.pk)
+        self.assertEqual(payload["entity"], "program")
+        self.assertEqual(payload["title"], "طرح اسنپ")
+        target = SNAPSHOT_DIR / "programs" / f"{self.program.pk}.json"
+        self.assertTrue(target.exists())
+

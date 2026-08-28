@@ -1,0 +1,22 @@
+{
+  "id": 251,
+  "title": "پایگاه امداد کوهستان -مهدیشهر",
+  "program_id": "922092",
+  "program_type": "پایگاه امداد کوهستانی",
+  "province": "سمنان",
+  "city": "مهدیشهر",
+  "license_state": "دارد",
+  "license_code": "0000",
+  "address": "مهدیشهر",
+  "longitude": "50.000000",
+  "latitude": "30.000000",
+  "description": "",
+  "program_opening_date": null,
+  "created_at": "2026-06-03T09:36:39.983635+00:00",
+  "updated_at": "2026-06-03T09:36:39.983647+00:00",
+  "is_approved": 0,
+  "is_submitted": 0,
+  "is_expert_approved": 0,
+  "entity": "program",
+  "projects": []
+}

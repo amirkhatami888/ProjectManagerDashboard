@@ -1,0 +1,22 @@
+{
+  "id": 92,
+  "title": "پایگاه امداد و نجات جاده ای محور کنارک - نیکشهر (پایگاه سورکمپ )",
+  "program_id": "759134",
+  "program_type": "پایگاه امداد جادهای",
+  "province": "سیستان و بلوچستان",
+  "city": "کنارک",
+  "license_state": "دارد",
+  "license_code": "1",
+  "address": "؟؟؟؟",
+  "longitude": "0.000000",
+  "latitude": "0.000000",
+  "description": "مختصات اصلاح شود.",
+  "program_opening_date": null,
+  "created_at": "2026-02-18T11:51:04.785083+00:00",
+  "updated_at": "2026-02-18T11:51:04.785098+00:00",
+  "is_approved": 0,
+  "is_submitted": 0,
+  "is_expert_approved": 0,
+  "entity": "program",
+  "projects": []
+}

@@ -1,0 +1,22 @@
+{
+  "id": 121,
+  "title": "سوله شماره 2 معاونت امداد ونجات",
+  "program_id": "604136",
+  "program_type": "سالن چند منظوره/انبار امدادی",
+  "province": "ایلام",
+  "city": "ایلام",
+  "license_state": "دارد",
+  "license_code": "111",
+  "address": "ایلام مجتمع امدادی و معاونت امداد جمعیت استان ایلام",
+  "longitude": "46.369770",
+  "latitude": "33.628120",
+  "description": "پروژه در محل معاونت امداد و نجات استان در حال اجرا می باشد",
+  "program_opening_date": null,
+  "created_at": "2026-02-23T10:00:05.708296+00:00",
+  "updated_at": "2026-06-06T08:31:46.483984+00:00",
+  "is_approved": 0,
+  "is_submitted": 0,
+  "is_expert_approved": 0,
+  "entity": "program",
+  "projects": []
+}

@@ -8,6 +8,9 @@ from .domain_tools import (
 from .search import tavily_search
 from .tools import explain_field
 from .js_runner import run_local_js
+from .reporter_tools import (
+    search_history, search_programs, search_projects, search_subprojects,
+)
 import os
 
 
@@ -48,6 +51,43 @@ BASE_TOOL_SCHEMAS = [
         "entity": {"type": "string", "enum": ["program", "project", "subproject"]},
         "field": {"type": "string"},
     }, ["entity", "field"]),
+    _function("program_search", "جستجوی عوامل طرح (برنامه) با فیلترهای گزارش‌گیر (همان /reporter/program-search/)", {
+        "query": {"type": "string"},
+        "program_types": {"type": "array", "items": {"type": "string"}},
+        "provinces": {"type": "array", "items": {"type": "string"}},
+        "license_states": {"type": "array", "items": {"type": "string"}},
+        "license_codes": {"type": "array", "items": {"type": "string"}},
+        "from_date": {"type": "string"},
+        "to_date": {"type": "string"},
+        "limit": {"type": "integer", "minimum": 1, "maximum": 50},
+    }),
+    _function("project_search", "جستجوی عوامل پروژه با فیلترهای گزارش‌گیر (همان /reporter/search-history/ با نوع پروژه)", {
+        "query": {"type": "string"},
+        "project_types": {"type": "array", "items": {"type": "string"}},
+        "project_statuses": {"type": "array", "items": {"type": "string"}},
+        "provinces": {"type": "array", "items": {"type": "string"}},
+        "program_types": {"type": "array", "items": {"type": "string"}},
+        "license_states": {"type": "array", "items": {"type": "string"}},
+        "min_physical_progress": {"type": "number"},
+        "max_physical_progress": {"type": "number"},
+        "min_financial_progress": {"type": "number"},
+        "max_financial_progress": {"type": "number"},
+        "limit": {"type": "integer", "minimum": 1, "maximum": 50},
+    }),
+    _function("subproject_search", "جستجوی عوامل زیرپروژه با فیلترهای نام، مرحله، وضعیت، نوع قرارداد و پیشرفت", {
+        "query": {"type": "string"},
+        "provinces": {"type": "array", "items": {"type": "string"}},
+        "stages": {"type": "array", "items": {"type": "string"}},
+        "states": {"type": "array", "items": {"type": "string"}},
+        "contract_types": {"type": "array", "items": {"type": "string"}},
+        "min_progress": {"type": "number"},
+        "max_progress": {"type": "number"},
+        "limit": {"type": "integer", "minimum": 1, "maximum": 50},
+    }),
+    _function("search_history", "فهرست تاریخچه جستجوهای گزارش‌گیر خود کاربر جاری", {
+        "search_type": {"type": "string", "enum": ["", "all", "project", "subproject"]},
+        "limit": {"type": "integer", "minimum": 1, "maximum": 50},
+    }),
 ]
 
 WEB_TOOL_SCHEMA = _function(
@@ -92,6 +132,40 @@ def _execute_tool(user, name, args, allow_web_search, allow_local_js):
         return project_forecast(user, args["project_id"])
     if name == "explain_field":
         return explain_field(args["entity"], args["field"]) or {"error": "فیلد پیدا نشد."}
+    if name == "program_search":
+        return search_programs(
+            user, query=args.get("query", ""),
+            program_types=args.get("program_types"),
+            provinces=args.get("provinces"),
+            license_states=args.get("license_states"),
+            license_codes=args.get("license_codes"),
+            from_date=args.get("from_date", ""),
+            to_date=args.get("to_date", ""),
+            limit=args.get("limit", 20))
+    if name == "project_search":
+        return search_projects(
+            user, query=args.get("query", ""),
+            project_types=args.get("project_types"),
+            project_statuses=args.get("project_statuses"),
+            provinces=args.get("provinces"),
+            program_types=args.get("program_types"),
+            license_states=args.get("license_states"),
+            min_physical_progress=args.get("min_physical_progress"),
+            max_physical_progress=args.get("max_physical_progress"),
+            min_financial_progress=args.get("min_financial_progress"),
+            max_financial_progress=args.get("max_financial_progress"),
+            limit=args.get("limit", 20))
+    if name == "subproject_search":
+        return search_subprojects(
+            user, query=args.get("query", ""),
+            provinces=args.get("provinces"), stages=args.get("stages"),
+            states=args.get("states"), contract_types=args.get("contract_types"),
+            min_progress=args.get("min_progress"),
+            max_progress=args.get("max_progress"),
+            limit=args.get("limit", 20))
+    if name == "search_history":
+        return search_history(user, search_type=args.get("search_type", ""),
+                              limit=args.get("limit", 20))
     if name == "web_search":
         if not allow_web_search:
             raise PermissionError("جستجوی وب برای این حساب یا این درخواست فعال نیست.")

@@ -1,0 +1,22 @@
+{
+  "id": 196,
+  "title": "تکمیل ساختمان اداری امدادی",
+  "program_id": "692508",
+  "program_type": "ساختمان اداری آموزشی درمانی وفرهنگی",
+  "province": "بوشهر",
+  "city": "دشتی",
+  "license_state": "دارد",
+  "license_code": "1",
+  "address": "خورموج بلوار بسیج بسیج 25",
+  "longitude": "51.375710",
+  "latitude": "28.645960",
+  "description": "",
+  "program_opening_date": null,
+  "created_at": "2026-02-25T09:14:16.552761+00:00",
+  "updated_at": "2026-02-25T09:18:51.779427+00:00",
+  "is_approved": 0,
+  "is_submitted": 0,
+  "is_expert_approved": 0,
+  "entity": "program",
+  "projects": []
+}

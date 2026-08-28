@@ -1,0 +1,77 @@
+{
+  "protocol": "mcp-style-catalog",
+  "version": "1.0",
+  "description": "کاتالوگ ابزارهای قابل فراخوانی دستیار هوشمند (عامل) سامانه مدیریت پروژه‌های عمرانی جمعیت هلال احمر ایران.",
+  "base_url": "/reporter/program-search/",
+  "documents_supported": {
+    "reporter_paths": [
+      "/reporter/program-search/",
+      "/reporter/search-history/"
+    ],
+    "snapshot_root": "ai_assistant/knowledge/snapshots/"
+  },
+  "tools": [
+    {
+      "name": "program_search",
+      "description": "جستجوی طرح با فیلترهای بخش گزارش‌گیر (برابر /reporter/program-search/). دسترسی: فقط طرح‌های قابل مشاهده کاربر.",
+      "url_equivalent": "GET /reporter/program-search/",
+      "parameters": [
+        {"name": "query", "type": "string", "match": "؟query="},
+        {"name": "program_types", "type": "array[string]", "match": "?program_types=..."},
+        {"name": "provinces", "type": "array[string]", "match": "?program_provinces=..."},
+        {"name": "license_states", "type": "array[string]", "match": "?license_states=..."},
+        {"name": "license_codes", "type": "array[string]", "match": "?license_codes=..."},
+        {"name": "from_date", "type": "date(Y-M-D)", "match": "?from_date="},
+        {"name": "to_date", "type": "date(Y-M-D)", "match": "?to_date="},
+        {"name": "limit", "type": "integer (1..50)", "default": 20}
+      ]
+    },
+    {
+      "name": "project_search",
+      "description": "جستجوی پروژه با فیلترهای گزارش‌گیر (برابر /reporter/search-history/ همراه type_filter=project). دسترسی: فقط پروژه‌های قابل مشاهده کاربر.",
+      "url_equivalent": "GET /reporter/search-history/?type_filter=project",
+      "parameters": [
+        {"name": "query", "type": "string", "match": "؟query="},
+        {"name": "project_types", "type": "array[string]", "match": "?project_types=..."},
+        {"name": "project_statuses", "type": "array[string]", "match": "?project_statuses=..."},
+        {"name": "provinces", "type": "array[string]", "match": "?project_provinces=..."},
+        {"name": "program_types", "type": "array[string]", "match": "?program_types=..."},
+        {"name": "license_states", "type": "array[string]", "match": "?license_states=..."},
+        {"name": "min_physical_progress", "type": "number", "match": "?min_physical_progress="},
+        {"name": "max_physical_progress", "type": "number", "match": "?max_physical_progress="},
+        {"name": "min_financial_progress", "type": "number"},
+        {"name": "max_financial_progress", "type": "number"},
+        {"name": "limit", "type": "integer (1..50)", "default": 20}
+      ]
+    },
+    {
+      "name": "subproject_search",
+      "description": "جستجوی زیرپروژه با نام، مرحله، وضعیت، نوع قرارداد و پیشرفت. دسترسی: فقط زیرپروژه‌های قابل مشاهده کاربر.",
+      "url_equivalent": "بدون view جدا در گزارش‌گیر؛ ابزار اختصاصی دستیار",
+      "parameters": [
+        {"name": "query", "type": "string"},
+        {"name": "provinces", "type": "array[string]"},
+        {"name": "stages", "type": "array[string]"},
+        {"name": "states", "type": "array[string]"},
+        {"name": "contract_types", "type": "array[string]"},
+        {"name": "min_progress", "type": "number"},
+        {"name": "max_progress", "type": "number"},
+        {"name": "limit", "type": "integer (1..50)", "default": 20}
+      ]
+    },
+    {
+      "name": "search_history",
+      "description": "فهرست تاریخچه جستجوهای گزارش‌گیر خود کاربر جاری (هرگز تاریخچه دیگران را برنمی‌گرداند).",
+      "url_equivalent": "GET /reporter/user-search-history/",
+      "parameters": [
+        {"name": "search_type", "type": "string", "enum": ["", "all", "project", "subproject"], "default": ""},
+        {"name": "limit", "type": "integer (1..50)", "default": 20}
+      ]
+    }
+  ],
+  "snapshots": {
+    "layout": "ai_assistant/knowledge/snapshots/{programs|projects|subprojects}/{id}.json",
+    "index": "ai_assistant/knowledge/snapshots/index.json",
+    "regenerate_command": "python manage.py generate_snapshots"
+  }
+}
