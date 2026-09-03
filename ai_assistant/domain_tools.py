@@ -447,6 +447,159 @@ def _program_template(program, with_children=True, user=None):
     }
 
 
+# States/signals used to decide whether a building is finished or نصفه‌کاره.
+_BUILDING_CONSTRUCTION_TYPES = {"احداث", "تکمیل"}
+_BUILDING_STAGES = {
+    "طراحی نقشه های فاز 1و2", "تجهیزات کارگاهی", "گودبرداری", "فونداسیون",
+    "اسکلت", "سفت کاری", "نما", "اجرای تاسیسات", "نازک کاری",
+    "اجرای نصبیات برقی و مکانیکی",
+}
+
+
+def _is_building_project(project):
+    """A project counts as a 'building' when it is an احداث/تکمیل construction
+    that actually carries building-work subprojects (its name or its subproject
+    stages point to structural/enclosure/finishing work)."""
+    if project.project_type not in _BUILDING_CONSTRUCTION_TYPES:
+        return False
+    name = (project.name or "").strip()
+    if any(kw in name for kw in ("ساختمان", "پایگاه", "سوله", "انبار", "سازه")):
+        return True
+    stages = {sp.project_stage for sp in project.subprojects.all() if sp.project_stage}
+    return bool(stages & _BUILDING_STAGES)
+
+
+def _subproject_unfinished(subproject):
+    """True when a subproject carries visible unfinished work: its physical
+    progress is below 100, OR it is still active/in-progress at a mid-build
+    stage that is not yet handed over (i.e. not تحویل قطعی/موقت) even if a
+    progress value is recorded."""
+    if subproject.physical_progress is None or float(subproject.physical_progress) < 100:
+        return True
+    # A record marked 100% that was not handed over counts as finished work
+    # awaiting handover; it is not a نیمه‌کاره building, so it is not flagged.
+    return False
+
+
+def _expand_provinces(raw_provinces):
+    """Normalize + expand a user-provided province list for matching.
+
+    - Strips whitespace and Persian variant characters.
+    - A bare prefix like «آذربایجان» or «خراسان» is expanded to every matching
+      province code that starts with it (e.g. both «آذربایجان شرقی» and
+      «آذربایجان غربی»), so the user never needs to disambiguate by hand.
+    - Returns the distinct, normalized province codes found in the DB.
+    """
+    from .reporter_tools import _PROVINCES
+    candidates = _PROVINCES
+    wanted = set()
+    if raw_provinces:
+        values = raw_provinces if isinstance(raw_provinces, (list, tuple, set)) else [raw_provinces]
+        specs = [str(v).strip() for v in values if str(v or "").strip()]
+    else:
+        specs = []
+    for spec in specs:
+        norm = "".join(spec.split()).replace("ي", "ی").replace("ك", "ک")
+        if norm in ("آذربایجان", "ازربایجان"):
+            wanted.update(p for p in candidates if "آذربایجان" in p)
+            continue
+        if norm in ("خراسان",):
+            wanted.update(p for p in candidates if "خراسان" in p)
+            continue
+        matched = [p for p in candidates if "".join(p.split()) == norm]
+        if matched:
+            wanted.update(matched)
+        else:
+            partial = [p for p in candidates if norm in "".join(p.split())]
+            if partial:
+                wanted.update(partial)
+    return wanted
+
+
+def analyze_program_buildings(user, province=None, provinces=None):
+    """عمیق و پویا در استان(های) مشخص‌شده: همه طرح‌ها → پروژه‌های ساختمانی
+    (احداث/تکمیل) → زیرپروژه‌های آن‌ها را می‌پیماید و ساختمان‌های نیمه‌کاره
+    (پیشرفت کمتر از صد یا دارای زیرپروژهٔ تحویل‌نشده/در حال اجرا) را برمی‌گرداند.
+
+    «province» برای سازگاری با فراخوانی‌های قدیمی تک‌استانی نگاه داشته شده و
+    «provinces» می‌تواند چند استان را هم‌زمان بگیرد. برای «آذربایجان» یا
+    «خراسان» (بدون صفت) هر دو استان متناظر به‌صورت خودکار پوشش داده می‌شوند.
+    نتایج به‌صورت قطعی از دیتابیس و در محدودهٔ داده‌های قابل مشاهدهٔ کاربر
+    ساخته می‌شوند و جایی ذخیره نمی‌شوند."""
+    provinces = provinces if provinces is not None else ([province] if province else [])
+    codes = _expand_provinces(provinces)
+    per_province = []
+    all_unfinished = []
+    for code in sorted(codes):
+        programs = visible_programs(user).filter(province=code).order_by("program_id")
+        unfinished_programs = []
+        for program in programs:
+            program_rows = []
+            for project in visible_projects(user).filter(program=program).order_by("pk"):
+                if not _is_building_project(project):
+                    continue
+                subprojects = list(visible_subprojects(user).filter(project=project).order_by("sub_project_number", "pk"))
+                unfinished_subs = [sp for sp in subprojects if _subproject_unfinished(sp)]
+                if float(project.physical_progress or 0) < 100 or unfinished_subs:
+                    program_rows.append({
+                        "project_id": project.project_id,
+                        "project_name": project.name,
+                        "project_type": project.project_type,
+                        "overall_status": project.overall_status,
+                        "physical_progress": float(project.physical_progress or 0),
+                        "unfinished_subprojects": [
+                            {
+                                "name": sp.name, "stage": sp.project_stage,
+                                "state": sp.state,
+                                "physical_progress": float(sp.physical_progress or 0),
+                                "remaining_work": sp.remaining_work,
+                            } for sp in unfinished_subs
+                        ],
+                    })
+            if program_rows:
+                unfinished_programs.append({
+                    "program_id": program.program_id,
+                    "title": program.title,
+                    "program_type": program.program_type,
+                    "city": program.city,
+                    "province": code,
+                    "unfinished_buildings": program_rows,
+                })
+                for row in program_rows:
+                    all_unfinished.append({"program_id": program.program_id,
+                                           "program_title": program.title,
+                                           "province": code,
+                                           **row})
+        per_province.append({
+            "province": code,
+            "unfinished_building_count": sum(
+                len(row["unfinished_buildings"]) for row in unfinished_programs),
+            "programs_with_unfinished_buildings": unfinished_programs,
+        })
+    total = sum(pc["unfinished_building_count"] for pc in per_province)
+    return {
+        "entity": "program_buildings",
+        "provinces": [pc["province"] for pc in per_province],
+        "requested_provinces": sorted(codes),
+        "unfinished_building_count": total,
+        "program_count_with_unfinished_buildings": sum(
+            len(pc["programs_with_unfinished_buildings"]) for pc in per_province),
+        "programs": [
+            {"program_id": x["program_id"], "program_title": x["program_title"],
+             "province": x["province"],
+             "project_name": x["project_name"],
+             "physical_progress": x["physical_progress"]}
+            for x in sorted(all_unfinished, key=lambda r: r["province"])
+        ],
+        "by_province": per_province,
+        "note": (
+            "ساختمان نیمه‌کاره = پروژهٔ احداث/تکمیل با پیشرفت فیزیکی کمتر از ۱۰۰٪ "
+            "یا دارای دست‌کم یک زیرپروژهٔ تحویل‌نشده/در حال اجرا. محاسبه به‌صورت لحظه‌ای "
+            "از دیتابیس انجام شده است و جایی ذخیره نمی‌شود."
+        ),
+    }
+
+
 def get_subproject_json_template(user, subproject_id):
     """بازگشت قالب JSON کامل و به‌صورت پویا برای یک زیرپروژه.
 

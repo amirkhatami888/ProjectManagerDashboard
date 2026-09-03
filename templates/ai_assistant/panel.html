@@ -16,6 +16,17 @@
       </div>
     </div>
     <div id="aiMessages" class="card-body" style="min-height: 320px"></div>
+    <div id="aiAgentBox" class="px-3 pb-2" hidden>
+      <div class="border rounded-3 p-2 bg-light">
+        <div class="d-flex align-items-center gap-2 small text-muted">
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          <b>عامل در حال کار…</b>
+          <span class="ms-auto badge bg-primary" id="aiAgentStatus">برنامه‌ریزی</span>
+        </div>
+        <ul id="aiPlan" class="list-unstyled small mb-1 mt-2"></ul>
+        <div id="aiToolLog" class="font-monospace text-muted small" style="max-height:140px; overflow-y:auto;"></div>
+      </div>
+    </div>
     <form id="aiChatForm" class="card-footer d-flex gap-2">
       {% csrf_token %}
       <input id="aiMessage" class="form-control" autocomplete="off"
@@ -29,14 +40,20 @@
   const form = document.getElementById('aiChatForm');
   const input = document.getElementById('aiMessage');
   const messages = document.getElementById('aiMessages');
+  const agentBox = document.getElementById('aiAgentBox');
+  const planEl = document.getElementById('aiPlan');
+  const toolLog = document.getElementById('aiToolLog');
+  const statusEl = document.getElementById('aiAgentStatus');
   const csrf = form.querySelector('[name=csrfmiddlewaretoken]').value;
   let conversationId = null;
+
   document.getElementById('newAiChat').addEventListener('click', () => {
     conversationId = null;
     messages.innerHTML = '';
     input.value = '';
     input.focus();
   });
+
   function addMessage(label, text) {
     const row = document.createElement('p');
     const title = document.createElement('b');
@@ -44,24 +61,65 @@
     row.append(title, document.createTextNode(text));
     messages.appendChild(row);
   }
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const message = input.value.trim();
-    if (!message) return;
-    addMessage('شما', message);
-    input.value = '';
-    const response = await fetch('{% url "ai_assistant:chat" %}', {
-      method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrf},
-      body: JSON.stringify({message, conversation_id: conversationId})
+
+  function showAgent(show) { agentBox.hidden = !show; }
+
+  const toolNames = {
+    program_search: 'جستجوی طرح', project_search: 'جستجوی پروژه',
+    subproject_search: 'جستجوی زیرپروژه', analyze_program_buildings: 'تحلیل عمیق',
+    read_program: 'خواندن طرح', read_project: 'خواندن پروژه', read_subproject: 'خواندن زیرپروژه',
+    get_program_json_template: 'قالب JSON طرح', get_project_json_template: 'قالب JSON پروژه',
+    get_subproject_json_template: 'قالب JSON زیرپروژه',
+    financial_audit: 'ممیزی مالی', project_forecast: 'پیش‌بینی/SPI-CPI', validate_project: 'اعتبارسنجی',
+    web_search: 'جستجوی وب', search_site: 'جستجوی سامانه', system_overview: 'نمای کلی',
+    search_history: 'تاریخچه', task_todo: 'پیشرفت گام', explain_field: 'راهنمای فیلد',
+    run_local_js: 'اسکریپت محلی'
+  };
+
+  function todoHtml(status) {
+    if (status === 'completed') return '<span class="text-success">✔</span>';
+    if (status === 'in_progress') return '<span class="spinner-border spinner-border-sm text-primary"></span>';
+    if (status === 'failed') return '<span class="text-danger">✖</span>';
+    return '<span class="text-secondary">○</span>';
+  }
+
+  const todos = new Map();
+  function setTodo(id, label, status) {
+    todos.set(String(id), { label, status });
+    renderTodos();
+  }
+  function renderTodos() {
+    planEl.innerHTML = '';
+    todos.forEach((t, id) => {
+      const li = document.createElement('li');
+      li.className = 'd-flex align-items-center gap-2 py-1';
+      li.innerHTML = todoHtml(t.status);
+      const txt = document.createElement('span');
+      txt.textContent = t.label || 'گام ' + id;
+      if (t.status === 'completed') txt.className = 'text-muted';
+      li.appendChild(txt);
+      planEl.appendChild(li);
     });
-    const data = await response.json();
-    conversationId = data.conversation_id || conversationId;
-    const answer = data.answer || data.error || '';
+  }
+
+  function setToolStatus(text, state, toolFa) {
+    statusEl.textContent = state && state !== 'done' ? 'در حال اجرا' : 'در حال پردازش';
+    const line = document.createElement('div');
+    const badge = document.createElement('span');
+    badge.className = 'badge bg-secondary me-1';
+    badge.textContent = toolFa || 'ابزار';
+    line.appendChild(badge);
+    line.appendChild(document.createTextNode(text || 'در حال پردازش…'));
+    toolLog.appendChild(line);
+    toolLog.scrollTop = toolLog.scrollHeight;
+  }
+
+  function appendAnswer(answer, options) {
     const row = document.createElement('div');
     const title = document.createElement('strong');
     title.textContent = 'دستیار: ';
     row.appendChild(title);
-    if (data.answer && window.renderAiMarkdown) {
+    if (window.renderAiMarkdown) {
       const formatted = document.createElement('div');
       window.renderAiMarkdown(formatted, answer);
       row.appendChild(formatted);
@@ -69,7 +127,96 @@
       row.appendChild(document.createTextNode(answer));
     }
     messages.appendChild(row);
+    if (options && options.length) {
+      const opts = document.createElement('p');
+      const oTitle = document.createElement('b');
+      oTitle.textContent = 'گزینه‌ها: ';
+      opts.append(oTitle, document.createTextNode(options.join(' | ')));
+      messages.appendChild(opts);
+    }
     messages.scrollTop = messages.scrollHeight;
+  }
+
+  function appendError(text) {
+    const row = document.createElement('p');
+    row.className = 'text-danger';
+    const title = document.createElement('b');
+    title.textContent = 'دستیار: ';
+    row.append(title, document.createTextNode(text));
+    messages.appendChild(row);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function handleEvent(data) {
+    if (data.type === 'plan') {
+      if (data.status === 'created') {
+        (data.todos || []).forEach(t => setTodo(t.id, t.task, 'pending'));
+      } else if (data.status === 'done') {
+        statusEl.textContent = 'پایان';
+      }
+    } else if (data.type === 'todo') {
+      setTodo(data.todo_id, data.label, data.status || 'pending');
+    } else if (data.type === 'step') {
+      if (data.state === 'running' && data.text) setToolStatus(data.text, data.state, data.tool_fa);
+    } else if (data.type === 'thinking_done') {
+      statusEl.textContent = 'نگارش پاسخ…';
+    } else if (data.type === 'done') {
+      conversationId = data.conversation_id || conversationId;
+      showAgent(false);
+      appendAnswer(data.answer || '', data.options || []);
+    } else if (data.type === 'error') {
+      showAgent(false);
+      appendError(data.error || 'خطا در پردازش درخواست.');
+    }
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const message = input.value.trim();
+    if (!message) return;
+    addMessage('شما', message);
+    input.value = '';
+    todos.clear();
+    planEl.innerHTML = '';
+    toolLog.innerHTML = '';
+    statusEl.textContent = 'برنامه‌ریزی';
+    showAgent(true);
+    const submitBtn = form.querySelector('button[type=submit]');
+    submitBtn.disabled = true;
+    try {
+      const response = await fetch('{% url "ai_assistant:chat_stream" %}', {
+        method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrf},
+        body: JSON.stringify({message, conversation_id: conversationId})
+      });
+      if (!response.ok || !response.body) {
+        showAgent(false);
+        appendError('ارتباط با دستیار برقرار نشد.');
+        return;
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const {value, done} = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, {stream: true});
+        let idx;
+        while ((idx = buffer.indexOf('\n\n')) !== -1) {
+          const raw = buffer.slice(0, idx);
+          buffer = buffer.slice(idx + 2);
+          const line = raw.split('\n').find(l => l.startsWith('data: '));
+          if (!line) continue;
+          let data;
+          try { data = JSON.parse(line.slice(6)); } catch { continue; }
+          handleEvent(data);
+        }
+      }
+    } catch (err) {
+      showAgent(false);
+      appendError('ارتباط با دستیار برقرار نشد.');
+    } finally {
+      submitBtn.disabled = false;
+    }
   });
 })();
 </script>

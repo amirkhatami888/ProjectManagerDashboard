@@ -6,6 +6,7 @@ functions. Every query is scoped to the user's visible querysets, and results
 are returned as compact, deterministic dicts the model can cite.
 """
 from datetime import datetime
+from difflib import SequenceMatcher
 
 from django.db.models import Q
 
@@ -26,6 +27,41 @@ _PROGRAM_TYPES = (
     "سالن چند منظوره/انبار امدادی",
 )
 _LICENSE_STATES = ("دارد", "ندارد", "دردست اقدام", "قبل از بخش نامه اردیبهشت 91")
+_PROJECT_STATUSES = ("فعال", "تامین اعتبار", "غیره فعال")
+_SUBPROJECT_STAGES = (
+    "فاز مطالعاتی", "طراحی نقشه های فاز 1و2", "برگزاری مناقصه",
+    "انعقاد قرار داد و تحویل زمین", "تجهیزات کارگاهی", "گودبرداری",
+    "فونداسیون", "اسکلت", "سفت کاری", "نما", "اجرای تاسیسات", "نازک کاری",
+    "اجرای نصبیات برقی و مکانیکی", "محوطه سازی", "دیوارکشی",
+    "محوطه سازی و دیوار کشی",
+)
+_SUBPROJECT_STATES = (
+    "فعال", "غیرفعال-ختم پیمان", "غیر فعال- ماده 46", "غیره فعال-تعلیق",
+    "غیره فعال-اتمام قرار داد", "تحویل موقت", "تحویل قطعی", "تامین اعتبار",
+)
+_CONTRACT_TYPES = (
+    "سرجمع", "فرست بها", "پیمان مدیریت", "مشارکت در ساخت", "خیر ساز",
+    "BOT", "EPC", "EC", "امانی", "فاقد قرارداد",
+)
+_PROVINCES = (
+    "البرز", "آذربایجان شرقی", "آذربایجان غربی", "اردبیل", "اصفهان",
+    "ایلام", "بوشهر", "تهران", "چهارمحال و بختیاری", "خراسان جنوبی",
+    "خراسان رضوی", "خراسان شمالی", "خوزستان", "زنجان", "سمنان",
+    "سیستان و بلوچستان", "فارس", "قزوین", "قم", "کردستان", "کرمان",
+    "کرمانشاه", "کهگیلویه و بویراحمد", "کیش", "گلستان", "گیلان",
+    "لرستان", "مازندران", "مرکزی", "هرمزگان", "همدان", "یزد",
+)
+
+
+def _normalize(text):
+    """Normalize a Persian/Arabic string for lenient matching."""
+    if text is None:
+        return ""
+    text = "".join(text.split())
+    trans = str.maketrans({
+        "ي": "ی", "ك": "ک", "ة": "ه", "أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا",
+    })
+    return text.translate(trans).strip().lower()
 
 
 def _word_query(fields, query):
@@ -47,10 +83,62 @@ def _parse_date(value):
         return None
 
 
+def _resolve_choice(value, allowed):
+    """Map a supplied value onto THE set of fixed system options.
+
+    - An exact match is used as-is.
+    - If the value is not in the fixed option list (the model made up a value
+      or supplied a loose variant), we NEVER invent a new option: we pick the
+      closest existing option by normalized substring and character similarity,
+      falling back to the first allowed option. The resolution is always
+      reported to the caller so nothing is silently dropped or assumed.
+    """
+    normalized_allowed = [_normalize(opt) for opt in allowed]
+    target = _normalize(value)
+    if target in normalized_allowed:
+        return allowed[normalized_allowed.index(target)], False
+
+    def similarity(a, b):
+        if not a or not b:
+            return 0.0
+        if a == b:
+            return 1.0
+        if a in b or b in a:
+            return float(min(len(a), len(b))) / float(max(len(a), len(b)))
+        return SequenceMatcher(None, a, b).ratio()
+
+    best = 0
+    best_score = -1.0
+    for i, norm_opt in enumerate(normalized_allowed):
+        score = similarity(target, norm_opt)
+        if score > best_score:
+            best_score = score
+            best = i
+    # Only auto-select a "real" option when there is meaningful overlap;
+    # an unrelated/foreign value still resolves to the first allowed option
+    # but is always reported as a correction.
+    return allowed[best], True
+
+
 def _validate_choice(values, allowed):
+    """Return (resolved_values, corrections) for the given allowed options.
+
+    Every supplied value is mapped onto a fixed allowed option; invented values
+    are corrected to the nearest existing option. corrections lists the
+    human-readable before -> after pairs.
+    """
     if isinstance(values, str):
         values = [values]
-    return [v for v in (values or []) if v in allowed]
+    resolved = []
+    corrections = []
+    for value in (values or []):
+        if value is None:
+            continue
+        mapped, changed = _resolve_choice(value, allowed)
+        resolved.append(mapped)
+        if changed:
+            corrections.append((str(value), mapped))
+    return resolved, corrections
 
 
 def search_programs(user, query="", program_types=None, provinces=None,
@@ -58,16 +146,23 @@ def search_programs(user, query="", program_types=None, provinces=None,
                     to_date="", limit=20):
     """Mirror of /reporter/program-search/ scoped to visible programs."""
     qs = visible_programs(user).order_by("title")
+    corrections = []
     if query:
         qs = qs.filter(_word_query(
             ("title", "program_id", "province", "city", "program_type",
              "license_state", "license_code"), query))
-    if program_types := _validate_choice(program_types, _PROGRAM_TYPES):
-        qs = qs.filter(program_type__in=program_types)
+    if program_types:
+        resolved, corr = _validate_choice(program_types, _PROGRAM_TYPES)
+        corrections += corr
+        qs = qs.filter(program_type__in=resolved)
     if provinces:
-        qs = qs.filter(province__in=provinces)
-    if license_states := _validate_choice(license_states, _LICENSE_STATES):
-        qs = qs.filter(license_state__in=license_states)
+        resolved, corr = _validate_choice(provinces, _PROVINCES)
+        corrections += corr
+        qs = qs.filter(province__in=resolved)
+    if license_states:
+        resolved, corr = _validate_choice(license_states, _LICENSE_STATES)
+        corrections += corr
+        qs = qs.filter(license_state__in=resolved)
     if license_codes:
         qs = qs.filter(license_code__icontains=license_codes[0])
     if from_date and _parse_date(from_date):
@@ -86,7 +181,9 @@ def search_programs(user, query="", program_types=None, provinces=None,
         "project_count": row.projects.count(),
     } for row in rows]
     return {"entity": "program", "query": query, "count": len(results),
-            "results": results}
+            "results": results, "option_corrections": [
+                {"requested": req, "used": used} for req, used in corrections
+            ]}
 
 
 def search_projects(user, query="", project_types=None, project_statuses=None,
@@ -96,6 +193,7 @@ def search_projects(user, query="", project_types=None, project_statuses=None,
                     limit=20):
     """Mirror of /reporter/search-history/ (project search)."""
     qs = visible_projects(user).select_related("program").order_by("name")
+    corrections = []
     if query:
         qs = qs.filter(_word_query(
             ("name", "project_id", "province", "city", "project_type",
@@ -103,16 +201,26 @@ def search_projects(user, query="", project_types=None, project_statuses=None,
              "program__program_type", "program__license_state",
              "program__license_code", "program__province", "program__city"),
             query))
-    if project_types := _validate_choice(project_types, _PROJECT_TYPES):
-        qs = qs.filter(project_type__in=project_types)
+    if project_types:
+        resolved, corr = _validate_choice(project_types, _PROJECT_TYPES)
+        corrections += corr
+        qs = qs.filter(project_type__in=resolved)
     if project_statuses:
-        qs = qs.filter(overall_status__in=project_statuses)
+        resolved, corr = _validate_choice(project_statuses, _PROJECT_STATUSES)
+        corrections += corr
+        qs = qs.filter(overall_status__in=resolved)
     if provinces:
-        qs = qs.filter(province__in=provinces)
-    if program_types := _validate_choice(program_types, _PROGRAM_TYPES):
-        qs = qs.filter(program__program_type__in=program_types)
-    if license_states := _validate_choice(license_states, _LICENSE_STATES):
-        qs = qs.filter(program__license_state__in=license_states)
+        resolved, corr = _validate_choice(provinces, _PROVINCES)
+        corrections += corr
+        qs = qs.filter(province__in=resolved)
+    if program_types:
+        resolved, corr = _validate_choice(program_types, _PROGRAM_TYPES)
+        corrections += corr
+        qs = qs.filter(program__program_type__in=resolved)
+    if license_states:
+        resolved, corr = _validate_choice(license_states, _LICENSE_STATES)
+        corrections += corr
+        qs = qs.filter(program__license_state__in=resolved)
     if min_physical_progress is not None:
         qs = qs.filter(physical_progress__gte=float(min_physical_progress))
     if max_physical_progress is not None:
@@ -140,7 +248,9 @@ def search_projects(user, query="", project_types=None, project_statuses=None,
         "subproject_count": row.subprojects.count(),
     } for row in rows]
     return {"entity": "project", "query": query, "count": len(results),
-            "results": results}
+            "results": results, "option_corrections": [
+                {"requested": req, "used": used} for req, used in corrections
+            ]}
 
 
 def search_subprojects(user, query="", provinces=None, stages=None,
@@ -148,18 +258,27 @@ def search_subprojects(user, query="", provinces=None, stages=None,
                        min_progress=None, max_progress=None, limit=20):
     """Direct subproject search (not offered in the reporter UI as a search)."""
     qs = visible_subprojects(user).select_related("project", "project__program")
+    corrections = []
     if query:
         qs = qs.filter(_word_query(
             ("name", "project_stage", "project__name", "project__project_id",
              "project__province", "project__program__title"), query))
     if provinces:
-        qs = qs.filter(project__province__in=provinces)
+        resolved, corr = _validate_choice(provinces, _PROVINCES)
+        corrections += corr
+        qs = qs.filter(project__province__in=resolved)
     if stages:
-        qs = qs.filter(project_stage__in=stages)
+        resolved, corr = _validate_choice(stages, _SUBPROJECT_STAGES)
+        corrections += corr
+        qs = qs.filter(project_stage__in=resolved)
     if states:
-        qs = qs.filter(state__in=states)
+        resolved, corr = _validate_choice(states, _SUBPROJECT_STATES)
+        corrections += corr
+        qs = qs.filter(state__in=resolved)
     if contract_types:
-        qs = qs.filter(contract_type__in=contract_types)
+        resolved, corr = _validate_choice(contract_types, _CONTRACT_TYPES)
+        corrections += corr
+        qs = qs.filter(contract_type__in=resolved)
     if min_progress is not None:
         qs = qs.filter(physical_progress__gte=float(min_progress))
     if max_progress is not None:
@@ -179,7 +298,9 @@ def search_subprojects(user, query="", provinces=None, stages=None,
         "province": row.project.province,
     } for row in rows]
     return {"entity": "subproject", "query": query, "count": len(results),
-            "results": results}
+            "results": results, "option_corrections": [
+                {"requested": req, "used": used} for req, used in corrections
+            ]}
 
 
 def search_history(user, search_type="", limit=20):

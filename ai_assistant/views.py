@@ -2,7 +2,7 @@ import json
 import re
 
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_http_methods
 
@@ -92,63 +92,14 @@ def assistant_chat(request):
         query = str(payload.get("message", "")).strip()
         if not query:
             return JsonResponse({"ok": False, "error": "پیام خالی است."}, status=400)
-        conversation_id = payload.get("conversation_id")
-        conversation = None
-        if conversation_id:
-            conversation = AIConversation.objects.filter(pk=conversation_id, user=request.user).first()
-        if conversation is None:
-            context_type = str(payload.get("context_type", ""))[:30]
-            try:
-                context_id = int(payload["context_id"]) if payload.get("context_id") else None
-            except (TypeError, ValueError):
-                context_id = None
-            conversation = AIConversation.objects.create(user=request.user,
-                title=query[:200], context_type=context_type, context_id=context_id)
-
-        history = [{"role": m.role, "content": m.content}
-                   for m in conversation.messages.filter(role__in=["user", "assistant"]).order_by("created_at")]
-        # Explicit wording such as «از روی اینترنت بگو» should not depend on
-        # a hidden checkbox, especially in the admin/CEO quick panel.
-        use_web = (bool(payload.get("use_web")) or _asks_for_web(query)) and policy.allow_web_search
-        use_local_js = bool(payload.get("use_local_js")) and bool(
-            getattr(request.user, "is_staff", False)
-        )
-        messages = make_messages(history, query, conversation.context_type, conversation.context_id)
-        provider = GapGPTProvider(
-            api_key=policy.get_api_key() or None,
-            model=policy.model_name or None,
-        )
+        conversation = _get_or_create_conversation(request.user, payload, query)
+        use_web, use_local_js, messages, provider = _chat_inputs(request, payload, query, conversation)
         result = run_tool_loop(
             request.user, messages, provider,
             allow_web_search=use_web, allow_local_js=use_local_js, max_rounds=3,
         )
-        answer, options, requested_action = _extract_agent_directives(result["content"])
-        action = None
-        if requested_action:
-            try:
-                if policy.allow_write_actions:
-                    action = preview_update(
-                        request.user,
-                        requested_action["entity"],
-                        requested_action["id"],
-                        requested_action["field"],
-                        requested_action["value"],
-                    )
-                    answer += "\n\nبرای اجرای تغییر، پیش‌نمایش زیر را بررسی و تأیید کنید."
-                else:
-                    answer += "\n\nعملیات تغییردهنده برای حساب شما فعال نیست. مدیر سامانه می‌تواند آن را از پنل AI فعال کند."
-            except (KeyError, TypeError, ValueError, PermissionError) as exc:
-                answer += f"\n\nامکان آماده‌سازی این تغییر وجود ندارد: {exc}"
-        AIMessage.objects.create(conversation=conversation, role="user", content=query)
-        AIMessage.objects.create(conversation=conversation, role="assistant", content=answer,
-                                 metadata={"web_search": use_web, "local_js": use_local_js,
-                                           "tools": result["trace"],
-                                           "options": options})
-        AIAuditLog.objects.create(
-            user=request.user, action="chat",
-            details={"web_search": use_web, "local_js": use_local_js, "tools": result["trace"],
-                     "conversation_id": conversation.pk},
-        )
+        answer, action, options = _prepare_answer(request, policy, result)
+        _persist(request, conversation, query, use_web, use_local_js, result, answer, options)
         return JsonResponse({"ok": True, "answer": answer, "action": action,
                              "options": options,
                              "conversation_id": conversation.pk,
@@ -164,6 +115,137 @@ def assistant_chat(request):
             "ok": False,
             "error": "در پردازش درخواست خطایی رخ داد. شناسه رویداد در گزارش مدیریتی ثبت شد.",
         }, status=500)
+
+
+def _get_or_create_conversation(user, payload, query):
+    conversation_id = payload.get("conversation_id")
+    conversation = None
+    if conversation_id:
+        conversation = AIConversation.objects.filter(pk=conversation_id, user=user).first()
+    if conversation is None:
+        context_type = str(payload.get("context_type", ""))[:30]
+        try:
+            context_id = int(payload["context_id"]) if payload.get("context_id") else None
+        except (TypeError, ValueError):
+            context_id = None
+        conversation = AIConversation.objects.create(user=user,
+            title=query[:200], context_type=context_type, context_id=context_id)
+    return conversation
+
+
+def _chat_inputs(request, payload, query, conversation):
+    """Shared provider/message setup for both the JSON and the SSE chat views."""
+    policy = effective_policy(request.user)
+    history = [{"role": m.role, "content": m.content}
+               for m in conversation.messages.filter(role__in=["user", "assistant"]).order_by("created_at")]
+    # Explicit wording such as «از روی اینترنت بگو» should not depend on
+    # a hidden checkbox, especially in the admin/CEO quick panel.
+    use_web = (bool(payload.get("use_web")) or _asks_for_web(query)) and policy.allow_web_search
+    use_local_js = bool(payload.get("use_local_js")) and bool(
+        getattr(request.user, "is_staff", False)
+    )
+    messages = make_messages(history, query, conversation.context_type, conversation.context_id)
+    provider = GapGPTProvider(
+        api_key=policy.get_api_key() or None,
+        model=policy.model_name or None,
+    )
+    return use_web, use_local_js, messages, provider
+
+
+def _prepare_answer(request, policy, result):
+    """Extract visible answer + validated action payload from a loop result."""
+    answer, options, requested_action = _extract_agent_directives(result["content"])
+    action = None
+    if requested_action:
+        try:
+            if policy.allow_write_actions:
+                action = preview_update(
+                    request.user,
+                    requested_action["entity"],
+                    requested_action["id"],
+                    requested_action["field"],
+                    requested_action["value"],
+                )
+                answer += "\n\nبرای اجرای تغییر، پیش‌نمایش زیر را بررسی و تأیید کنید."
+            else:
+                answer += "\n\nعملیات تغییردهنده برای حساب شما فعال نیست. مدیر سامانه می‌تواند آن را از پنل AI فعال کند."
+        except (KeyError, TypeError, ValueError, PermissionError) as exc:
+            answer += f"\n\nامکان آماده‌سازی این تغییر وجود ندارد: {exc}"
+    return answer, action, options
+
+
+def _persist(request, conversation, query, use_web, use_local_js, result, answer, options):
+    AIMessage.objects.create(conversation=conversation, role="user", content=query)
+    AIMessage.objects.create(conversation=conversation, role="assistant", content=answer,
+                             metadata={"web_search": use_web, "local_js": use_local_js,
+                                       "tools": result["trace"],
+                                       "plan": result.get("plan", []),
+                                       "options": options})
+    AIAuditLog.objects.create(
+        user=request.user, action="chat",
+        details={"web_search": use_web, "local_js": use_local_js, "tools": result["trace"],
+                 "conversation_id": conversation.pk},
+    )
+
+
+def _sse(data):
+    return f"data: {json.dumps(data, ensure_ascii=False, default=str)}\n\n"
+
+
+@login_required
+@require_http_methods(["POST"])
+def assistant_chat_stream(request):
+    """SSE endpoint that streams the agent's live activity at the bottom of the
+    panel and then streams the final answer, options and action payload."""
+    policy = effective_policy(request.user)
+    if not policy.can_use():
+        return StreamingHttpResponse(
+            _sse({"type": "error", "error": "دستیار برای شما غیرفعال است یا سقف مصرف مجاز به پایان رسیده است."}),
+            content_type="text/event-stream")
+
+    def events():
+        try:
+            payload = json.loads(request.body or "{}")
+            query = str(payload.get("message", "")).strip()
+            if not query:
+                yield _sse({"type": "error", "error": "پیام خالی است."})
+                return
+            conversation = _get_or_create_conversation(request.user, payload, query)
+            use_web, use_local_js, messages, provider = _chat_inputs(request, payload, query, conversation)
+
+            queue = []
+
+            def on_progress(event):
+                queue.append(event)
+
+            result = run_tool_loop(
+                request.user, messages, provider, allow_web_search=use_web,
+                allow_local_js=use_local_js, max_rounds=3, progress=on_progress,
+            )
+            # Relay every live event (plan / todo / step) as-is so the panel
+            # can render the Cursor-like plan + tool-activity feed.
+            for event in queue:
+                yield _sse({**event, "type": event.get("kind", "step")})
+            yield _sse({"type": "plan", "status": "done", "todos": [
+                {"id": t.get("id", i + 1), "task": str(t.get("task", "")).strip()}
+                for i, t in enumerate(result.get("plan", []) or [])]})
+            yield _sse({"type": "thinking_done"})
+
+            answer, action, options = _prepare_answer(request, policy, result)
+            _persist(request, conversation, query, use_web, use_local_js, result, answer, options)
+            yield _sse({"type": "done", "answer": answer, "action": action,
+                        "options": options, "conversation_id": conversation.pk})
+        except ProviderError as exc:
+            AIAuditLog.objects.create(user=request.user, action="chat", status="error",
+                                      details={"error": str(exc)[:500]})
+            yield _sse({"type": "error", "error": str(exc)})
+        except Exception as exc:
+            AIAuditLog.objects.create(user=request.user, action="chat", status="error",
+                                      details={"error": str(exc)[:500]})
+            yield _sse({"type": "error",
+                        "error": "در پردازش درخواست خطایی رخ داد. شناسه رویداد در گزارش مدیریتی ثبت شد."})
+
+    return StreamingHttpResponse(events(), content_type="text/event-stream")
 
 
 @login_required
