@@ -1,0 +1,222 @@
+/* Modern Swiss / institutional system-wide theme.
+   Loaded last so existing page templates keep their behavior while sharing
+   one calm, high-contrast visual language. */
+:root {
+    --inst-ink: #12212b;
+    --inst-navy: #102a43;
+    --inst-blue: #1769aa;
+    --inst-red: #d8473f;
+    --inst-red-dark: #b93832;
+    --inst-paper: #f5f6f3;
+    --inst-surface: #ffffff;
+    --inst-line: #d8dee3;
+    --inst-muted: #60717d;
+    --inst-radius: 10px;
+    --inst-shadow: 0 8px 24px rgba(16, 42, 67, .07);
+}
+
+html { background: var(--inst-paper); }
+
+body {
+    color: var(--inst-ink);
+    background: var(--inst-paper);
+    letter-spacing: -.01em;
+}
+
+body::selection { color: #fff; background: var(--inst-red); }
+
+.navbar {
+    min-height: 68px;
+    border-bottom: 4px solid var(--inst-red);
+    background: var(--inst-navy) !important;
+    box-shadow: 0 2px 0 rgba(16, 42, 67, .12);
+}
+
+.navbar-brand {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: .65rem;
+    padding-right: 0;
+    color: #fff !important;
+    font-size: 1.08rem;
+    font-weight: 800;
+    letter-spacing: -.03em;
+}
+
+.navbar-brand::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    background: var(--inst-red);
+    display: inline-block;
+}
+
+.navbar .nav-link {
+    color: rgba(255,255,255,.82) !important;
+    border-radius: 6px;
+    padding: .65rem .8rem;
+    transition: background .18s ease, color .18s ease;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link:focus { color: #fff !important; background: rgba(255,255,255,.1); }
+
+.sidebar {
+    background: var(--inst-navy) !important;
+    border-left: 1px solid rgba(255,255,255,.08);
+    padding: 1.1rem .85rem;
+}
+
+.sidebar .nav { gap: .18rem; }
+
+.sidebar .nav-link {
+    position: relative;
+    color: rgba(255,255,255,.72) !important;
+    border-radius: 6px;
+    padding: .72rem .85rem;
+    font-size: .88rem;
+    font-weight: 600;
+    transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+
+.sidebar .nav-link i {
+    width: 1.35rem;
+    color: #91a7b6;
+    font-size: 1rem;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link:focus,
+.sidebar .nav-link.active {
+    color: #fff !important;
+    background: rgba(255,255,255,.1);
+    transform: translateX(-2px);
+}
+
+.sidebar .nav-link.active::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    right: 0;
+    width: 3px;
+    background: var(--inst-red);
+}
+
+.collapse-inner {
+    margin: .35rem .35rem .45rem 0;
+    border: 1px solid rgba(16,42,67,.12);
+    border-radius: 7px !important;
+    box-shadow: var(--inst-shadow);
+}
+
+.content {
+    background:
+        linear-gradient(rgba(16,42,67,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(16,42,67,.025) 1px, transparent 1px),
+        var(--inst-paper);
+    background-size: 24px 24px;
+}
+
+.content > * { position: relative; }
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--inst-ink);
+    font-weight: 800;
+    letter-spacing: -.035em;
+}
+
+h1::after, h2::after {
+    content: "";
+    display: block;
+    width: 2.2rem;
+    height: 4px;
+    margin-top: .55rem;
+    background: var(--inst-red);
+}
+
+.card {
+    border: 1px solid var(--inst-line);
+    border-radius: var(--inst-radius);
+    background: var(--inst-surface);
+    box-shadow: var(--inst-shadow);
+}
+
+.card-header {
+    padding: 1rem 1.15rem;
+    color: var(--inst-ink);
+    background: #f8faf9;
+    border-bottom: 1px solid var(--inst-line);
+    font-weight: 800;
+}
+
+.card-body { padding: 1.15rem; }
+
+.table {
+    --bs-table-bg: transparent;
+    color: var(--inst-ink);
+    vertical-align: middle;
+}
+
+.table thead th {
+    color: var(--inst-muted);
+    background: #f2f5f5;
+    border-bottom: 2px solid var(--inst-ink);
+    font-size: .76rem;
+    font-weight: 800;
+    letter-spacing: .02em;
+    white-space: nowrap;
+}
+
+.table > :not(caption) > * > * { padding: .8rem .7rem; border-color: var(--inst-line); }
+.table tbody tr:hover { background: #f8fbfb; }
+
+.form-label { color: var(--inst-ink); font-size: .85rem; font-weight: 800; }
+
+.form-control, .form-select {
+    border: 1px solid #cbd5da;
+    border-radius: 7px;
+    color: var(--inst-ink);
+    background-color: #fff;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--inst-blue);
+    box-shadow: 0 0 0 3px rgba(23,105,170,.14);
+}
+
+.btn {
+    border-radius: 6px;
+    padding: .58rem 1rem;
+    font-weight: 700;
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.btn:hover { transform: translateY(-1px); }
+.btn-primary { background: var(--inst-blue); border-color: var(--inst-blue); }
+.btn-primary:hover, .btn-primary:focus { background: #12578d; border-color: #12578d; box-shadow: 0 5px 14px rgba(23,105,170,.22); }
+.btn-danger { background: var(--inst-red); border-color: var(--inst-red); }
+.btn-danger:hover, .btn-danger:focus { background: var(--inst-red-dark); border-color: var(--inst-red-dark); }
+.btn-outline-primary { color: var(--inst-blue); border-color: var(--inst-blue); }
+.btn-outline-primary:hover { color: #fff; background: var(--inst-blue); }
+
+.badge { border-radius: 4px; padding: .38em .62em; font-weight: 800; }
+.alert { border: 1px solid var(--inst-line); border-right: 4px solid var(--inst-blue); border-radius: 7px; box-shadow: 0 3px 10px rgba(16,42,67,.04); }
+.alert-danger { border-right-color: var(--inst-red); }
+
+.breadcrumb { color: var(--inst-muted); font-size: .8rem; }
+.breadcrumb a { color: var(--inst-blue); font-weight: 700; }
+
+.pagination .page-link { color: var(--inst-blue); border-color: var(--inst-line); }
+.pagination .active .page-link { color: #fff; background: var(--inst-blue); border-color: var(--inst-blue); }
+
+footer { color: var(--inst-muted); background: #e9edeb !important; border-top: 1px solid var(--inst-line); font-size: .78rem; }
+
+@media (max-width: 991.98px) {
+    .sidebar { border-left: 0; border-top: 1px solid rgba(255,255,255,.12); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
