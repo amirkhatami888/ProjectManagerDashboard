@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from .models import (
     AIAuditLog, AIConversation, AIMessage, AIPendingAction, AIPlatformSettings,
-    AIRolePolicy, AIUsageRecord, AIUserPolicy,
+    AIRolePolicy, AIUsageRecord, AIUserPolicy, AIKnowledgeEntry, AIAutomationRule, AIExpertComment,
 )
 from .forms import AIPlatformSettingsForm
 
@@ -66,3 +66,24 @@ class AIUsageRecordAdmin(admin.ModelAdmin):
                     "output_tokens", "latency_ms")
     list_filter = ("provider", "status")
     readonly_fields = ("created_at",)
+
+
+@admin.register(AIKnowledgeEntry)
+class AIKnowledgeEntryAdmin(admin.ModelAdmin):
+    list_display = ("title", "category", "priority", "is_active", "updated_at")
+    list_filter = ("category", "is_active")
+    search_fields = ("title", "content", "source")
+
+
+@admin.register(AIAutomationRule)
+class AIAutomationRuleAdmin(admin.ModelAdmin):
+    list_display = ("name", "rule_type", "is_active", "last_run_at")
+    list_filter = ("rule_type", "is_active")
+
+
+@admin.register(AIExpertComment)
+class AIExpertCommentAdmin(admin.ModelAdmin):
+    list_display = ("project", "severity", "status", "author", "created_at")
+    list_filter = ("severity", "status")
+    search_fields = ("project__name", "content")
+    readonly_fields = ("created_at", "published_at")

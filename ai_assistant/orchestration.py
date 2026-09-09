@@ -3,7 +3,7 @@ import json
 
 from .domain_tools import (
     financial_audit, read_program, read_project, read_subproject, search_site,
-    project_forecast, system_overview, validate_project,
+    project_forecast, project_health_check, system_overview, validate_project,
     get_program_json_template, get_project_json_template,
     get_subproject_json_template, analyze_program_buildings,
 )
@@ -66,6 +66,9 @@ BASE_TOOL_SCHEMAS = [
     }, ["project_id"]),
     _function("project_forecast", "محاسبه قطعی و توضیح‌پذیر SPI، CPI و تاریخ احتمالی پایان زیرپروژه‌های یک پروژه", {
         "project_id": {"type": "integer"},
+    }, ["project_id"]),
+    _function("project_health_check", "گزارش سلامت ۳۶۰ درجه پروژه: داده، زمان‌بندی، هزینه و ریسک‌های اقدام‌پذیر", {
+        "project_id": {"type": "integer"}, "progress_threshold": {"type": "number", "minimum": 0, "maximum": 100},
     }, ["project_id"]),
     _function("explain_field", "توضیح کاربرد یک فیلد سامانه", {
         "entity": {"type": "string", "enum": ["program", "project", "subproject"]},
@@ -267,6 +270,8 @@ def _execute_tool(user, name, args, allow_web_search, allow_local_js,
         return financial_audit(user, args["project_id"])
     if name == "project_forecast":
         return project_forecast(user, args["project_id"])
+    if name == "project_health_check":
+        return project_health_check(user, args["project_id"], args.get("progress_threshold", 25))
     if name == "explain_field":
         return explain_field(args["entity"], args["field"]) or {"error": "فیلد پیدا نشد."}
     if name == "program_search":
@@ -334,6 +339,7 @@ def _tool_name_fa(name):
         "validate_project": "اعتبارسنجی پروژه",
         "financial_audit": "ممیزی مالی",
         "project_forecast": "پیش‌بینی/SPI-CPI",
+        "project_health_check": "سلامت ۳۶۰ درجه پروژه",
         "explain_field": "راهنمای فیلد",
         "program_search": "جستجوی طرح",
         "project_search": "جستجوی پروژه",

@@ -193,6 +193,27 @@ def validate_project(user, project_id):
             "project_issues": issues, "subproject_checks": checks}
 
 
+def project_health_check(user, project_id, progress_threshold=25):
+    """Combine data-quality, finance, and schedule signals into an actionable report."""
+    project = resolve_visible(user, Project, project_id)
+    validation = validate_project(user, project_id)
+    forecast = project_forecast(user, project_id)
+    audit = financial_audit(user, project_id)
+    risks = []
+    for row in forecast["subprojects"]:
+        progress = _decimal(row.get("progress_percent"))
+        if progress < Decimal(str(progress_threshold)):
+            risks.append({"severity": "high", "type": "progress", "subproject_id": row["subproject_id"], "message": "پیشرفت زیر آستانه پایش است."})
+        if row.get("spi") is not None and _decimal(row["spi"]) < Decimal("0.8"):
+            risks.append({"severity": "high", "type": "schedule", "subproject_id": row["subproject_id"], "message": "SPI کمتر از ۰٫۸ است؛ احتمال تأخیر جدی وجود دارد."})
+        if row.get("cpi") is not None and _decimal(row["cpi"]) < Decimal("0.8"):
+            risks.append({"severity": "medium", "type": "cost", "subproject_id": row["subproject_id"], "message": "CPI کمتر از ۰٫۸ است؛ هزینه‌کرد نامطلوب است."})
+    risks.extend({"severity": "high" if "بیشتر" in warning else "medium", "type": "finance", "message": warning} for warning in audit["warnings"])
+    return {"project_id": project.pk, "project_code": project.project_id, "project_name": project.name,
+            "health": "قرمز" if any(r["severity"] == "high" for r in risks) else ("زرد" if risks else "سبز"),
+            "risk_count": len(risks), "risks": risks, "validation": validation, "financial": audit, "forecast": forecast}
+
+
 def financial_audit(user, project_id):
     project = resolve_visible(user, Project, project_id)
     subprojects = visible_subprojects(user).filter(project=project)

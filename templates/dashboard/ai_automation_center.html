@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}مرکز خودکارسازی هوش مصنوعی{% endblock %}
+{% block content %}
+<main class="container-fluid py-4" dir="rtl">
+  {% if messages %}<div class="mb-3">{% for message in messages %}<div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div><span class="text-muted small">مدیریت / هوش مصنوعی</span><h1 class="h3 mb-1">مرکز خودکارسازی پروژه‌ها</h1><p class="text-muted mb-0">پایش سلامت مالی، زمان‌بندی و کیفیت داده پروژه‌ها با اجرای دستی یا زمان‌بندی‌شده.</p></div>
+    <div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="{% url 'dashboard:ai_control_center' %}"><i class="bi bi-arrow-right"></i> مرکز کنترل AI</a><span class="badge text-bg-primary align-self-center p-2">{{ visible_project_count }} پروژه قابل مشاهده</span></div>
+  </div>
+  <div class="row g-4">
+    <div class="col-xl-4">
+      <section class="card shadow-sm h-100"><div class="card-header"><h2 class="h6 mb-0">ساخت قاعده پایش جدید</h2></div><div class="card-body">
+        <form method="post">{% csrf_token %}<input type="hidden" name="action" value="create_rule">
+          <label class="form-label">نام قاعده<input class="form-control" name="name" required maxlength="160" placeholder="مثلاً پایش پروژه‌های پرریسک"></label>
+          <label class="form-label">توضیحات<textarea class="form-control" name="description" rows="2" placeholder="هدف و مسئول بررسی نتایج"></textarea></label>
+          <label class="form-label">آستانه هشدار پیشرفت (%)<input class="form-control" name="progress_threshold" type="number" min="0" max="100" value="25"></label>
+          <label class="form-label">شناسه پروژه‌ها (اختیاری، جداشده با کاما)<input class="form-control" name="project_ids" placeholder="خالی = همه پروژه‌های قابل مشاهده"></label>
+          <label class="form-check mb-3"><input class="form-check-input" type="checkbox" name="include_green" value="1"><span class="form-check-label">ثبت پروژه‌های سالم هم در نتیجه</span></label>
+          <button class="btn btn-primary w-100" type="submit"><i class="bi bi-plus-circle"></i> ایجاد قاعده</button>
+        </form>
+      </div></section>
+    </div>
+    <div class="col-xl-8">
+      <section class="card shadow-sm"><div class="card-header d-flex justify-content-between align-items-center"><h2 class="h6 mb-0">قواعد فعال و نتایج آخرین اجرا</h2><small class="text-muted">هر اجرا در رکورد قاعده ذخیره می‌شود</small></div><div class="card-body">
+        {% for rule in rules %}<article class="border rounded p-3 mb-3 {% if not rule.is_active %}opacity-75{% endif %}">
+          <div class="d-flex flex-wrap justify-content-between gap-2"><div><h3 class="h6 mb-1">{{ rule.name }} {% if rule.is_active %}<span class="badge text-bg-success">فعال</span>{% else %}<span class="badge text-bg-secondary">متوقف</span>{% endif %}</h3><p class="text-muted small mb-2">{{ rule.description|default:'بدون توضیحات' }}</p></div><div class="d-flex gap-2"><form method="post">{% csrf_token %}<input type="hidden" name="action" value="toggle_rule"><input type="hidden" name="rule_id" value="{{ rule.pk }}"><button class="btn btn-sm btn-outline-secondary" type="submit">{% if rule.is_active %}توقف{% else %}فعال‌سازی{% endif %}</button></form>{% if rule.is_active %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="run_rule"><input type="hidden" name="rule_id" value="{{ rule.pk }}"><button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-play-fill"></i> اجرای فوری</button></form>{% endif %}</div></div>
+          <div class="row g-2 small"><div class="col-md-4"><span class="text-muted">آخرین اجرا:</span> {{ rule.last_run_at|date:'Y/m/d H:i'|default:'هنوز اجرا نشده' }}</div><div class="col-md-4"><span class="text-muted">یافته‌ها:</span> {{ rule.last_result.count|default:0 }}</div><div class="col-md-4"><span class="text-muted">سازنده:</span> {{ rule.created_by.username|default:'سامانه' }}</div></div>
+          {% if rule.last_result.projects %}<details class="mt-3"><summary class="small text-primary">مشاهده یافته‌های آخرین اجرا</summary><div class="table-responsive mt-2"><table class="table table-sm align-middle"><thead><tr><th>پروژه</th><th>سلامت</th><th>ریسک</th></tr></thead><tbody>{% for item in rule.last_result.projects %}<tr><td>{{ item.project_name|default:item.project_id }}</td><td><span class="badge {% if item.health == 'قرمز' %}text-bg-danger{% elif item.health == 'زرد' %}text-bg-warning{% elif item.health == 'سبز' %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ item.health }}</span></td><td>{{ item.risk_count|default:item.error|default:'-' }}</td></tr>{% endfor %}</tbody></table></div></details>{% endif %}
+        </article>{% empty %}<div class="text-center text-muted py-5"><i class="bi bi-robot fs-1 d-block mb-2"></i>هنوز قاعده‌ای ساخته نشده است.</div>{% endfor %}
+      </div></section>
+    </div>
+  </div>
+</main>
+{% endblock %}

@@ -12,6 +12,7 @@ urlpatterns = [
     path('dashboard/admin/turnstile/', views.toggle_turnstile, name='toggle_turnstile'),
     path('dashboard/admin/ai/toggle/', views.toggle_ai_platform, name='toggle_ai_platform'),
     path('dashboard/admin/ai/', views.ai_control_center, name='ai_control_center'),
+    path('dashboard/admin/ai/automations/', views.ai_automation_center, name='ai_automation_center'),
     path('dashboard/admin/ai/action/', views.ai_control_action, name='ai_control_action'),
     
     # CEO dashboard

@@ -206,3 +206,55 @@ class AIUsageRecord(models.Model):
         verbose_name = "مصرف دستیار"
         verbose_name_plural = "مصرف دستیار"
         ordering = ["-created_at"]
+
+
+class AIKnowledgeEntry(models.Model):
+    """Curated operational knowledge injected into the agent context."""
+    title = models.CharField(max_length=200)
+    category = models.CharField(max_length=60, default="general")
+    content = models.TextField()
+    source = models.CharField(max_length=300, blank=True, default="سامانه داخلی")
+    is_active = models.BooleanField(default=True)
+    priority = models.PositiveIntegerField(default=50)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-priority", "title"]
+        verbose_name = "دانش دستیار"
+        verbose_name_plural = "دانش دستیار"
+
+
+class AIAutomationRule(models.Model):
+    """Saved, explainable checks that can be run by cron or an administrator."""
+    name = models.CharField(max_length=160)
+    description = models.TextField(blank=True, default="")
+    rule_type = models.CharField(max_length=50, default="project_health")
+    config = models.JSONField(default=dict, blank=True)
+    is_active = models.BooleanField(default=True)
+    last_run_at = models.DateTimeField(null=True, blank=True)
+    last_result = models.JSONField(default=dict, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "قاعده خودکارسازی AI"
+        verbose_name_plural = "قواعد خودکارسازی AI"
+
+
+class AIExpertComment(models.Model):
+    """AI-generated review comments, always traceable and optionally publishable."""
+    project = models.ForeignKey("creator_project.Project", on_delete=models.CASCADE, related_name="ai_expert_comments")
+    subproject = models.ForeignKey("creator_subproject.SubProject", on_delete=models.CASCADE, null=True, blank=True, related_name="ai_expert_comments")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="ai_expert_comments")
+    content = models.TextField()
+    severity = models.CharField(max_length=20, default="مهم")
+    status = models.CharField(max_length=20, default="draft")
+    evidence = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "نظر کارشناسی AI"
+        verbose_name_plural = "نظرات کارشناسی AI"

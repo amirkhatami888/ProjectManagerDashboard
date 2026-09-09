@@ -1,0 +1,20 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}مدیریت سامانه | {{ title }}{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/admin-institutional.css' %}">
+{% endblock %}
+
+{% block branding %}
+<div id="site-name" class="admin-brand">
+    <span class="admin-brand__mark" aria-hidden="true"></span>
+    <a href="{% url 'admin:index' %}">مدیریت سامانه پروژه</a>
+</div>
+{% endblock %}
+
+{% block nav-global %}
+<div class="admin-context">مرکز کنترل و گزارش‌گیری سازمانی</div>
+{% endblock %}

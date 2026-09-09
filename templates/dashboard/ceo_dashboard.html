@@ -8,8 +8,8 @@
 <div class="container-fluid mt-4">
     <div class="row">
         <div class="col-12">
-            <h2 class="mb-4">داشبورد مدیر عامل</h2>
-            <p>سلام {{ user.first_name }} {{ user.last_name }}، به سامانه مدیریت پروژه خوش آمدید.</p>
+            <div class="dashboard-heading"><div><span class="eyebrow">نمای راهبردی</span><h2 class="mb-0">داشبورد مدیر عامل</h2><p>تصویر فشرده‌ای از عملکرد استان‌ها و وضعیت سرمایه‌گذاری پروژه‌ها برای تصمیم‌گیری سریع.</p></div><span class="dashboard-heading__meta"><i class="bi bi-graph-up-arrow"></i> گزارش اجرایی</span></div>
+            <div class="alert alert-primary d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3"><span><i class="bi bi-robot me-2"></i><strong>مرکز پایش هوشمند</strong> برای اجرای خودکار کنترل‌های پروژه آماده است.</span><a class="btn btn-primary btn-sm" href="{% url 'dashboard:ai_automation_center' %}">مدیریت خودکارسازی‌ها <i class="bi bi-arrow-left"></i></a></div>
         </div>
     </div>
 
@@ -96,13 +96,13 @@
                                                         <td>تخصیص مالی اسناد خزانه (ریال):</td>
                                                         <td class="text-start">{{ province.total_treasury_allocation|floatformat:0|intcomma }}</td>
                                                     </tr>
-                                                    <tr class="table-primary">
-                                                        <td>مجموع تخصیص مالی (ریال):</td>
-                                                        <td class="text-start"><strong>{{ province.total_allocation|floatformat:0|intcomma }}</strong></td>
+                                                    <tr>
+                                                        <td style="border-right: 4px solid #0d6efd; font-weight: 600;">مجموع تخصیص مالی (ریال):</td>
+                                                        <td class="text-start" style="border-right: 4px solid #0d6efd; font-weight: 600; color: #0d6efd;">{{ province.total_allocation|floatformat:0|intcomma }}</td>
                                                     </tr>
-                                                    <tr class="table-danger">
-                                                        <td>مجموع دیون استان (ریال):</td>
-                                                        <td class="text-start"><strong>{{ province.total_debt|floatformat:0|intcomma }}</strong></td>
+                                                    <tr>
+                                                        <td style="border-right: 4px solid #dc3545; font-weight: 600;">مجموع دیون استان (ریال):</td>
+                                                        <td class="text-start" style="border-right: 4px solid #dc3545; font-weight: 600; color: #dc3545;">{{ province.total_debt|floatformat:0|intcomma }}</td>
                                                     </tr>
                                                 </tbody>
                                             </table>

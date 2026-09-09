@@ -7,8 +7,10 @@
 <div class="container-fluid mt-4">
     <div class="row">
         <div class="col-12">
-            <h2 class="mb-4">داشبورد معاون اجرایی</h2>
-            <p>سلام {{ user.first_name }} {{ user.last_name }}، به سامانه مدیریت پروژه خوش آمدید.</p>
+            <div class="dashboard-heading">
+                <div><span class="eyebrow">مرکز تصمیم‌گیری</span><h2 class="mb-0">داشبورد معاون اجرایی</h2><p>سلام {{ user.first_name }} {{ user.last_name }}؛ پروژه‌ها و گزارش‌های کلیدی را از اینجا پیگیری کنید.</p></div>
+                <span class="dashboard-heading__meta"><i class="bi bi-bar-chart-line"></i> نمای مدیریتی</span>
+            </div>
         </div>
     </div>
 
@@ -33,4 +35,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

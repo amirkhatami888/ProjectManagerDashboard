@@ -1,12 +1,14 @@
 import json
 import re
+from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
-from .models import AIUserPolicy, AIRolePolicy, AIConversation, AIMessage, AIAuditLog
+from .models import AIUserPolicy, AIRolePolicy, AIConversation, AIMessage, AIAuditLog, AIPendingAction, AIExpertComment
 from .orchestration import run_tool_loop
 from .provider import GapGPTProvider, ProviderError
 from .services import make_messages
@@ -51,10 +53,11 @@ def effective_policy(user):
     return policy
 
 
-def _extract_agent_directives(answer):
+def _extract_agent_directives_with_comment(answer):
     """Remove machine directives from visible text and return validated payloads."""
     options = []
     action = None
+    comment = None
     option_match = re.search(r"<options>([\s\S]*?)</options>", answer)
     if option_match:
         try:
@@ -73,7 +76,22 @@ def _extract_agent_directives(answer):
         except (TypeError, ValueError):
             pass
         answer = answer.replace(action_match.group(0), "").strip()
-    return answer, options, action
+    comment_match = re.search(r"<comment>([\s\S]*?)</comment>", answer)
+    if comment_match:
+        try:
+            parsed = json.loads(comment_match.group(1))
+            if isinstance(parsed, dict) and parsed.get("project_id") and parsed.get("content"):
+                comment = parsed
+        except (TypeError, ValueError):
+            pass
+        answer = answer.replace(comment_match.group(0), "").strip()
+    return answer, options, action, comment
+
+
+def _extract_agent_directives(answer):
+    """Backward-compatible extractor used by existing integrations/tests."""
+    visible, options, action, _comment = _extract_agent_directives_with_comment(answer)
+    return visible, options, action
 
 
 @login_required
@@ -154,7 +172,7 @@ def _chat_inputs(request, payload, query, conversation):
 
 def _prepare_answer(request, policy, result):
     """Extract visible answer + validated action payload from a loop result."""
-    answer, options, requested_action = _extract_agent_directives(result["content"])
+    answer, options, requested_action, requested_comment = _extract_agent_directives_with_comment(result["content"])
     action = None
     if requested_action:
         try:
@@ -171,6 +189,19 @@ def _prepare_answer(request, policy, result):
                 answer += "\n\nعملیات تغییردهنده برای حساب شما فعال نیست. مدیر سامانه می‌تواند آن را از پنل AI فعال کند."
         except (KeyError, TypeError, ValueError, PermissionError) as exc:
             answer += f"\n\nامکان آماده‌سازی این تغییر وجود ندارد: {exc}"
+    if requested_comment:
+        try:
+            from .permissions import resolve_visible
+            from creator_project.models import Project
+            project = resolve_visible(request.user, Project, int(requested_comment["project_id"]))
+            pending = AIPendingAction.objects.create(user=request.user, action_type="add_comment", payload={
+                "project_id": project.pk, "subproject_id": requested_comment.get("subproject_id"),
+                "content": str(requested_comment["content"])[:10000], "severity": str(requested_comment.get("severity", "مهم"))[:20],
+            }, expires_at=timezone.now() + timedelta(minutes=10))
+            answer += "\n\nپیش‌نویس نظر کارشناسی آماده شد و برای انتشار نیازمند تأیید شماست."
+            action = {"action_id": pending.pk, "action_type": "add_comment", **pending.payload}
+        except Exception as exc:
+            answer += f"\n\nامکان آماده‌سازی نظر کارشناسی وجود ندارد: {exc}"
     return answer, action, options
 
 
@@ -272,10 +303,25 @@ def confirm_action(request):
         return JsonResponse({"ok": False, "error": "عملیات تغییردهنده برای حساب شما فعال نیست."}, status=403)
     try:
         data = json.loads(request.body or "{}")
-        result = confirm_update(request.user, int(data["action_id"]))
+        pending = AIPendingAction.objects.get(pk=int(data["action_id"]), user=request.user, status="pending")
+        if pending.action_type == "add_comment":
+            if pending.expires_at < timezone.now():
+                pending.status = "expired"; pending.save(update_fields=["status"])
+                raise ValueError("زمان تأیید این نظر به پایان رسیده است.")
+            from .permissions import resolve_visible
+            from creator_project.models import Project
+            project = resolve_visible(request.user, Project, pending.payload["project_id"])
+            comment = AIExpertComment.objects.create(project=project, subproject_id=pending.payload.get("subproject_id"), author=request.user,
+                content=pending.payload["content"], severity=pending.payload.get("severity", "مهم"), status="published", published_at=timezone.now(), evidence={"source": "ai_assistant"})
+            pending.status = "confirmed"; pending.confirmed_at = timezone.now(); pending.save(update_fields=["status", "confirmed_at"])
+            result = {"comment_id": comment.pk, "content": comment.content, "severity": comment.severity}
+            message = "نظر کارشناسی AI با موفقیت منتشر شد."
+        else:
+            result = confirm_update(request.user, int(data["action_id"]))
+            message = f"فیلد «{result['field_label']}» با موفقیت به‌روزرسانی شد."
         AIAuditLog.objects.create(user=request.user, action="confirm_update",
                                   details=result)
-        return JsonResponse({"ok": True, "message": f"فیلد «{result['field_label']}» با موفقیت به‌روزرسانی شد.",
+        return JsonResponse({"ok": True, "message": message,
                              "action": result})
     except Exception as exc:
         AIAuditLog.objects.create(user=request.user, action="confirm_update",

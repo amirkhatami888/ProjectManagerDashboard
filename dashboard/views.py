@@ -21,9 +21,11 @@ from .models import SecuritySettings
 from ai_assistant.models import (
     AIAuditLog, AIConversation, AIMessage, AIPendingAction,
     AIPlatformSettings, AIUsageRecord, AIUserPolicy,
-    AIRolePolicy,
+    AIRolePolicy, AIAutomationRule, AIKnowledgeEntry, AIExpertComment,
 )
 from ai_assistant.forms import AIPlatformSettingsForm
+from ai_assistant.domain_tools import project_health_check
+from ai_assistant.permissions import visible_projects
 
 
 def _get_province_stats():
@@ -200,12 +202,17 @@ def admin_dashboard(request):
 @login_required
 def ai_control_center(request):
     """Dedicated AI operations console for platform administrators."""
-    if not request.user.is_admin:
+    if not (getattr(request.user, 'is_admin', False) or getattr(request.user, 'is_ceo', False)):
         return HttpResponseForbidden("You don't have permission to access this page.")
 
     today = timezone.localdate()
     month_start = today.replace(day=1)
     ai_settings = AIPlatformSettings.get_solo()
+    # A malformed/rotated secret must not take down the entire admin console.
+    try:
+        provider_key_ready = bool(ai_settings.get_gapgpt_api_key())
+    except Exception:
+        provider_key_ready = False
     month_usage = AIUsageRecord.objects.filter(created_at__date__gte=month_start)
     month_messages = AIMessage.objects.filter(
         role='user', created_at__date__gte=month_start
@@ -273,12 +280,11 @@ def ai_control_center(request):
         })
 
     recent_events = AIAuditLog.objects.select_related('user').order_by('-created_at')[:8]
+    automation_rules = AIAutomationRule.objects.order_by('-created_at')[:5]
+    recent_ai_comments = AIExpertComment.objects.select_related('project', 'author').order_by('-created_at')[:5]
     context = {
         'ai_settings': ai_settings,
-        'ai_provider_ready': bool(
-            ai_settings.get_gapgpt_api_key()
-            and (ai_settings.provider_endpoint or os.getenv('GAPGPT_API_URL', ''))
-        ),
+        'ai_provider_ready': bool(provider_key_ready and (ai_settings.provider_endpoint or os.getenv('GAPGPT_API_URL', ''))),
         'settings_form': AIPlatformSettingsForm(instance=ai_settings),
         'users': users,
         'usage_totals': usage_totals,
@@ -294,15 +300,92 @@ def ai_control_center(request):
         'role_stats': role_stats,
         'recent_events': recent_events,
         'month_label': today.strftime('%Y/%m'),
+        'automation_rules': automation_rules,
+        'automation_count': AIAutomationRule.objects.count(),
+        'active_automation_count': AIAutomationRule.objects.filter(is_active=True).count(),
+        'knowledge_count': AIKnowledgeEntry.objects.filter(is_active=True).count(),
+        'pending_comment_count': AIExpertComment.objects.filter(status='draft').count(),
+        'recent_ai_comments': recent_ai_comments,
     }
     return render(request, 'dashboard/ai_control_center.html', context)
+
+
+def _can_manage_ai_automations(user):
+    return bool(getattr(user, 'is_admin', False) or getattr(user, 'is_ceo', False))
+
+
+def _run_ai_automation(rule, user):
+    config = rule.config or {}
+    ids = config.get('project_ids') or list(visible_projects(user).values_list('pk', flat=True))
+    findings = []
+    for project_id in ids[:int(config.get('max_projects', 200))]:
+        try:
+            result = project_health_check(user, int(project_id), config.get('progress_threshold', 25))
+            if result['health'] != 'سبز' or config.get('include_green'):
+                findings.append(result)
+        except Exception as exc:
+            findings.append({'project_id': project_id, 'health': 'خطا', 'error': str(exc)[:300]})
+    rule.last_result = {'run_at': timezone.now().isoformat(), 'projects': findings, 'count': len(findings)}
+    rule.last_run_at = timezone.now()
+    rule.save(update_fields=['last_result', 'last_run_at'])
+    return rule.last_result
+
+
+@login_required
+def ai_automation_center(request):
+    """Admin/CEO console for creating, running, and reviewing AI monitors."""
+    if not _can_manage_ai_automations(request.user):
+        return HttpResponseForbidden("You don't have permission to access this page.")
+    rules = list(AIAutomationRule.objects.select_related('created_by').all())
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'create_rule':
+            raw_ids = request.POST.get('project_ids', '')
+            project_ids = []
+            for value in raw_ids.replace('،', ',').split(','):
+                try:
+                    project_id = int(value.strip())
+                    if visible_projects(request.user).filter(pk=project_id).exists():
+                        project_ids.append(project_id)
+                except (TypeError, ValueError):
+                    continue
+            try:
+                threshold = max(0, min(100, int(request.POST.get('progress_threshold', 25) or 25)))
+            except (TypeError, ValueError):
+                threshold = 25
+            rule = AIAutomationRule.objects.create(
+                name=request.POST.get('name', '').strip()[:160] or 'پایش سلامت پروژه‌ها',
+                description=request.POST.get('description', '').strip(),
+                rule_type='project_health',
+                config={'project_ids': project_ids, 'progress_threshold': threshold,
+                        'max_projects': 200, 'include_green': request.POST.get('include_green') == '1'},
+                created_by=request.user,
+            )
+            messages.success(request, f'قاعده «{rule.name}» ایجاد شد.')
+        elif action == 'run_rule':
+            rule = get_object_or_404(AIAutomationRule, pk=request.POST.get('rule_id'), is_active=True)
+            result = _run_ai_automation(rule, request.user)
+            messages.success(request, f'پایش «{rule.name}» اجرا شد؛ {result.get("count", 0)} یافته ثبت شد.')
+        elif action == 'toggle_rule':
+            rule = get_object_or_404(AIAutomationRule, pk=request.POST.get('rule_id'))
+            rule.is_active = not rule.is_active
+            rule.save(update_fields=['is_active'])
+            messages.success(request, f'قاعده «{rule.name}» {"فعال" if rule.is_active else "متوقف"} شد.')
+        else:
+            messages.error(request, 'عملیات خودکارسازی نامعتبر است.')
+        return redirect('dashboard:ai_automation_center')
+    return render(request, 'dashboard/ai_automation_center.html', {
+        'rules': rules,
+        'visible_project_count': visible_projects(request.user).count(),
+        'visible_projects': visible_projects(request.user).order_by('name')[:200],
+    })
 
 
 @login_required
 @require_POST
 def ai_control_action(request):
     """Handle small, auditable controls exposed by the AI console."""
-    if not request.user.is_admin:
+    if not (getattr(request.user, 'is_admin', False) or getattr(request.user, 'is_ceo', False)):
         return HttpResponseForbidden("You don't have permission to access this page.")
 
     def number(name, default=0, minimum=0):
@@ -363,6 +446,13 @@ def ai_control_action(request):
             messages.success(request, "تنظیمات سرویس‌دهنده و API با موفقیت ذخیره شد.")
         else:
             messages.error(request, "تنظیمات سرویس‌دهنده ذخیره نشد؛ فیلدها را بررسی کنید.")
+    elif action == 'run_all_automations':
+        rules = AIAutomationRule.objects.filter(is_active=True)
+        total_findings = 0
+        for rule in rules:
+            result = _run_ai_automation(rule, request.user)
+            total_findings += int(result.get('count', 0) or 0)
+        messages.success(request, f'{rules.count()} قاعده اجرا شد؛ {total_findings} یافته ثبت شد.')
     else:
         messages.error(request, "عملیات درخواستی ناشناخته است.")
     return redirect('dashboard:ai_control_center')

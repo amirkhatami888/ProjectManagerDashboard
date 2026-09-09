@@ -1,0 +1,128 @@
+/* Django Admin companion theme: same Swiss / institutional language as the
+   public application, optimized for dense operational work. */
+:root {
+    --admin-ink: #14202b;
+    --admin-navy: #0b1b2b;
+    --admin-blue: #1c5d82;
+    --admin-coral: #d96b4f;
+    --admin-paper: #f3f5f2;
+    --admin-surface: #fff;
+    --admin-line: #d4ddd9;
+    --admin-muted: #687780;
+}
+
+html, body { background: var(--admin-paper); color: var(--admin-ink); direction: rtl; text-align: right; }
+body { font-family: 'Vazir', Tahoma, Arial, sans-serif; }
+#header { min-height: 72px; padding: 0 2rem; display: flex; align-items: center; gap: 2rem; background: var(--admin-navy); border-bottom: 3px solid var(--admin-coral); box-shadow: 0 8px 24px rgba(11,27,43,.13); }
+#branding { display: flex; align-items: center; min-width: 0; }
+.admin-brand { display: flex; align-items: center; gap: .8rem; }
+.admin-brand__mark { width: 11px; height: 11px; background: var(--admin-coral); box-shadow: 6px 6px 0 #c59a55; }
+#branding h1, #branding h1 a, #site-name a { color: #fff; font-size: 1.05rem; font-weight: 800; letter-spacing: -.03em; }
+#user-tools { margin-left: auto; color: rgba(255,255,255,.76); font-size: .78rem; line-height: 1.8; }
+#user-tools a { color: #fff; border-bottom: 1px solid rgba(255,255,255,.35); }
+.admin-context { color: rgba(255,255,255,.58); font-size: .74rem; letter-spacing: .04em; }
+#content { max-width: 1480px; margin: 0 auto; padding: 2rem 2.25rem 3rem; }
+#content h1 { color: var(--admin-ink); font-size: clamp(1.7rem, 1.2rem + 1.2vw, 2.5rem); font-weight: 800; letter-spacing: -.04em; }
+#content h1::after { content: ""; display: block; width: 2.5rem; height: 3px; margin-top: .55rem; background: var(--admin-coral); }
+.breadcrumbs { margin: 0 0 1.4rem; padding: .8rem 1rem; color: var(--admin-muted); background: #e8eeeb; border: 1px solid var(--admin-line); border-radius: 7px; font-size: .78rem; }
+.breadcrumbs a { color: var(--admin-blue); font-weight: 700; }
+#content-main, #content-related { min-width: 0; }
+#nav-sidebar { background: #eef3f1; border-left: 1px solid var(--admin-line); }
+#nav-sidebar a { color: var(--admin-ink); font-size: .8rem; }
+#nav-sidebar a:hover, #nav-sidebar .current-app a { color: #fff; background: #123b5d; }
+.module, .aligned-form, .submit-row { border: 1px solid var(--admin-line); border-radius: 10px; background: var(--admin-surface); box-shadow: 0 8px 22px rgba(16,40,63,.055); }
+.module caption, .module h2, .module h3 { padding: .9rem 1rem; color: #fff; background: var(--admin-navy); border-bottom: 0; font-size: .86rem; font-weight: 800; }
+.module caption a, .module h2 a, .module h3 a { color: #fff; }
+.module th, .module td { padding: .78rem .9rem; border-bottom: 1px solid var(--admin-line); font-size: .82rem; }
+.module tr:last-child th, .module tr:last-child td { border-bottom: 0; }
+.module tr:hover { background: #f4f8f6; }
+#changelist-filter { border: 1px solid var(--admin-line); border-radius: 10px; background: #eef3f1; overflow: hidden; }
+#changelist-filter h2 { padding: .9rem 1rem; color: #fff; background: var(--admin-navy); font-size: .82rem; }
+#changelist-filter h3 { color: var(--admin-ink); font-size: .77rem; }
+#changelist-filter li.selected a { color: var(--admin-coral); font-weight: 800; }
+input, textarea, select, .vTextField, .vURLField, .vIntegerField { border: 1px solid #c8d3d0; border-radius: 6px; padding: .55rem .7rem; color: var(--admin-ink); background: #fff; font-family: inherit; }
+input:focus, textarea:focus, select:focus { border-color: var(--admin-blue); outline: 3px solid rgba(28,93,130,.14); }
+label { color: var(--admin-ink); font-size: .8rem; font-weight: 800; }
+.aligned .form-row { display: flex; align-items: flex-start; gap: 1rem; min-height: 3.25rem; box-sizing: border-box; }
+.aligned .form-row > label { flex: 0 0 12rem; width: auto; box-sizing: border-box; padding-top: .65rem; }
+.aligned .form-row > div, .aligned .form-row > p { flex: 1 1 auto; min-width: 0; }
+.aligned .form-row input:not([type="checkbox"]):not([type="radio"]),
+.aligned .form-row select, .aligned .form-row textarea { max-width: 100%; box-sizing: border-box; }
+.aligned .form-row .help, .aligned .form-row p.help { color: var(--admin-muted); font-size: .74rem; line-height: 1.7; }
+.aligned .form-row ul.errorlist { flex: 1 1 100%; margin: .25rem 0; color: #9b2c2c; font-weight: 700; }
+.aligned .checkbox-row { align-items: center; }
+.aligned .checkbox-row label { flex: 1 1 auto; padding-top: 0; }
+.aligned .checkbox-row input[type="checkbox"] { flex: 0 0 auto; width: 1rem; height: 1rem; }
+.submit-row { display: flex; flex-wrap: wrap; gap: .65rem; align-items: center; }
+.submit-row input { margin: 0; }
+.button, input[type=submit], input[type=button], .submit-row input, a.button { border: 1px solid var(--admin-blue); border-radius: 6px; padding: .58rem 1rem; color: #fff; background: var(--admin-blue); font-family: inherit; font-weight: 800; }
+.button:hover, input[type=submit]:hover, input[type=button]:hover, a.button:hover { background: #164b69; }
+.object-tools a { border-radius: 6px; background: var(--admin-coral); font-weight: 800; }
+.object-tools a:hover { background: #b8533d; }
+.submit-row { padding: 1rem; background: #f8faf8; }
+.messagelist li { border-radius: 7px; border-right: 4px solid var(--admin-blue); font-size: .82rem; }
+.messagelist li.warning { border-right-color: #c59a55; }
+.messagelist li.error { border-right-color: var(--admin-coral); }
+.paginator { border-color: var(--admin-line); color: var(--admin-muted); }
+a:link, a:visited { color: var(--admin-blue); }
+a:hover { color: #7ee5d9; }
+#footer { padding: 1.4rem 2rem; color: var(--admin-muted); background: #e8eeeb; border-top: 1px solid var(--admin-line); font-size: .76rem; }
+@media (max-width: 767px) { #header { padding: 0 1rem; flex-wrap: wrap; gap: .3rem 1rem; } .admin-context { display: none; } #content { padding: 1.25rem .9rem 2rem; } #user-tools { font-size: .7rem; } }
+@media (max-width: 767px) {
+  .aligned .form-row { display: block; }
+  .aligned .form-row > label { display: block; width: auto; padding: .35rem 0; }
+  .aligned .form-row > div, .aligned .form-row > p { width: 100%; }
+}
+
+/* Shared dark academic technology palette */
+:root {
+  --admin-ink: #ffffff;
+  --admin-navy: #061521;
+  --admin-blue: #39d5c7;
+  --admin-coral: #39d5c7;
+  --admin-paper: #0b2138;
+  --admin-surface: #102d47;
+  --admin-line: rgba(174,192,207,.2);
+  --admin-muted: #aec0cf;
+}
+html, body { background: #0b2138; color: #aec0cf; }
+#header { background: #061521; border-bottom-color: #39d5c7; }
+#branding h1, #branding h1 a, #site-name a { color: #fff; }
+#user-tools { color: #aec0cf; }
+#content h1 { color: #fff; }
+#content h1::after { background: #39d5c7; }
+.breadcrumbs, #footer { color: #aec0cf; background: #081827; border-color: rgba(174,192,207,.2); }
+.breadcrumbs a, a:link, a:visited { color: #7ee5d9; }
+#nav-sidebar { background: #081827; border-left-color: rgba(174,192,207,.2); }
+#nav-sidebar a { color: #b8c9d5; }
+#nav-sidebar a:hover, #nav-sidebar .current-app a { color: #fff; background: #123b5d; }
+.module, .aligned-form, .submit-row { border-color: rgba(174,192,207,.2); background: #102d47; box-shadow: 0 12px 30px rgba(0,0,0,.25); }
+.module caption, .module h2, .module h3, #changelist-filter h2 { color: #fff; background: #123b5d; }
+.module th, .module td { border-bottom-color: rgba(174,192,207,.2); color: #b8c9d5; }
+.module tr:hover { background: rgba(57,213,199,.08); }
+#changelist-filter { background: #081827; border-color: rgba(174,192,207,.2); }
+#changelist-filter h3, label { color: #fff; }
+input, textarea, select, .vTextField, .vURLField, .vIntegerField { color: #fff; background: #081827; border-color: rgba(174,192,207,.35); }
+input:focus, textarea:focus, select:focus { border-color: #39d5c7; outline-color: rgba(57,213,199,.2); }
+.button, input[type=submit], input[type=button], .submit-row input, a.button { color: #061521; background: #39d5c7; border-color: #39d5c7; }
+.button:hover, input[type=submit]:hover, input[type=button]:hover, a.button:hover { color: #061521; background: #7ee5d9; }
+.object-tools a { background: #f2b84b; color: #061521; }
+.submit-row { background: #0d263d; }
+.messagelist li { border-right-color: #39d5c7; }
+.messagelist li.warning { border-right-color: #f2b84b; }
+.messagelist li.error { border-right-color: #ef7d86; }
+.bg-white, .bg-light, .table-light, .dropdown-menu { color: #b8c9d5 !important; background-color: #0d263d !important; border-color: rgba(174,192,207,.2) !important; }
+.text-dark, .text-gray-800, .text-body { color: #fff !important; }
+.text-muted { color: #aec0cf !important; }
+.module th, .module td, #nav-sidebar a, .aligned .form-row .help { color: #d7e3eb; }
+.module th a, .module td a, #nav-sidebar a:hover, #nav-sidebar .current-app a { color: #7ee5d9; }
+.module tr:hover th, .module tr:hover td, .module tr:hover a { color: #e8f7f5; }
+
+/* Keep the add/change forms readable when the browser or Django switches to
+   dark mode. The theme's variables are otherwise overridden by the light
+   institutional palette above. */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) { --admin-ink: #eef2f1; --admin-paper: #121a20; --admin-surface: #1c272e; --admin-line: #3b4b54; --admin-muted: #bdc9c8; }
+  html:not([data-theme="light"]) input, html:not([data-theme="light"]) textarea, html:not([data-theme="light"]) select { color: #17232a; background: #fff; }
+  html:not([data-theme="light"]) .breadcrumbs, html:not([data-theme="light"]) #footer, html:not([data-theme="light"]) #nav-sidebar, html:not([data-theme="light"]) .submit-row { background: #202d35; }
+}

@@ -9,6 +9,7 @@
 
 {% block content %}
 <div class="ai-console" dir="rtl">
+    {% if messages %}<div class="ai-console__messages" role="status">{% for message in messages %}<div class="ai-console__message ai-console__message--{{ message.tags|default:'info' }}">{{ message }}</div>{% endfor %}</div>{% endif %}
     <div class="ai-console__topbar">
         <div>
             <div class="ai-console__breadcrumb"><a href="{% url 'dashboard:admin_dashboard' %}">داشبورد مدیریت پروژه</a><i class="bi bi-chevron-left"></i> مدیریت هوش مصنوعی</div>
@@ -29,6 +30,7 @@
         <a href="#provider"><i class="bi bi-key"></i> API و سرویس‌دهنده</a>
         <a href="#limits"><i class="bi bi-sliders"></i> کنترل مصرف</a>
         <a href="#activity"><i class="bi bi-activity"></i> فعالیت‌ها</a>
+        <a href="{% url 'dashboard:ai_automation_center' %}"><i class="bi bi-play-circle"></i> خودکارسازی‌ها</a>
     </div>
 
     <section id="overview" class="ai-console__hero">
@@ -42,6 +44,13 @@
             <div><strong>دسترسی سراسری هوش مصنوعی</strong><span>{% if ai_settings.enabled %}درخواست‌ها مجاز هستند{% else %}همه درخواست‌ها متوقف شده‌اند{% endif %}</span></div>
             <button class="ai-switch {% if ai_settings.enabled %}is-on{% endif %}" aria-label="تغییر وضعیت سرویس هوش مصنوعی" type="submit"><i></i></button>
         </form>
+    </section>
+
+    <section class="ai-quick-actions" aria-label="عملیات سریع">
+        <a class="ai-quick-action ai-quick-action--primary" href="{% url 'dashboard:ai_automation_center' %}"><i class="bi bi-play-circle"></i><span><strong>مرکز خودکارسازی</strong><small>{{ active_automation_count }} قاعده فعال · {{ automation_count }} قاعده کل</small></span><i class="bi bi-arrow-left"></i></a>
+        <form class="ai-quick-action" method="post" action="{% url 'dashboard:ai_control_action' %}">{% csrf_token %}<input type="hidden" name="action" value="run_all_automations"><i class="bi bi-shield-check"></i><span><strong>اجرای همه پایش‌ها</strong><small>کنترل فوری پروژه‌های قابل مشاهده</small></span><button type="submit" class="ai-quick-action__button">اجرا</button></form>
+        <a class="ai-quick-action" href="{% url 'admin:ai_assistant_aiknowledgeentry_changelist' %}"><i class="bi bi-journal-text"></i><span><strong>دانش عملیاتی</strong><small>{{ knowledge_count }} ورودی فعال در زمینه عامل</small></span><i class="bi bi-arrow-left"></i></a>
+        <a class="ai-quick-action" href="{% url 'admin:ai_assistant_aiexpertcomment_changelist' %}"><i class="bi bi-chat-square-text"></i><span><strong>نظرات کارشناسی</strong><small>{{ pending_comment_count }} پیش‌نویس در انتظار انتشار</small></span><i class="bi bi-arrow-left"></i></a>
     </section>
 
     <section class="ai-console__metrics">
@@ -69,13 +78,13 @@
                 <div class="ai-provider__brand"><span><i class="bi bi-cpu"></i></span><div><strong>{{ ai_settings.provider_name|default:"بدون سرویس‌دهنده" }}</strong><small>{{ ai_settings.provider_model|default:"مدل پیش‌فرض" }}</small></div></div>
                 <dl><dt>نشانی API</dt><dd>{{ ai_settings.provider_endpoint|default:"تنظیم‌شده در محیط اجرا" }}</dd><dt>مهلت پاسخ</dt><dd>{{ ai_settings.request_timeout_seconds }} ثانیه</dd><dt>اعتبار جستجو</dt><dd>{{ usage_totals.search_credits|default:0 }} در این ماه</dd></dl>
             </div>
-            <form method="post" action="{% url 'dashboard:ai_control_action' %}" class="ai-provider-form">
+            <form method="post" action="{% url 'dashboard:ai_control_action' %}" class="ai-provider-form" novalidate>
                 {% csrf_token %}<input type="hidden" name="action" value="save_provider">
                 <input type="hidden" name="enabled" value="{% if ai_settings.enabled %}on{% endif %}">
                 <input type="hidden" name="request_timeout_seconds" value="{{ ai_settings.request_timeout_seconds }}">
                 <input type="hidden" name="daily_request_limit" value="{{ ai_settings.daily_request_limit }}">
                 <input type="hidden" name="monthly_request_limit" value="{{ ai_settings.monthly_request_limit }}">
-                <div class="ai-form-grid"><label>نام سرویس‌دهنده {{ settings_form.provider_name }}</label><label>مدل {{ settings_form.provider_model }}</label><label class="wide">نشانی API {{ settings_form.provider_endpoint }}</label><label class="wide">کلید API گپ‌جی‌پی‌تی {{ settings_form.gapgpt_api_key }}<small>{{ settings_form.gapgpt_api_key.help_text }}</small></label></div>
+                <div class="ai-form-grid"><label>نام سرویس‌دهنده {{ settings_form.provider_name }}{% if settings_form.provider_name.errors %}<small class="field-error">{{ settings_form.provider_name.errors|striptags }}</small>{% endif %}</label><label>مدل {{ settings_form.provider_model }}{% if settings_form.provider_model.errors %}<small class="field-error">{{ settings_form.provider_model.errors|striptags }}</small>{% endif %}</label><label class="wide">نشانی API {{ settings_form.provider_endpoint }}{% if settings_form.provider_endpoint.errors %}<small class="field-error">{{ settings_form.provider_endpoint.errors|striptags }}</small>{% endif %}</label><label class="wide">کلید API گپ‌جی‌پی‌تی {{ settings_form.gapgpt_api_key }}<small>{{ settings_form.gapgpt_api_key.help_text }}</small></label></div>
                 <button class="ai-button ai-button--primary" type="submit"><i class="bi bi-save"></i> ذخیره تنظیمات سرویس</button>
             </form>
             <a class="ai-card__link" href="{% url 'admin:ai_assistant_aiplatformsettings_change' ai_settings.pk %}">تنظیمات پیشرفته سرویس‌دهنده <i class="bi bi-arrow-up-left"></i></a>
@@ -100,13 +109,37 @@
         </section>
     </div>
 
+    <div class="ai-console__grid ai-console__grid--secondary ai-console__grid--ops">
+        <section class="ai-card"><div class="ai-card__heading"><div><span class="ai-console__kicker">پایش</span><h3>قواعد خودکارسازی اخیر</h3></div><a class="ai-card__link" href="{% url 'dashboard:ai_automation_center' %}">مدیریت همه <i class="bi bi-arrow-up-left"></i></a></div>
+            <div class="ai-ops-list">{% for rule in automation_rules %}<div><span class="ai-ops-icon {% if rule.is_active %}is-active{% endif %}"><i class="bi bi-play-fill"></i></span><span><strong>{{ rule.name }}</strong><small>{% if rule.last_run_at %}آخرین اجرا: {{ rule.last_run_at|date:'Y/m/d H:i' }}{% else %}هنوز اجرا نشده{% endif %}</small></span><b>{{ rule.last_result.count|default:0 }} یافته</b></div>{% empty %}<div class="ai-empty">قاعده‌ای ثبت نشده است.</div>{% endfor %}</div>
+        </section>
+        <section class="ai-card"><div class="ai-card__heading"><div><span class="ai-console__kicker">بازبینی</span><h3>آخرین نظرات کارشناسی AI</h3></div><a class="ai-card__link" href="{% url 'admin:ai_assistant_aiexpertcomment_changelist' %}">مشاهده همه <i class="bi bi-arrow-up-left"></i></a></div>
+            <div class="ai-ops-list">{% for comment in recent_ai_comments %}<div><span class="ai-ops-icon {% if comment.status == 'published' %}is-active{% endif %}"><i class="bi bi-chat-left-text"></i></span><span><strong>{{ comment.project.name|truncatechars:35 }}</strong><small>{{ comment.created_at|date:'Y/m/d H:i' }} · {{ comment.severity }}</small></span><b>{{ comment.status }}</b></div>{% empty %}<div class="ai-empty">نظری ثبت نشده است.</div>{% endfor %}</div>
+        </section>
+    </div>
+
     <section id="users" class="ai-card ai-users-card">
-        <div class="ai-card__heading"><div><span class="ai-console__kicker">مدیریت دسترسی</span><h3>کاربران هوش مصنوعی</h3><p>فعال‌سازی، سهمیه پیام، جستجوی وب و اجازه ویرایش هر حساب را تنظیم کنید.</p></div><a class="ai-button ai-button--ghost" href="{% url 'admin:ai_assistant_aiuserpolicy_changelist' %}"><i class="bi bi-person-gear"></i> مدیریت کامل سیاست‌ها</a></div>
+        <div class="ai-card__heading"><div><span class="ai-console__kicker">نمایش کاربران</span><h3>خلاصه کاربران هوش مصنوعی</h3><p>این جدول فقط نمای سریع مصرف و وضعیت است؛ کنترل کامل پایین همین صفحه قرار دارد.</p></div><a class="ai-button ai-button--ghost" href="#policy-management"><i class="bi bi-sliders"></i> رفتن به مدیریت کامل سیاست‌ها</a></div>
         <div class="ai-table-wrap"><table class="ai-table"><thead><tr><th>کاربر</th><th>نقش</th><th>مصرف ماه</th><th>سقف پیام</th><th>قابلیت‌ها</th><th>وضعیت</th><th></th></tr></thead><tbody>
         {% for ai_user in users %}
         <tr><td><div class="ai-user"><span>{{ ai_user.username|slice:":1"|upper }}</span><div><strong>{{ ai_user.get_full_name|default:ai_user.username }}</strong><small>{{ ai_user.email }}</small></div></div></td><td><span class="ai-role">{{ ai_user.ai_role_label }}</span></td><td><strong>{{ ai_user.ai_messages_month }}</strong> پیام<small>{{ ai_user.ai_tokens_month }} توکن</small></td><td>{% if ai_user.ai_policy %}{{ ai_user.ai_policy.daily_message_limit }} روزانه · {{ ai_user.ai_policy.monthly_message_limit }} ماهانه{% else %}<span class="muted">بدون سیاست اختصاصی</span>{% endif %}</td><td><span class="ai-capabilities">{% if ai_user.ai_policy.allow_web_search %}<i class="bi bi-globe2" title="جستجوی وب"></i>{% endif %}{% if ai_user.ai_policy.allow_write_actions %}<i class="bi bi-pencil-square" title="عملیات ویرایشی"></i>{% endif %}</span></td><td>{% if ai_user.ai_policy.is_enabled %}<span class="ai-status-dot is-on">فعال</span>{% else %}<span class="ai-status-dot">غیرفعال</span>{% endif %}</td><td><details class="ai-user-edit"><summary><i class="bi bi-three-dots"></i></summary><form method="post" action="{% url 'dashboard:ai_control_action' %}">{% csrf_token %}<input type="hidden" name="action" value="save_user_policy"><input type="hidden" name="user_id" value="{{ ai_user.pk }}"><label>پیام روزانه<input type="number" name="daily_message_limit" min="0" value="{{ ai_user.ai_policy.daily_message_limit|default:30 }}"></label><label>پیام ماهانه<input type="number" name="monthly_message_limit" min="0" value="{{ ai_user.ai_policy.monthly_message_limit|default:500 }}"></label><label>مدل اختصاصی<input type="text" name="model_name" value="{{ ai_user.ai_policy.model_name|default:'' }}" placeholder="خالی یعنی مدل سراسری"></label><label>کلید API اختصاصی<input type="password" name="api_key" autocomplete="new-password" placeholder="{% if ai_user.ai_policy.api_key_encrypted %}کلید فعلی محفوظ است؛ برای تعویض وارد کنید{% else %}اختیاری{% endif %}"></label><label><input type="checkbox" name="is_enabled" value="1" {% if ai_user.ai_policy.is_enabled %}checked{% endif %}> دستیار فعال</label><label><input type="checkbox" name="allow_web_search" value="1" {% if ai_user.ai_policy.allow_web_search %}checked{% endif %}> جستجوی وب</label><label><input type="checkbox" name="allow_write_actions" value="1" {% if ai_user.ai_policy.allow_write_actions %}checked{% endif %}> عملیات ویرایشی</label><button class="ai-button ai-button--primary" type="submit">ذخیره سیاست</button></form></details></td></tr>
         {% empty %}<tr><td colspan="7" class="ai-empty">کاربر فعالی پیدا نشد.</td></tr>{% endfor %}
         </tbody></table></div>
+    </section>
+
+    <section class="ai-card ai-management-panel" id="policy-management">
+        <div class="ai-card__heading"><div><span class="ai-console__kicker">کنترل کامل</span><h3>مدیریت کامل سیاست‌های کاربران</h3><p>همه گزینه‌ها در همین صفحه قابل مشاهده و ذخیره هستند؛ دیگر نیازی به بازکردن منوی هر ردیف نیست.</p></div><a class="ai-button ai-button--ghost" href="{% url 'admin:ai_assistant_aiuserpolicy_changelist' %}"><i class="bi bi-box-arrow-up-left"></i> نمای مدیریتی Django</a></div>
+        <div class="ai-policy-grid">{% for ai_user in users %}<form class="ai-policy-card" method="post" action="{% url 'dashboard:ai_control_action' %}">{% csrf_token %}<input type="hidden" name="action" value="save_user_policy"><input type="hidden" name="user_id" value="{{ ai_user.pk }}"><div class="ai-policy-card__head"><div><strong>{{ ai_user.get_full_name|default:ai_user.username }}</strong><small>{{ ai_user.username }} · {{ ai_user.ai_role_label }}</small></div><span class="ai-status-dot {% if ai_user.ai_policy.is_enabled %}is-on{% endif %}">{% if ai_user.ai_policy.is_enabled %}فعال{% else %}غیرفعال{% endif %}</span></div><div class="ai-policy-fields"><label>پیام روزانه<input type="number" name="daily_message_limit" min="0" value="{{ ai_user.ai_policy.daily_message_limit|default:30 }}"></label><label>پیام ماهانه<input type="number" name="monthly_message_limit" min="0" value="{{ ai_user.ai_policy.monthly_message_limit|default:500 }}"></label><label class="wide">مدل اختصاصی<input type="text" name="model_name" value="{{ ai_user.ai_policy.model_name|default:'' }}" placeholder="خالی = مدل سراسری"></label></div><div class="ai-policy-checks"><label><input type="checkbox" name="is_enabled" value="1" {% if ai_user.ai_policy.is_enabled %}checked{% endif %}> فعال</label><label><input type="checkbox" name="allow_web_search" value="1" {% if ai_user.ai_policy.allow_web_search %}checked{% endif %}> وب</label><label><input type="checkbox" name="allow_write_actions" value="1" {% if ai_user.ai_policy.allow_write_actions %}checked{% endif %}> ویرایش</label></div><button class="ai-button ai-button--primary" type="submit"><i class="bi bi-save"></i> ذخیره سیاست</button></form>{% empty %}<div class="ai-empty">کاربر فعالی وجود ندارد.</div>{% endfor %}</div>
+    </section>
+
+    <section class="ai-card ai-management-panel" id="role-management">
+        <div class="ai-card__heading"><div><span class="ai-console__kicker">سیاست نقش</span><h3>توزیع دسترسی — مدیریت مستقیم نقش‌ها</h3><p>سقف نقش بر سیاست اختصاصی کاربران اولویت دارد.</p></div></div>
+        <div class="ai-role-policy-grid">{% for role in role_stats %}<form class="ai-role-policy-card" method="post" action="{% url 'dashboard:ai_control_action' %}">{% csrf_token %}<input type="hidden" name="action" value="save_role_policy"><input type="hidden" name="role" value="{{ role.value }}"><div class="ai-policy-card__head"><strong>{{ role.label }}</strong><span>{{ role.count }} کاربر</span></div><div class="ai-policy-fields"><label>پیام روزانه<input type="number" name="daily_message_limit" min="0" value="{{ role.policy.daily_message_limit }}"></label><label>پیام ماهانه<input type="number" name="monthly_message_limit" min="0" value="{{ role.policy.monthly_message_limit }}"></label></div><div class="ai-policy-checks"><label><input type="checkbox" name="is_enabled" value="1" {% if role.policy.is_enabled %}checked{% endif %}> فعال</label><label><input type="checkbox" name="allow_web_search" value="1" {% if role.policy.allow_web_search %}checked{% endif %}> وب</label><label><input type="checkbox" name="allow_write_actions" value="1" {% if role.policy.allow_write_actions %}checked{% endif %}> ویرایش</label></div><button class="ai-button ai-button--primary" type="submit">ذخیره نقش</button></form>{% endfor %}</div>
+    </section>
+
+    <section class="ai-card ai-management-panel" id="audit-management">
+        <div class="ai-card__heading"><div><span class="ai-console__kicker">ممیزی</span><h3>ردپای ممیزی کامل</h3><p>آخرین عملیات، خطاها و تغییرات انجام‌شده توسط AI و مدیران.</p></div><a class="ai-button ai-button--ghost" href="{% url 'admin:ai_assistant_aiauditlog_changelist' %}">مشاهده گزارش کامل</a></div>
+        <div class="table-responsive"><table class="ai-audit-table"><thead><tr><th>زمان</th><th>کاربر</th><th>عملیات</th><th>وضعیت</th><th>جزئیات</th></tr></thead><tbody>{% for event in recent_events %}<tr><td>{{ event.created_at|date:'Y/m/d H:i' }}</td><td>{% if event.user %}{{ event.user.username }}{% else %}سامانه{% endif %}</td><td>{{ event.action }}</td><td><span class="ai-audit-status {% if event.status == 'error' %}is-error{% endif %}">{{ event.status }}</span></td><td>{{ event.details|truncatechars:100 }}</td></tr>{% empty %}<tr><td colspan="5" class="ai-empty">رویدادی ثبت نشده است.</td></tr>{% endfor %}</tbody></table></div>
     </section>
 
     <div class="ai-console__grid ai-console__grid--footer">

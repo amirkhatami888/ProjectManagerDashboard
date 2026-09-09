@@ -64,6 +64,16 @@
   function addActionCard(action) {
     const card = document.createElement('div');
     card.className = 'rcs-ai-action-card';
+    if (action.action_type === 'add_comment') {
+      card.innerHTML =
+        '<div class="rcs-ai-action-title"><i class="bi bi-chat-square-text"></i> پیش‌نویس نظر کارشناسی</div>' +
+        '<div class="rcs-ai-action-row"><span>شدت</span><strong></strong></div>' +
+        '<div class="rcs-ai-action-row"><span>متن نظر</span><b></b></div>' +
+        '<button type="button" class="rcs-ai-confirm"><i class="bi bi-check2"></i> تأیید و انتشار نظر</button>' +
+        '<small class="rcs-ai-action-expiry"><i class="bi bi-clock"></i> این پیش‌نویس تا ۱۰ دقیقه معتبر است</small>';
+      card.querySelector('strong').textContent = action.severity || 'مهم';
+      card.querySelector('b').textContent = action.content || '';
+    } else {
     card.innerHTML =
       '<div class="rcs-ai-action-title"><i class="bi bi-pencil-square"></i> پیش‌نمایش تغییر</div>' +
       '<div class="rcs-ai-action-row"><span>فیلد</span><strong></strong></div>' +
@@ -74,6 +84,7 @@
     card.querySelector('strong').textContent = action.field_label || action.field;
     card.querySelector('del').textContent = action.old_value || 'خالی';
     card.querySelector('b').textContent = action.new_value || 'خالی';
+    }
     const button = card.querySelector('button');
     button.addEventListener('click', async () => {
       button.disabled = true;
