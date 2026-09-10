@@ -1,0 +1,87 @@
+/* Focused workspaces: navigation opens one administration area at a time. */
+
+/* Overview keeps the executive summary compact: hero, quick actions, metrics,
+   and the usage chart. */
+.ai-console--section-overview > #limits,
+.ai-console--section-overview > .ai-console__grid--ops,
+.ai-console--section-overview > .ai-users-card,
+.ai-console--section-overview > .ai-management-panel,
+.ai-console--section-overview > .ai-console__grid--main > #provider {
+    display: none;
+}
+
+.ai-console--section-overview > .ai-console__grid--main {
+    grid-template-columns: 1fr;
+}
+
+/* Provider/API: show only the provider card. It is nested inside the main
+   grid, so the grid itself must remain visible. */
+.ai-console--section-provider > .ai-console__hero,
+.ai-console--section-provider > .ai-quick-actions,
+.ai-console--section-provider > .ai-console__metrics,
+.ai-console--section-provider > #limits,
+.ai-console--section-provider > .ai-console__grid--ops,
+.ai-console--section-provider > .ai-users-card,
+.ai-console--section-provider > .ai-management-panel,
+.ai-console--section-provider > .ai-console__grid--footer {
+    display: none;
+}
+
+.ai-console--section-provider > .ai-console__grid--main > .ai-card--chart {
+    display: none;
+}
+
+.ai-console--section-provider > .ai-console__grid--main {
+    grid-template-columns: 1fr;
+}
+
+/* Users & access: user summary plus the two policy/role editors. */
+.ai-console--section-users > .ai-console__hero,
+.ai-console--section-users > .ai-quick-actions,
+.ai-console--section-users > .ai-console__metrics,
+.ai-console--section-users > .ai-console__grid--main,
+.ai-console--section-users > #limits,
+.ai-console--section-users > .ai-console__grid--ops,
+.ai-console--section-users > .ai-management-panel:not(#policy-management):not(#role-management),
+.ai-console--section-users > .ai-console__grid--footer {
+    display: none;
+}
+
+/* Usage limits: global request/timeout controls plus current service health. */
+.ai-console--section-limits > .ai-console__hero,
+.ai-console--section-limits > .ai-quick-actions,
+.ai-console--section-limits > .ai-console__metrics,
+.ai-console--section-limits > .ai-console__grid--main,
+.ai-console--section-limits > .ai-console__grid--ops,
+.ai-console--section-limits > .ai-users-card,
+.ai-console--section-limits > .ai-management-panel,
+.ai-console--section-limits > .ai-console__grid--footer {
+    display: none;
+}
+
+.ai-console--section-limits > #limits {
+    display: grid;
+}
+
+/* Activity/audit: recent automation/comments and the full audit trail. */
+.ai-console--section-activity > .ai-console__hero,
+.ai-console--section-activity > .ai-quick-actions,
+.ai-console--section-activity > .ai-console__metrics,
+.ai-console--section-activity > .ai-console__grid--main,
+.ai-console--section-activity > #limits,
+.ai-console--section-activity > .ai-users-card,
+.ai-console--section-activity > .ai-management-panel:not(#audit-management),
+.ai-console--section-activity > .ai-console__grid--footer {
+    display: none;
+}
+
+.ai-console--section-activity > .ai-console__grid--ops {
+    display: grid;
+}
+
+@media (max-width: 700px) {
+    .ai-console--section-limits > #limits,
+    .ai-console--section-activity > .ai-console__grid--ops {
+        display: block;
+    }
+}

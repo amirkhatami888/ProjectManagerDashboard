@@ -2,6 +2,7 @@ from datetime import timedelta
 import os
 
 from django.shortcuts import get_object_or_404, render, redirect
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.db.models import Sum, Count, Avg, Q, F, Value
@@ -205,6 +206,11 @@ def ai_control_center(request):
     if not (getattr(request.user, 'is_admin', False) or getattr(request.user, 'is_ceo', False)):
         return HttpResponseForbidden("You don't have permission to access this page.")
 
+    sections = {'overview', 'users', 'provider', 'limits', 'activity'}
+    active_section = request.GET.get('section', 'overview')
+    if active_section not in sections:
+        active_section = 'overview'
+
     today = timezone.localdate()
     month_start = today.replace(day=1)
     ai_settings = AIPlatformSettings.get_solo()
@@ -306,6 +312,7 @@ def ai_control_center(request):
         'knowledge_count': AIKnowledgeEntry.objects.filter(is_active=True).count(),
         'pending_comment_count': AIExpertComment.objects.filter(status='draft').count(),
         'recent_ai_comments': recent_ai_comments,
+        'active_section': active_section,
     }
     return render(request, 'dashboard/ai_control_center.html', context)
 
@@ -455,6 +462,9 @@ def ai_control_action(request):
         messages.success(request, f'{rules.count()} قاعده اجرا شد؛ {total_findings} یافته ثبت شد.')
     else:
         messages.error(request, "عملیات درخواستی ناشناخته است.")
+    section = request.POST.get('return_section', '')
+    if section in {'overview', 'users', 'provider', 'limits', 'activity'}:
+        return redirect(f"{reverse('dashboard:ai_control_center')}?section={section}")
     return redirect('dashboard:ai_control_center')
 
 

@@ -11,11 +11,11 @@
 <link rel="stylesheet" href="{% static 'plugins/persian-datepicker/css/persian-datepicker.min.css' %}">
 <style>
     :root {
-        --report-navy: #12263a;
-        --report-blue: #2563eb;
-        --report-teal: #0f766e;
-        --report-border: #e2e8f0;
-        --report-bg: #f1f5f9;
+        --report-navy: #0d6efd;
+        --report-blue: #0d6efd;
+        --report-teal: #198754;
+        --report-border: #dee2e6;
+        --report-bg: #f8f9fa;
     }
 
     body {
@@ -24,8 +24,8 @@
 
     .search-hero {
         background:
-            radial-gradient(circle at 12% 20%, rgba(59, 130, 246, .28), transparent 30%),
-            linear-gradient(120deg, #0f172a 0%, #1e3a5f 55%, #0f766e 100%);
+            radial-gradient(circle at 12% 20%, rgba(13, 110, 253, .3), transparent 30%),
+            linear-gradient(120deg, #212529 0%, #0b5ed7 55%, #0d6efd 100%);
         color: white;
         padding: 3.5rem 0;
         margin-bottom: 2.25rem;
@@ -53,11 +53,11 @@
         border: 1px solid var(--report-border);
         border-radius: 12px;
         padding: 1rem;
-        background: #fbfdff;
+        background: #f8f9fa;
     }
     
     .search-btn {
-        background: #3498db;
+        background: #0d6efd;
         border: none;
         border-radius: 6px;
         padding: 0.75rem 1.5rem;
@@ -67,13 +67,13 @@
     }
     
     .search-btn:hover {
-        background: #2980b9;
+        background: #0b5ed7;
         transform: translateY(-1px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
     
     .export-btn {
-        background: #27ae60;
+        background: #198754;
         border: none;
         border-radius: 6px;
         padding: 0.75rem 1.5rem;
@@ -83,7 +83,7 @@
     }
     
     .export-btn:hover {
-        background: #229954;
+        background: #157347;
         transform: translateY(-1px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
@@ -179,7 +179,7 @@
     }
     
     .results-table tbody tr:hover {
-        background-color: #f8fafc;
+        background-color: #f8f9fa;
     }
 
     .results-table tbody tr {
@@ -235,7 +235,7 @@
     .summary-stat {
         border: 1px solid var(--report-border);
         border-radius: 12px;
-        background: linear-gradient(145deg, #fff, #f8fafc);
+        background: linear-gradient(145deg, #fff, #f8f9fa);
         padding: 1rem;
     }
 
@@ -256,23 +256,23 @@
     }
     
     .form-control:focus {
-        border-color: #3498db;
-        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
     }
     
     .form-check-input:checked {
-        background-color: #3498db;
-        border-color: #3498db;
+        background-color: #0d6efd;
+        border-color: #0d6efd;
     }
     
     .btn-primary {
-        background: #3498db;
-        border-color: #3498db;
+        background: #0d6efd;
+        border-color: #0d6efd;
     }
     
     .btn-primary:hover {
-        background: #2980b9;
-        border-color: #2980b9;
+        background: #0b5ed7;
+        border-color: #0b5ed7;
     }
     
     .btn-outline-secondary {
@@ -286,9 +286,9 @@
     }
     
     .alert-info {
-        background: #d1ecf1;
-        border-color: #bee5eb;
-        color: #0c5460;
+        background: #cff4fc;
+        border-color: #b6effb;
+        color: #055160;
     }
     
     .progress {
@@ -296,19 +296,19 @@
     }
     
     .badge.bg-primary {
-        background: #3498db !important;
+        background: #0d6efd !important;
     }
     
     .badge.bg-success {
-        background: #27ae60 !important;
+        background: #198754 !important;
     }
     
     .badge.bg-warning {
-        background: #f39c12 !important;
+        background: #ffc107 !important;
     }
     
     .badge.bg-danger {
-        background: #e74c3c !important;
+        background: #dc3545 !important;
     }
     
     .sidebar-card {
@@ -321,7 +321,7 @@
         border-radius: 8px 8px 0 0 !important;
         border: none;
         padding: 1.5rem;
-        background: #34495e;
+        background: #0d6efd;
         color: white;
     }
     
@@ -335,16 +335,16 @@
         border-radius: 8px 8px 0 0 !important;
         border: none;
         padding: 1.5rem;
-        background: #34495e;
+        background: #0d6efd;
         color: white;
     }
     
     .section-title {
-        color: #2c3e50;
+        color: #212529;
         font-weight: 600;
         margin-bottom: 1rem;
         padding-bottom: 0.5rem;
-        border-bottom: 2px solid #ecf0f1;
+        border-bottom: 2px solid #dee2e6;
     }
     
     .toggle-switch {
@@ -385,7 +385,7 @@
     }
     
     input:checked + .slider {
-        background-color: #2196F3;
+        background-color: #0d6efd;
     }
     
     input:checked + .slider:before {

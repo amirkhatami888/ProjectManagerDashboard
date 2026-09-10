@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Keep every data table usable on narrow screens, including tables in
     // page-specific templates that do not use Bootstrap's wrapper.
     document.querySelectorAll('table').forEach(function(table) {
-        if (table.closest('.table-responsive')) return;
+        if (table.closest('.table-responsive') || table.dataset.disableResponsiveWrapper === 'true') return;
         var wrapper = document.createElement('div');
         wrapper.className = 'table-responsive';
         table.parentNode.insertBefore(wrapper, table);

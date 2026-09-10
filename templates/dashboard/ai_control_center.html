@@ -5,10 +5,11 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/ai-control-center.css' %}">
+<link rel="stylesheet" href="{% static 'css/ai-control-sections.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="ai-console" dir="rtl">
+<div class="ai-console ai-console--section-{{ active_section|default:'overview' }}" dir="rtl">
     {% if messages %}<div class="ai-console__messages" role="status">{% for message in messages %}<div class="ai-console__message ai-console__message--{{ message.tags|default:'info' }}">{{ message }}</div>{% endfor %}</div>{% endif %}
     <div class="ai-console__topbar">
         <div>
@@ -25,11 +26,11 @@
     </div>
 
     <div class="ai-console__nav">
-        <a class="is-active" href="#overview"><i class="bi bi-grid-1x2"></i> نمای کلی</a>
-        <a href="#users"><i class="bi bi-people"></i> کاربران</a>
-        <a href="#provider"><i class="bi bi-key"></i> API و سرویس‌دهنده</a>
-        <a href="#limits"><i class="bi bi-sliders"></i> کنترل مصرف</a>
-        <a href="#activity"><i class="bi bi-activity"></i> فعالیت‌ها</a>
+        <a class="{% if active_section == 'overview' %}is-active{% endif %}" href="{% url 'dashboard:ai_control_center' %}"><i class="bi bi-grid-1x2"></i> نمای کلی</a>
+        <a class="{% if active_section == 'users' %}is-active{% endif %}" href="{% url 'dashboard:ai_control_center' %}?section=users"><i class="bi bi-people"></i> کاربران و دسترسی</a>
+        <a class="{% if active_section == 'provider' %}is-active{% endif %}" href="{% url 'dashboard:ai_control_center' %}?section=provider"><i class="bi bi-key"></i> API و سرویس‌دهنده</a>
+        <a class="{% if active_section == 'limits' %}is-active{% endif %}" href="{% url 'dashboard:ai_control_center' %}?section=limits"><i class="bi bi-sliders"></i> کنترل مصرف</a>
+        <a class="{% if active_section == 'activity' %}is-active{% endif %}" href="{% url 'dashboard:ai_control_center' %}?section=activity"><i class="bi bi-activity"></i> فعالیت‌ها</a>
         <a href="{% url 'dashboard:ai_automation_center' %}"><i class="bi bi-play-circle"></i> خودکارسازی‌ها</a>
     </div>
 
@@ -147,4 +148,18 @@
         <section class="ai-card"><div class="ai-card__heading"><div><span class="ai-console__kicker">ردپای ممیزی</span><h3>فعالیت‌های اخیر</h3></div><a class="ai-card__link" href="{% url 'admin:ai_assistant_aiauditlog_changelist' %}">مشاهده همه <i class="bi bi-arrow-up-left"></i></a></div><div class="ai-events">{% for event in recent_events %}<div><span class="ai-event-icon {% if event.status == 'error' %}error{% endif %}"><i class="bi bi-{% if event.status == 'error' %}exclamation-triangle{% else %}check2{% endif %}"></i></span><div><strong>{{ event.action }}</strong><small>{% if event.user %}{{ event.user.username }}{% else %}سامانه{% endif %} · {{ event.created_at|date:"Y/m/d H:i" }}</small></div><em>{% if event.status == "error" %}خطا{% else %}موفق{% endif %}</em></div>{% empty %}<div class="ai-empty">هنوز رویدادی ثبت نشده است.</div>{% endfor %}</div></section>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const consoleRoot = document.querySelector('.ai-console');
+    if (!consoleRoot) return;
+    const match = consoleRoot.className.match(/ai-console--section-([a-z]+)/);
+    const section = match ? match[1] : 'overview';
+    document.querySelectorAll('form[action$="ai/action/"]').forEach(function (form) {
+        if (form.querySelector('input[name="return_section"]')) return;
+        const input = document.createElement('input');
+        input.type = 'hidden'; input.name = 'return_section'; input.value = section;
+        form.appendChild(input);
+    });
+});
+</script>
 {% endblock %}

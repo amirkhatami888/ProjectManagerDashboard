@@ -884,6 +884,119 @@
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
     }
+
+    /* ------------------------------------------------------------------
+       Dark institutional theme overrides (mirror static/css/institutional.css).
+       The rules above were written for a light palette; these keep the page
+       consistent with the rest of the dashboard. */
+    :root {
+        --primary-color: #7ee5d9;
+        --secondary-color: #b8c9d5;
+        --accent-color: #39d5c7;
+        --success-color: #42d392;
+        --warning-color: #f2b84b;
+        --danger-color: #ef7d86;
+        --light-bg: #0d263d;
+        --border-color: rgba(174, 192, 207, 0.2);
+        --text-muted: #aec0cf;
+        --shadow-light: 0 6px 16px rgba(2, 12, 22, 0.25);
+        --shadow-medium: 0 14px 32px rgba(2, 12, 22, 0.3);
+        --shadow-heavy: 0 18px 38px rgba(2, 12, 22, 0.45);
+        --gradient-primary: linear-gradient(135deg, #1f7f8a 0%, #123b5d 100%);
+        --gradient-success: linear-gradient(135deg, #16806a 0%, #0d263d 100%);
+        --gradient-warning: linear-gradient(135deg, #8a6a20 0%, #0d263d 100%);
+        --gradient-info: linear-gradient(135deg, #1b6681 0%, #0d263d 100%);
+    }
+
+    body { background: #0b2138; }
+
+    .page-header {
+        background: linear-gradient(135deg, #123b5d 0%, #0b2138 100%);
+        border: 1px solid var(--border-color);
+    }
+
+    /* Stats cards: dark surface, distinct accent and value colour per card */
+    .stats-card,
+    .stats-card:nth-child(1),
+    .stats-card:nth-child(2),
+    .stats-card:nth-child(3),
+    .stats-card:nth-child(4) {
+        background: #102d47;
+        border: 1px solid var(--border-color);
+        border-top: 4px solid var(--sc-accent, #39d5c7);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .row.mb-4 > div:nth-child(1) .stats-card { --sc-accent: #39d5c7; }
+    .row.mb-4 > div:nth-child(2) .stats-card { --sc-accent: #42d392; }
+    .row.mb-4 > div:nth-child(3) .stats-card { --sc-accent: #f2b84b; }
+    .row.mb-4 > div:nth-child(4) .stats-card { --sc-accent: #7ec8f5; }
+
+    .row.mb-4 > div:nth-child(1) .stats-number { color: #39d5c7; }
+    .row.mb-4 > div:nth-child(2) .stats-number { color: #42d392; }
+    .row.mb-4 > div:nth-child(3) .stats-number { color: #f2b84b; }
+    .row.mb-4 > div:nth-child(4) .stats-number { color: #7ec8f5; }
+
+    .stats-card::before {
+        background: linear-gradient(45deg, rgba(57, 213, 199, 0.12) 0%, transparent 100%);
+    }
+
+    .stats-label { color: #aec0cf; }
+
+    /* Filters / form controls */
+    .filter-card .form-control,
+    .filter-card .form-control:hover,
+    .filter-card .form-control:focus {
+        background: #081827;
+        color: #f5fbff;
+        border-color: rgba(174, 192, 207, 0.35);
+    }
+
+    .filter-card .form-control:focus {
+        border-color: #39d5c7;
+        box-shadow: 0 0 0 0.25rem rgba(57, 213, 199, 0.18);
+    }
+
+    /* Results table */
+    .results-header {
+        background: linear-gradient(135deg, #123b5d 0%, #0d263d 100%);
+    }
+
+    .table { background: transparent; color: #b8c9d5; }
+    .table thead th { background: #081827; color: #7ee5d9; }
+    .table tbody td { border-bottom-color: rgba(174, 192, 207, 0.2); }
+
+    .change-row { background: #102d47; }
+    .change-row:hover,
+    .change-row.hover { background: #123b5d; }
+
+    .change-type-badge,
+    .object-type-badge { border-color: rgba(174, 192, 207, 0.25); }
+
+    .change-description { color: #b8c9d5; }
+
+    .modal-header { background: linear-gradient(135deg, #123b5d 0%, #0d263d 100%); }
+
+    .card-footer { background: #0d263d; border-top-color: rgba(174, 192, 207, 0.2); }
+
+    .pagination .page-link {
+        background: #102d47;
+        border-color: rgba(174, 192, 207, 0.2);
+        color: #7ee5d9;
+    }
+
+    .pagination .page-item.active .page-link {
+        background: #123b5d;
+        color: #ffffff;
+        border-color: #39d5c7;
+    }
+
+    .empty-state { background: #102d47; color: #aec0cf; }
+    .empty-state i { color: #39d5c7; }
+
+    .modal-body pre { background: #081827; color: #d7e3eb; }
+
+    .loading-overlay { background: rgba(11, 33, 56, 0.9); }
 </style>
 {% endblock %}
 

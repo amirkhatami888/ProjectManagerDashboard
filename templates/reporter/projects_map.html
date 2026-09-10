@@ -86,10 +86,49 @@
         color: white;
     }
     .filter-container {
-        background-color: #f8f9fa;
+        background-color: #102d47;
+        border: 1px solid rgba(174, 192, 207, 0.2);
         padding: 15px;
         border-radius: 10px;
         margin-bottom: 15px;
+        box-shadow: 0 14px 32px rgba(2, 12, 22, 0.3);
+    }
+
+    /* Leaflet controls and popups follow the dark institutional palette */
+    #map {
+        border: 1px solid rgba(174, 192, 207, 0.2);
+        box-shadow: 0 14px 32px rgba(2, 12, 22, 0.3);
+    }
+
+    .leaflet-container {
+        background: #0b2138;
+    }
+
+    .leaflet-popup-content-wrapper,
+    .leaflet-popup-tip {
+        background: #102d47;
+        color: #d7e3eb;
+        box-shadow: 0 14px 32px rgba(2, 12, 22, 0.45);
+    }
+
+    .project-info h5 {
+        color: #ffffff;
+    }
+
+    .leaflet-bar a,
+    .leaflet-bar a:hover {
+        background: #123b5d;
+        color: #d7e3eb;
+        border-bottom-color: rgba(174, 192, 207, 0.2);
+    }
+
+    .leaflet-control-attribution {
+        background: rgba(11, 33, 56, 0.8);
+        color: #aec0cf;
+    }
+
+    .leaflet-control-attribution a {
+        color: #7ee5d9;
     }
 </style>
 {% endblock %}

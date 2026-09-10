@@ -3,6 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from django.http import HttpRequest
 from django.db import transaction
+from django.db.models import Count
 from .models import (
     ActivityLog, ProjectChangeLog, UserSession, SystemEvent, 
     ActivityDashboard, AuditTrail
@@ -572,33 +573,68 @@ def update_daily_dashboard(date: Optional[datetime.date] = None) -> ActivityDash
 
 def get_activity_summary(days: int = 7) -> Dict[str, Any]:
     """
-    Get activity summary for the last N days
+    Get activity summary for the last N days.
+
+    The statistics are read straight from the source tables instead of the
+    pre-aggregated ActivityDashboard rows, because those rows are only written
+    by the one-off ``init_activity_monitor`` command. When nobody refreshes
+    them the dashboard cards would silently show stale (usually zero) values.
     """
     try:
-        end_date = timezone.now().date()
-        start_date = end_date - timedelta(days=days)
-        
-        # Get daily dashboards
-        dashboards = ActivityDashboard.objects.filter(
-            date__range=(start_date, end_date)
-        ).order_by('date')
-        
+        days = max(1, int(days))
+        end_date = timezone.localdate()
+        start_date = end_date - timedelta(days=days - 1)
+
+        # Use a full datetime range so the whole last day is included and MySQL
+        # time-zone conversion does not drop rows near midnight.
+        start_datetime = timezone.make_aware(
+            datetime.combine(start_date, datetime.min.time())
+        )
+        end_datetime = timezone.make_aware(
+            datetime.combine(end_date, datetime.max.time())
+        )
+        date_range = (start_datetime, end_datetime)
+
+        activities = ActivityLog.objects.filter(timestamp__range=date_range)
+        project_changes = ProjectChangeLog.objects.filter(timestamp__range=date_range)
+        system_events = SystemEvent.objects.filter(timestamp__range=date_range)
+
         # Calculate totals
-        total_activities = sum(d.total_activities for d in dashboards)
-        total_logins = sum(d.total_logins for d in dashboards)
-        total_project_changes = sum(d.total_project_changes for d in dashboards)
-        total_errors = sum(d.errors_count for d in dashboards)
-        
+        total_activities = activities.count()
+        total_logins = activities.filter(activity_type='LOGIN').count()
+        total_project_changes = project_changes.count()
+        total_system_events = system_events.count()
+        total_errors = system_events.filter(event_type='ERROR').count()
+
         # Get recent activities
-        recent_activities = ActivityLog.objects.filter(
-            timestamp__date__gte=start_date
-        ).select_related('user').order_by('-timestamp')[:10]
-        
+        recent_activities = activities.select_related('user').order_by('-timestamp')[:10]
+
         # Get recent system events
-        recent_system_events = SystemEvent.objects.filter(
-            timestamp__date__gte=start_date
-        ).order_by('-timestamp')[:5]
-        
+        recent_system_events = system_events.order_by('-timestamp')[:5]
+
+        # Build the per-day breakdown for charts from live data as well
+        activities_by_day = {
+            row['timestamp__date']: row['count']
+            for row in activities.values('timestamp__date').annotate(count=Count('id'))
+        }
+        logins_by_day = {
+            row['timestamp__date']: row['count']
+            for row in activities.filter(activity_type='LOGIN').values('timestamp__date').annotate(count=Count('id'))
+        }
+        errors_by_day = {
+            row['timestamp__date']: row['count']
+            for row in system_events.filter(event_type='ERROR').values('timestamp__date').annotate(count=Count('id'))
+        }
+        daily_data = []
+        for offset in range(days):
+            day = start_date + timedelta(days=offset)
+            daily_data.append({
+                'date': day,
+                'total_activities': activities_by_day.get(day, 0),
+                'total_logins': logins_by_day.get(day, 0),
+                'errors_count': errors_by_day.get(day, 0),
+            })
+
         return {
             'period_days': days,
             'start_date': start_date,
@@ -606,10 +642,11 @@ def get_activity_summary(days: int = 7) -> Dict[str, Any]:
             'total_activities': total_activities,
             'total_logins': total_logins,
             'total_project_changes': total_project_changes,
+            'total_system_events': total_system_events,
             'total_errors': total_errors,
             'recent_activities': recent_activities,
             'recent_system_events': recent_system_events,
-            'daily_data': list(dashboards.values('date', 'total_activities', 'total_logins', 'errors_count'))
+            'daily_data': daily_data,
         }
     
     except Exception as e:

@@ -5,105 +5,210 @@
 
 {% block extra_css %}
 <style>
+    :root {
+        --am-primary: #39d5c7;
+        --am-success: #42d392;
+        --am-info: #7ec8f5;
+        --am-warning: #f2b84b;
+        --am-danger: #ef7d86;
+        --am-ink: #ffffff;
+        --am-muted: #aec0cf;
+        --am-line: rgba(174, 192, 207, 0.2);
+        --am-soft: #0d263d;
+        --am-surface: #102d47;
+        --am-hover: #123b5d;
+    }
+
+    /* Keep the cards in line with the dark institutional theme */
+    .card {
+        border: 1px solid var(--am-line);
+        border-radius: 16px;
+        background: var(--am-surface);
+        box-shadow: 0 14px 32px rgba(2, 12, 22, 0.3);
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: var(--am-hover);
+        border-bottom: 1px solid var(--am-line);
+    }
+
+    /* Statistics cards ------------------------------------------------- */
     .stats-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 15px;
+        --am-accent: var(--am-primary);
+        --am-accent-soft: rgba(57, 213, 199, 0.16);
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: linear-gradient(180deg, #102d47 0%, #0d263d 100%);
+        border: 1px solid var(--am-line);
+        border-radius: 16px;
         padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 24px;
+        box-shadow: 0 14px 32px rgba(2, 12, 22, 0.3);
+        transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
     }
-    
+
+    .stats-card::before {
+        content: "";
+        position: absolute;
+        inset-inline-start: 0;
+        top: 14px;
+        bottom: 14px;
+        width: 4px;
+        border-radius: 0 4px 4px 0;
+        background: var(--am-accent);
+    }
+
     .stats-card.success {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        --am-accent: var(--am-success);
+        --am-accent-soft: rgba(66, 211, 146, 0.16);
     }
-    
-    .stats-card.warning {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-    
+
     .stats-card.info {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --am-accent: var(--am-info);
+        --am-accent-soft: rgba(126, 200, 245, 0.16);
     }
-    
+
+    .stats-card.warning {
+        --am-accent: var(--am-warning);
+        --am-accent-soft: rgba(242, 184, 75, 0.18);
+    }
+
+    .stats-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--am-accent);
+        box-shadow: 0 18px 38px rgba(2, 12, 22, 0.45);
+    }
+
+    .stats-icon {
+        flex: 0 0 auto;
+        width: 52px;
+        height: 52px;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        font-size: 1.35rem;
+        color: var(--am-accent);
+        background: var(--am-accent-soft);
+    }
+
     .stats-number {
-        font-size: 2.5rem;
-        font-weight: bold;
-        margin-bottom: 5px;
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1.1;
+        color: var(--am-accent);
     }
-    
+
     .stats-label {
-        font-size: 0.9rem;
-        opacity: 0.9;
+        font-size: 0.85rem;
+        color: var(--am-muted);
+        margin-top: 4px;
     }
-    
+
+    /* Activity / session / event lists --------------------------------- */
     .activity-item {
-        border-left: 4px solid #667eea;
-        padding: 10px 15px;
-        margin-bottom: 10px;
-        background: #f8f9fa;
-        border-radius: 0 8px 8px 0;
+        color: #d7e3eb;
+        border: 1px solid var(--am-line);
+        border-inline-start: 4px solid var(--am-primary);
+        padding: 14px 16px;
+        margin-bottom: 12px;
+        background: var(--am-soft);
+        border-radius: 12px;
+        transition: background 0.2s ease, box-shadow 0.2s ease;
     }
-    
+
+    .activity-item:hover {
+        background: var(--am-hover);
+        box-shadow: 0 8px 18px rgba(2, 12, 22, 0.35);
+    }
+
     .activity-item.error {
-        border-left-color: #dc3545;
+        border-inline-start-color: var(--am-danger);
     }
-    
+
     .activity-item.warning {
-        border-left-color: #ffc107;
+        border-inline-start-color: var(--am-warning);
     }
-    
+
     .activity-item.success {
-        border-left-color: #28a745;
+        border-inline-start-color: var(--am-success);
     }
-    
+
     .session-item {
-        background: white;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        padding: 15px;
+        color: #d7e3eb;
+        background: var(--am-soft);
+        border: 1px solid var(--am-line);
+        border-radius: 12px;
+        padding: 14px;
         margin-bottom: 10px;
+        transition: background 0.2s ease, box-shadow 0.2s ease;
     }
-    
+
+    .session-item:hover {
+        background: var(--am-hover);
+        box-shadow: 0 8px 18px rgba(2, 12, 22, 0.35);
+    }
+
     .event-item {
-        background: white;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        padding: 15px;
+        color: #d7e3eb;
+        background: linear-gradient(180deg, rgba(157, 70, 82, 0.28) 0%, var(--am-surface) 100%);
+        border: 1px solid rgba(239, 125, 134, 0.35);
+        border-inline-start: 4px solid var(--am-danger);
+        border-radius: 12px;
+        padding: 14px;
         margin-bottom: 10px;
-        border-left: 4px solid #dc3545;
+        transition: box-shadow 0.2s ease;
     }
-    
+
+    .event-item:hover {
+        box-shadow: 0 8px 18px rgba(239, 125, 134, 0.25);
+    }
+
     .event-item.resolved {
-        border-left-color: #28a745;
+        border-inline-start-color: var(--am-success);
+        border-color: rgba(66, 211, 146, 0.35);
+        background: linear-gradient(180deg, rgba(66, 211, 146, 0.14) 0%, var(--am-surface) 100%);
     }
-    
+
+    /* Quick actions ---------------------------------------------------- */
     .quick-actions {
-        background: white;
-        border-radius: 15px;
+        background: linear-gradient(135deg, var(--am-hover) 0%, var(--am-soft) 100%);
+        border: 1px solid var(--am-line);
+        border-radius: 16px;
         padding: 20px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        box-shadow: 0 14px 32px rgba(2, 12, 22, 0.3);
     }
-    
+
     .quick-action-btn {
-        display: block;
+        display: flex;
+        align-items: center;
+        gap: 10px;
         width: 100%;
-        padding: 12px;
+        padding: 12px 14px;
         margin-bottom: 10px;
-        border: none;
-        border-radius: 8px;
-        background: #667eea;
-        color: white;
+        border: 1px solid var(--am-line);
+        border-radius: 10px;
+        background: var(--am-surface);
+        color: #7ee5d9;
+        font-weight: 600;
         text-decoration: none;
-        text-align: center;
-        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(2, 12, 22, 0.25);
+        transition: all 0.25s ease;
     }
-    
+
+    .quick-action-btn:last-child {
+        margin-bottom: 0;
+    }
+
     .quick-action-btn:hover {
-        background: #5a6fd8;
-        color: white;
+        background: var(--am-primary);
+        border-color: var(--am-primary);
+        color: #061521;
         text-decoration: none;
         transform: translateY(-2px);
+        box-shadow: 0 10px 22px rgba(57, 213, 199, 0.28);
     }
 </style>
 {% endblock %}
@@ -124,29 +229,41 @@
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="stats-card">
-                <div class="stats-number">{{ summary.total_activities|default:0 }}</div>
-                <div class="stats-label">کل فعالیت‌ها (۷ روز گذشته)</div>
+                <div class="stats-icon"><i class="fas fa-wave-square"></i></div>
+                <div class="stats-body">
+                    <div class="stats-number">{{ summary.total_activities|default:0 }}</div>
+                    <div class="stats-label">کل فعالیت‌ها (۷ روز گذشته)</div>
+                </div>
             </div>
         </div>
         
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="stats-card success">
-                <div class="stats-number">{{ summary.total_logins|default:0 }}</div>
-                <div class="stats-label">ورود کاربران (۷ روز گذشته)</div>
+                <div class="stats-icon"><i class="fas fa-right-to-bracket"></i></div>
+                <div class="stats-body">
+                    <div class="stats-number">{{ summary.total_logins|default:0 }}</div>
+                    <div class="stats-label">ورود کاربران (۷ روز گذشته)</div>
+                </div>
             </div>
         </div>
         
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="stats-card info">
-                <div class="stats-number">{{ summary.total_project_changes|default:0 }}</div>
-                <div class="stats-label">تغییرات پروژه‌ها (۷ روز گذشته)</div>
+                <div class="stats-icon"><i class="fas fa-diagram-project"></i></div>
+                <div class="stats-body">
+                    <div class="stats-number">{{ summary.total_project_changes|default:0 }}</div>
+                    <div class="stats-label">تغییرات پروژه‌ها (۷ روز گذشته)</div>
+                </div>
             </div>
         </div>
         
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="stats-card warning">
-                <div class="stats-number">{{ summary.total_errors|default:0 }}</div>
-                <div class="stats-label">خطاهای سامانه (۷ روز گذشته)</div>
+                <div class="stats-icon"><i class="fas fa-triangle-exclamation"></i></div>
+                <div class="stats-body">
+                    <div class="stats-number">{{ summary.total_errors|default:0 }}</div>
+                    <div class="stats-label">خطاهای سامانه (۷ روز گذشته)</div>
+                </div>
             </div>
         </div>
     </div>
@@ -170,7 +287,7 @@
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <strong>{{ activity.user.username|default:"سامانه" }}</strong>
-                                    <span class="badge badge-{% if activity.activity_type == 'LOGIN' %}success{% elif activity.activity_type == 'ERROR' %}danger{% else %}primary{% endif %} ml-2">
+                                    <span class="badge text-bg-{% if activity.activity_type == 'LOGIN' %}success{% elif activity.activity_type == 'ERROR' %}danger{% else %}primary{% endif %} ms-2">
                                         {{ activity.activity_type }}
                                     </span>
                                 </div>
@@ -202,7 +319,7 @@
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <strong>{{ change.project_name }}</strong>
-                                    <span class="badge badge-info ml-2">{{ change.change_type }}</span>
+                                    <span class="badge text-bg-info ms-2">{{ change.change_type }}</span>
                                 </div>
                                 <small class="text-muted">{{ change.timestamp|timesince }} پیش</small>
                             </div>
@@ -239,7 +356,7 @@
                                 <div class="text-right">
                                     <small class="text-muted">{{ session.last_activity|timesince }} پیش</small>
                                     <br>
-                                    <span class="badge badge-success">{{ session.page_views }} بازدید</span>
+                                    <span class="badge text-bg-success">{{ session.page_views }} بازدید</span>
                                 </div>
                             </div>
                         </div>
@@ -264,7 +381,7 @@
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <strong>{{ event.title }}</strong>
-                                    <span class="badge badge-{% if event.severity == 'CRITICAL' %}danger{% elif event.severity == 'HIGH' %}warning{% else %}info{% endif %} ml-2">
+                                    <span class="badge text-bg-{% if event.severity == 'CRITICAL' %}danger{% elif event.severity == 'HIGH' %}warning{% else %}info{% endif %} ms-2">
                                         {{ event.severity }}
                                     </span>
                                 </div>
