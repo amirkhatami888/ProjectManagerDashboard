@@ -33,17 +33,36 @@ class ProgramListView(LoginRequiredMixin, ListView):
         
         # If user is admin, CEO, or chief executive, show all programs
         if user.is_admin or user.is_ceo or user.is_chief_executive:
-            return Program.objects.all().order_by('-created_at')
+            queryset = Program.objects.all().order_by('-created_at')
+        else:
+            # Get user's assigned provinces
+            user_provinces = user.get_assigned_provinces()
+            
+            # Filter programs by user's assigned provinces
+            if user_provinces:
+                queryset = Program.objects.filter(province__in=user_provinces).order_by('-created_at')
+            else:
+                # If user has no province assignments, show only their own programs
+                queryset = Program.objects.filter(created_by=user).order_by('-created_at')
         
-        # Get user's assigned provinces
-        user_provinces = user.get_assigned_provinces()
+        # Apply program_type filter
+        program_type = self.request.GET.get('program_type')
+        if program_type:
+            queryset = queryset.filter(program_type=program_type)
         
-        # Filter programs by user's assigned provinces
-        if user_provinces:
-            return Program.objects.filter(province__in=user_provinces).order_by('-created_at')
+        # Apply province filter (not shown for province managers)
+        province = self.request.GET.get('province')
+        if province:
+            if not (user.is_province_manager):
+                queryset = queryset.filter(province=province)
         
-        # If user has no province assignments, show only their own programs
-        return Program.objects.filter(created_by=user).order_by('-created_at')
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['program_type_choices'] = Program.PROGRAM_TYPE_CHOICES
+        context['province_choices'] = Program.PROVINCE_CHOICES
+        return context
 
 
 class ProgramDetailView(LoginRequiredMixin, DetailView):

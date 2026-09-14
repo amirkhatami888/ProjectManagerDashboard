@@ -127,6 +127,24 @@ class Program(models.Model):
         for project in self.projects.all():
             total += project.get_subproject_count()
         return total
+
+    def get_subproject_count_with_contract(self):
+        """Returns the count of subprojects that have a contract (contract_type != 'فاقد قرارداد')."""
+        from creator_subproject.models import SubProject
+        return SubProject.objects.filter(
+            project__program=self,
+            contract_type__isnull=False
+        ).exclude(contract_type='فاقد قرارداد').count()
+
+    def get_subproject_count_without_contract(self):
+        """Returns the count of subprojects that don't have a contract (contract_type == 'فاقد قرارداد' or null)."""
+        from creator_subproject.models import SubProject
+        from django.db.models import Q
+        return SubProject.objects.filter(
+            project__program=self,
+        ).filter(
+            Q(contract_type='فاقد قرارداد') | Q(contract_type__isnull=True)
+        ).count()
     
     def calculate_overall_physical_progress(self):
         """

@@ -31,22 +31,62 @@
         {% endif %}
     </div>
     
+    <!-- Filters -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">فیلتر بر اساس نوع طرح</label>
+                    <select name="program_type" class="form-select">
+                        <option value="">همه انواع</option>
+                        {% for value, label in program_type_choices %}
+                        <option value="{{ value }}" {% if request.GET.program_type == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if not user.is_province_manager %}
+                <div class="col-md-3">
+                    <label class="form-label">فیلتر بر اساس استان</label>
+                    <select name="province" class="form-select">
+                        <option value="">همه استان‌ها</option>
+                        {% for value, label in province_choices %}
+                        <option value="{{ value }}" {% if request.GET.province == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-funnel me-1"></i>اعمال فیلتر
+                    </button>
+                </div>
+                {% if request.GET.program_type or request.GET.province %}
+                <div class="col-md-2">
+                    <a href="{% url 'creator_program:program_list' %}" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-x-circle me-1"></i>پاک کردن فیلتر
+                    </a>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
     {% if programs %}
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-hover table-sm table-bordered table-nowrap">
                     <thead>
                         <tr>
                             <th>کد طرح</th>
                             <th>عنوان طرح</th>
                             <th>نوع طرح</th>
                             <th>استان</th>
-                            <th>ایجاد کننده</th>
-                            <th>وضعیت مجوز</th>
-                            <th>تعداد پروژه‌ها</th>
-                            <th>پیشرفت فیزیکی</th>
-                            <th>تاریخ ایجاد</th>
+<th>تعداد پروژهها</th>
+                            <th title="تعداد زیرپروژههای دارای قرارداد">زیرپروژه با قرارداد</th>
+                            <th title="تعداد زیرپروژههای بدون قرارداد">زیرپروژه بدون قرارداد</th>
+                            <th>پیشرفت</th>
+                            <th>تاریخ افتتاح طرح</th>
                             <th>عملیات</th>
                         </tr>
                     </thead>
@@ -57,44 +97,31 @@
                                 <span class="fw-bold text-primary">{{ program.program_id }}</span>
                             </td>
                             <td>
-                                <span class="fw-bold">{{ program.title }}</span>
+                                <a href="{% url 'creator_program:program_detail' program.pk %}">{{ program.title }}</a>
                             </td>
                             <td>{{ program.get_program_type_display }}</td>
                             <td>{{ program.province }}</td>
-                            <td>
-                                <small class="text-muted">
-                                    {{ program.created_by.get_full_name|default:program.created_by.username }}
-                                    {% if user == program.created_by %}
-                                        <span class="badge bg-success ms-1">شما</span>
-                                    {% endif %}
-                                </small>
-                            </td>
-                            <td>
-                                <span class="badge {% if program.license_state == 'دارد' %}bg-success{% elif program.license_state == 'ندارد' %}bg-danger{% elif program.license_state == 'دردست اقدام' %}bg-warning{% else %}bg-secondary{% endif %}">
-                                    {{ program.get_license_state_display }}
-                                </span>
-                            </td>
-                            <td>
+                            <td class="text-center">
                                 <span class="badge bg-info">{{ program.get_project_count }}</span>
                             </td>
-                            <td style="width: 150px;">
-                                <div class="progress">
-                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ program.calculate_overall_physical_progress }}%;" aria-valuenow="{{ program.calculate_overall_physical_progress }}" aria-valuemin="0" aria-valuemax="100">
-                                        {{ program.calculate_overall_physical_progress }}%
-                                    </div>
-                                </div>
+                            <td class="text-center">
+                                <span class="badge bg-success">{{ program.get_subproject_count_with_contract }}</span>
                             </td>
-                            <td>{{ program.created_at|to_jalali }}</td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <a href="{% url 'creator_program:program_detail' program.pk %}" class="btn btn-sm btn-primary" title="مشاهده">
+                            <td class="text-center">
+                                <span class="badge bg-danger">{{ program.get_subproject_count_without_contract }}</span>
+                            </td>
+                            <td class="text-center">
+                                {{ program.calculate_overall_physical_progress }}%
+                            </td>
+                            <td class="text-nowrap">{% if program.program_opening_date %}{{ program.program_opening_date|to_jalali }}{% else %}-{% endif %}</td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'creator_program:program_detail' program.pk %}" class="btn btn-outline-primary btn-sm px-2" title="مشاهده">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    {% if user.is_admin or user.is_chief_executive or user.is_province_manager and program.province in user.get_assigned_provinces %}
-                                    <a href="{% url 'creator_program:program_update' program.pk %}" class="btn btn-sm btn-secondary" title="بروزرسانی">
+                                    <a href="{% url 'creator_program:program_update' program.pk %}" class="btn btn-outline-secondary btn-sm px-2" title="ویرایش">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    {% endif %}
                                 </div>
                             </td>
                         </tr>
