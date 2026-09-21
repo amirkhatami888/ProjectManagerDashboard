@@ -136,6 +136,19 @@ class Project(models.Model):
         """Returns the current number of subprojects."""
         return self.subprojects.count()
     
+    def get_subproject_count_with_contract(self):
+        """Returns the count of subprojects that have a contract (contract_type != 'فاقد قرارداد')."""
+        return self.subprojects.filter(
+            contract_type__isnull=False
+        ).exclude(contract_type='فاقد قرارداد').count()
+    
+    def get_subproject_count_without_contract(self):
+        """Returns the count of subprojects that don't have a contract (contract_type == 'فاقد قرارداد' or null)."""
+        from django.db.models import Q
+        return self.subprojects.filter(
+            Q(contract_type='فاقد قرارداد') | Q(contract_type__isnull=True)
+        ).count()
+    
     def has_available_subproject_slots(self):
         """Checks if there are available slots for new subprojects."""
         return self.get_subproject_count() < self.max_subprojects
