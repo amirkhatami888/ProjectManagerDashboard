@@ -27,6 +27,9 @@ git pull origin main
 echo ""
 echo "Collecting and publishing static/media files..."
 python collect_static.py --document-root ~/public_html
+python manage.py makemigrations
+python manage.py migrate
+python manage.py collectstatic --no-input
 
 echo ""
 echo "✅ Done!"

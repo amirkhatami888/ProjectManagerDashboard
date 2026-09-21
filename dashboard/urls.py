@@ -10,6 +10,7 @@ urlpatterns = [
     # Admin dashboard
     path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),
     path('dashboard/admin/turnstile/', views.toggle_turnstile, name='toggle_turnstile'),
+    path('dashboard/admin/brute-force/', views.toggle_brute_force, name='toggle_brute_force'),
     path('dashboard/admin/ai/toggle/', views.toggle_ai_platform, name='toggle_ai_platform'),
     path('dashboard/admin/ai/', views.ai_control_center, name='ai_control_center'),
     path('dashboard/admin/ai/action/', views.ai_control_action, name='ai_control_action'),

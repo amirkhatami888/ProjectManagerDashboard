@@ -3,6 +3,7 @@ from django.db import models
 
 class SecuritySettings(models.Model):
     turnstile_enabled = models.BooleanField(default=True, verbose_name='Cloudflare Turnstile enabled')
+    brute_force_enabled = models.BooleanField(default=True, verbose_name='Brute Force Protection enabled')
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
