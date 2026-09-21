@@ -385,6 +385,21 @@ def toggle_turnstile(request):
 
 @login_required
 @require_POST
+def toggle_brute_force(request):
+    if not request.user.is_admin:
+        return HttpResponseForbidden("You don't have permission to access this page.")
+
+    security_settings = SecuritySettings.get_solo()
+    security_settings.brute_force_enabled = request.POST.get('brute_force_enabled') == 'on'
+    security_settings.save(update_fields=['brute_force_enabled', 'updated_at'])
+
+    status = 'enabled' if security_settings.brute_force_enabled else 'disabled'
+    messages.success(request, f'Brute Force Protection has been {status}.')
+    return redirect('dashboard:admin_dashboard')
+
+
+@login_required
+@require_POST
 def toggle_ai_platform(request):
     """Enable or disable the AI provider from the administrator dashboard."""
     if not request.user.is_admin:

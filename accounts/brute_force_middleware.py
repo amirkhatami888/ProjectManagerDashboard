@@ -32,8 +32,20 @@ class BruteForceProtectionMiddleware(MiddlewareMixin):
         self.progressive_delay_base = getattr(settings, 'BRUTE_FORCE_PROGRESSIVE_DELAY_BASE', 2)  # seconds
         self.captcha_threshold = getattr(settings, 'BRUTE_FORCE_CAPTCHA_THRESHOLD', 3)
         
+    def _is_brute_force_enabled(self):
+        """Check if brute-force protection is enabled from database settings"""
+        try:
+            from dashboard.models import SecuritySettings
+            return SecuritySettings.get_solo().brute_force_enabled
+        except Exception:
+            return True  # Default to enabled if there's an error
+        
     def process_request(self, request):
         """Process incoming request for brute-force protection"""
+        # Check if brute-force protection is enabled
+        if not self._is_brute_force_enabled():
+            return None
+            
         # Only apply to login attempts
         if not (request.path == '/accounts/login/' and request.method == 'POST'):
             return None
