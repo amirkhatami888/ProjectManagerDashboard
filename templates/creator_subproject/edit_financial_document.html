@@ -6,7 +6,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="{% static 'css/jalali-datepicker.css' %}">
-<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+<link rel="stylesheet" href="{% static 'plugins/persian-datepicker/css/persian-datepicker.min.css' %}">
 <link rel="stylesheet" href="{% static 'css/currency-input.css' %}">
 <style>
     .date-input-container {
@@ -247,10 +247,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
-<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
-
 <script>
     $(document).ready(function() {
         // Initialize Persian Datepicker for date fields

@@ -444,27 +444,44 @@
                 
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    filePreview.innerHTML = `
-                        <div style="text-align: center;">
-                            <h6 style="color: #2c3e50; font-weight: 600; margin-bottom: 1rem;">
-                                <i class="bi bi-image me-2"></i>پیش‌نمایش تصویر
-                            </h6>
-                            <img src="${e.target.result}" style="max-height: 200px; object-fit: contain; border: 1px solid #e0e6ed; border-radius: 0; margin-bottom: 1rem;">
-                            <div style="background: white; padding: 1rem; border: 1px solid #e0e6ed; border-radius: 0;">
-                                <p style="color: #2c3e50; margin-bottom: 0.5rem; font-weight: 500;">
-                                    <i class="bi bi-file-earmark me-2"></i>نام فایل: ${file.name}
-                                </p>
-                                <p style="color: #7f8c8d; margin-bottom: 0; font-size: 0.9rem;">
-                                    <i class="bi bi-hdd me-2"></i>حجم فایل: ${fileSize} مگابایت
-                                </p>
-                                <div style="margin-top: 0.5rem; padding: 0.5rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 0;">
-                                    <small style="color: #155724;">
-                                        <i class="bi bi-check-circle me-1"></i>فایل آماده آپلود است
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    // Build the preview with DOM APIs so file-controlled values are
+                    // inserted as text/attributes rather than reinterpreted as HTML.
+                    const preview = document.createElement('div');
+                    preview.style.textAlign = 'center';
+
+                    const heading = document.createElement('h6');
+                    heading.style.cssText = 'color: #2c3e50; font-weight: 600; margin-bottom: 1rem;';
+                    heading.append(document.createElement('i'), document.createTextNode('پیش‌نمایش تصویر'));
+                    heading.firstChild.className = 'bi bi-image me-2';
+
+                    const image = document.createElement('img');
+                    image.src = e.target.result;
+                    image.style.cssText = 'max-height: 200px; object-fit: contain; border: 1px solid #e0e6ed; border-radius: 0; margin-bottom: 1rem;';
+
+                    const details = document.createElement('div');
+                    details.style.cssText = 'background: white; padding: 1rem; border: 1px solid #e0e6ed; border-radius: 0;';
+
+                    const name = document.createElement('p');
+                    name.style.cssText = 'color: #2c3e50; margin-bottom: 0.5rem; font-weight: 500;';
+                    name.append(document.createElement('i'), document.createTextNode(`نام فایل: ${file.name}`));
+                    name.firstChild.className = 'bi bi-file-earmark me-2';
+
+                    const size = document.createElement('p');
+                    size.style.cssText = 'color: #7f8c8d; margin-bottom: 0; font-size: 0.9rem;';
+                    size.append(document.createElement('i'), document.createTextNode(`حجم فایل: ${fileSize} مگابایت`));
+                    size.firstChild.className = 'bi bi-hdd me-2';
+
+                    const ready = document.createElement('div');
+                    ready.style.cssText = 'margin-top: 0.5rem; padding: 0.5rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 0;';
+                    const readyText = document.createElement('small');
+                    readyText.style.color = '#155724';
+                    readyText.append(document.createElement('i'), document.createTextNode('فایل آماده آپلود است'));
+                    readyText.firstChild.className = 'bi bi-check-circle me-1';
+                    ready.appendChild(readyText);
+
+                    details.append(name, size, ready);
+                    preview.append(heading, image, details);
+                    filePreview.replaceChildren(preview);
                 }
                 reader.readAsDataURL(file);
             }

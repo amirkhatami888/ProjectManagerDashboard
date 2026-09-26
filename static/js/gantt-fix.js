@@ -191,20 +191,33 @@ window.debugGanttStatus = function() {
     
     const container = document.getElementById('gantt-chart-container');
     if (container) {
-        container.innerHTML = `
-            <div class="gantt-debug-info">
-                <strong>Debug Information:</strong><br>
-                Gantt Library Loaded: ${debugInfo.ganttLibraryLoaded}<br>
-                Gantt CSS Loaded: ${debugInfo.ganttCSSLoaded}<br>
-                Gantt Available: ${debugInfo.ganttAvailable}<br>
-                Container Exists: ${debugInfo.containerExists}<br>
-                Project ID: ${debugInfo.currentProjectId}<br>
-                Data Length: ${debugInfo.ganttDataLength}<br>
-                Manager Available: ${debugInfo.windowGanttChartManager}<br>
-                Scripts: ${debugInfo.scripts.join(', ')}<br>
-                CSS Links: ${debugInfo.cssLinks.join(', ')}
-            </div>
-        `;
+        const debugPanel = document.createElement('div');
+        debugPanel.className = 'gantt-debug-info';
+
+        const appendDebugLine = (label, value, emphasize = false) => {
+            if (emphasize) {
+                const heading = document.createElement('strong');
+                heading.textContent = value;
+                debugPanel.appendChild(heading);
+            } else {
+                debugPanel.appendChild(document.createTextNode(label));
+                debugPanel.appendChild(document.createTextNode(String(value)));
+            }
+            debugPanel.appendChild(document.createElement('br'));
+        };
+
+        appendDebugLine('', 'Debug Information:', true);
+        appendDebugLine('Gantt Library Loaded: ', debugInfo.ganttLibraryLoaded);
+        appendDebugLine('Gantt CSS Loaded: ', debugInfo.ganttCSSLoaded);
+        appendDebugLine('Gantt Available: ', debugInfo.ganttAvailable);
+        appendDebugLine('Container Exists: ', debugInfo.containerExists);
+        appendDebugLine('Project ID: ', debugInfo.currentProjectId);
+        appendDebugLine('Data Length: ', debugInfo.ganttDataLength);
+        appendDebugLine('Manager Available: ', debugInfo.windowGanttChartManager);
+        appendDebugLine('Scripts: ', debugInfo.scripts.join(', '));
+        appendDebugLine('CSS Links: ', debugInfo.cssLinks.join(', '));
+
+        container.replaceChildren(debugPanel);
     }
     
     return debugInfo;

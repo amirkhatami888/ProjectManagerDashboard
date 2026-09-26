@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}ویرایش صورت وضعیت{% endblock %}
 
 {% block extra_head %}
 <!-- Persian Datepicker CSS -->
-<link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+<link rel="stylesheet" href="{% static 'plugins/persian-datepicker/css/persian-datepicker.min.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -132,13 +133,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- jQuery (required for Persian Datepicker) -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- Persian Date -->
-<script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
-<!-- Persian Datepicker -->
-<script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
-
 <script>
     $(document).ready(function() {
         // Initialize Persian Datepicker
@@ -222,4 +216,4 @@
         });
     });
 </script>
-{% endblock %} 
+{% endblock %}
