@@ -213,24 +213,14 @@
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="{{ form.payment_amount.id_for_label }}" class="form-label form-label-enhanced">مبلغ پرداخت شده (ریال) <span class="text-danger">*</span></label>
+                            <label for="{{ form.amount.id_for_label }}" class="form-label form-label-enhanced">مبلغ پرداخت شده (ریال) <span class="text-danger">*</span></label>
                             <div class="input-group mb-2">
-                                <input type="text"
-                                       id="{{ form.payment_amount.id_for_label }}"
-                                       name="{{ form.payment_amount.html_name }}"
-                                       class="form-control currency-input currency-input-enhanced {% if form.payment_amount.errors %}is-invalid{% endif %}"
-                                       value="{{ form.payment_amount.value|default:payment.amount }}"
-                                       required
-                                       placeholder="0"
-                                       autocomplete="off"
-                                       data-currency-field="true"
-                                       dir="ltr"
-                                       style="text-align: left;">
+                                {{ form.amount|add_class:"form-control currency-input currency-input-enhanced"|attr:"dir:ltr"|attr:"style:text-align: left;"|attr:"placeholder:0"|attr:"autocomplete:off"|attr:"data-currency-field:true" }}
                                 <span class="input-group-text bg-light text-muted">ریال</span>
                             </div>
-                            {% if form.payment_amount.errors %}
+                            {% if form.amount.errors %}
                                 <div class="invalid-feedback d-block">
-                                    {% for error in form.payment_amount.errors %}{{ error }}{% endfor %}
+                                    {% for error in form.amount.errors %}{{ error }}{% endfor %}
                                 </div>
                             {% endif %}
                         </div>
@@ -314,7 +304,7 @@ $(document).ready(function() {
     var datepickerState = {};
     
     // Format existing amount on page load
-    var amountInput = $('.currency-input');
+    var amountInput = $('#id_amount');
     if (amountInput.length > 0) {
         var value = amountInput.val();
         if (value && !isNaN(value) && value !== '') {
@@ -380,8 +370,8 @@ $(document).ready(function() {
     });
     
     // Initialize proper formatting for currency input
-    if ($('.currency-input').length > 0) {
-        $('.currency-input').on('input', function() {
+    if ($('#id_amount').length > 0) {
+        $('#id_amount').on('input', function() {
             var value = $(this).val().replace(/,/g, '');
             if (!isNaN(value) && value !== '') {
                 $(this).val(Number(value).toLocaleString());
@@ -390,7 +380,7 @@ $(document).ready(function() {
         
         // Remove commas before form submission
         $('form').on('submit', function() {
-            $('.currency-input').each(function() {
+            $('#id_amount').each(function() {
                 var value = $(this).val().replace(/,/g, '');
                 $(this).val(value);
             });

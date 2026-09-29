@@ -1201,7 +1201,8 @@ def payments(request, subproject_id):
     # Check permissions - admin users should have access
     if not (request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive or 
             request.user.is_expert or request.user == subproject.created_by or 
-            request.user == subproject.project.created_by):
+            request.user == subproject.project.created_by or
+            (request.user.is_province_manager and subproject.project.province in request.user.get_assigned_provinces())):
         raise PermissionDenied
     
     payments_list = Payment.objects.filter(
@@ -1229,7 +1230,8 @@ def add_payment(request, subproject_id):
     project = subproject.project
 
     # Check permissions - admin users should have access
-    if not (request.user.is_admin or request.user == subproject.created_by):
+    if not (request.user.is_admin or request.user == subproject.created_by or
+            (request.user.is_province_manager and project.province in request.user.get_assigned_provinces())):
         raise PermissionDenied
 
     if request.method == 'POST':
@@ -1284,7 +1286,8 @@ def edit_payment(request, payment_id):
     project = subproject.project
 
     # Check permissions - admin users should have access
-    if not (request.user.is_admin or request.user == payment.created_by):
+    if not (request.user.is_admin or request.user == payment.created_by or
+            (request.user.is_province_manager and project.province in request.user.get_assigned_provinces())):
         raise PermissionDenied
 
     if request.method == 'POST':
