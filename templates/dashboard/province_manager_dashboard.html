@@ -1,144 +1,264 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+{% load jalali_tags %}
 
 {% block title %}داشبورد مدیر استان{% endblock %}
 
 {% block content %}
-<div class="container-fluid my-4">
-    <h1 class="mb-4">داشبورد مدیر استان</h1>
-    
+<div class="container-fluid mt-4">
     <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">داشبورد مدیر استان</h2>
+                    <p class="mb-0">سلام {{ user.first_name }} {{ user.last_name }}، به سامانه مدیریت پروژه خوش آمدید.</p>
+                </div>
+                {% if user.is_province_manager %}
+                <a href="{% url 'creator_program:program_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>ایجاد طرح جدید
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Provincial Statistics Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">آمار پروژه‌ها</h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">اطلاعات آماری استانی</h5>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-light btn-sm" id="showAllProvinceCards">
+                                <i class="bi bi-arrows-expand me-1"></i> نمایش همه
+                            </button>
+                            <button type="button" class="btn btn-outline-light btn-sm" id="closeAllProvinceCards">
+                                <i class="bi bi-arrows-collapse me-1"></i> بستن همه
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
+                    {% if province_stats %}
                     <div class="row">
-                        <div class="col-6">
-                            <div class="card text-center mb-3">
-                                <div class="card-body">
-                                    <h3 class="card-title">{{ projects_by_status.total }}</h3>
-                                    <p class="card-text">کل پروژه‌ها</p>
+                        {% for province in province_stats %}
+                        <div class="col-md-6 col-lg-4 mb-4 province-card-column">
+                            <div class="card h-100 {% if province.total_projects == 0 %}bg-light text-muted{% endif %} province-card">
+                                <div class="card-header {% if province.total_projects > 0 %}bg-info text-white{% else %}bg-secondary text-white{% endif %}"
+                                     data-bs-toggle="collapse"
+                                     data-bs-target="#collapse{{ forloop.counter }}"
+                                     aria-expanded="false"
+                                     aria-controls="collapse{{ forloop.counter }}"
+                                     style="cursor: pointer;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="card-title mb-0">{{ province.province }}</h5>
+                                        <span class="badge bg-light text-dark">{{ province.total_programs }} طرح</span>
+                                        <i class="bi bi-chevron-down"></i>
+                                    </div>
+                                </div>
+                                <div class="collapse" id="collapse{{ forloop.counter }}">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>تعداد پروژه‌ها:</span>
+                                            <strong>{{ province.total_projects }}</strong>
+                                        </div>
+
+                                        <div class="row g-3 mb-3 text-center">
+                                            <div class="col-6">
+                                                <div class="province-donut" role="img"
+                                                     aria-label="میانگین پیشرفت فیزیکی {{ province.avg_physical_progress|floatformat:2 }} درصد">
+                                                    <svg viewBox="0 0 42 42" class="province-donut-svg">
+                                                        <circle class="province-donut-track" cx="21" cy="21" r="15.9155"></circle>
+                                                        <circle class="province-donut-value province-donut-value-physical"
+                                                                cx="21" cy="21" r="15.9155"
+                                                                pathLength="100"
+                                                                style="stroke-dasharray: {{ province.avg_physical_progress|default:0 }}, 100;"></circle>
+                                                    </svg>
+                                                    <span class="province-donut-label">{{ province.avg_physical_progress|floatformat:0 }}%</span>
+                                                </div>
+                                                <small class="d-block mt-2">پیشرفت فیزیکی</small>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="province-donut" role="img"
+                                                     aria-label="میانگین پیشرفت مالی {{ province.avg_financial_progress|floatformat:2 }} درصد">
+                                                    <svg viewBox="0 0 42 42" class="province-donut-svg">
+                                                        <circle class="province-donut-track" cx="21" cy="21" r="15.9155"></circle>
+                                                        <circle class="province-donut-value province-donut-value-financial"
+                                                                cx="21" cy="21" r="15.9155"
+                                                                pathLength="100"
+                                                                style="stroke-dasharray: {{ province.avg_financial_progress|default:0 }}, 100;"></circle>
+                                                    </svg>
+                                                    <span class="province-donut-label">{{ province.avg_financial_progress|floatformat:0 }}%</span>
+                                                </div>
+                                                <small class="d-block mt-2">پیشرفت مالی</small>
+                                            </div>
+                                        </div>
+
+                                        <div class="province-finance-table">
+                                            <table class="table table-sm mb-0">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>تخصیص مالی نقدی (ریال):</td>
+                                                        <td class="text-start">{{ province.total_cash_allocation|floatformat:0|intcomma }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>تخصیص مالی اسناد خزانه (ریال):</td>
+                                                        <td class="text-start">{{ province.total_treasury_allocation|floatformat:0|intcomma }}</td>
+                                                    </tr>
+                                                    <tr class="table-primary">
+                                                        <td>مجموع تخصیص مالی (ریال):</td>
+                                                        <td class="text-start"><strong>{{ province.total_allocation|floatformat:0|intcomma }}</strong></td>
+                                                    </tr>
+                                                    <tr class="table-danger">
+                                                        <td>مجموع دیون استان (ریال):</td>
+                                                        <td class="text-start"><strong>{{ province.total_debt|floatformat:0|intcomma }}</strong></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div class="border-top pt-3 mt-3">
+                                            <button type="button" class="btn btn-outline-primary w-100"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#programsModal{{ forloop.counter }}">
+                                                <i class="bi bi-diagram-3 me-1"></i>
+                                                مشاهده طرح‌های این استان
+                                                <span class="badge bg-primary ms-1">{{ province.total_programs }}</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-6">
-                            <div class="card text-center mb-3">
-                                <div class="card-body">
-                                    <h3 class="card-title">{{ subprojects_by_status.total }}</h3>
-                                    <p class="card-text">کل زیرپروژه‌ها</p>
+                        <div class="modal fade" id="programsModal{{ forloop.counter }}" tabindex="-1"
+                             aria-labelledby="programsModalLabel{{ forloop.counter }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered modal-lg">
+                                <div class="modal-content" dir="rtl">
+                                    <div class="modal-header bg-primary text-white">
+                                        <h5 class="modal-title" id="programsModalLabel{{ forloop.counter }}">
+                                            طرح‌های استان {{ province.province }}
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                                aria-label="بستن"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        {% if province.programs %}
+                                            <div class="list-group">
+                                                {% for program in province.programs %}
+                                                    <a href="{% url 'creator_program:program_detail' program.id %}"
+                                                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                                        <span>
+                                                            <strong>{{ program.title }}</strong>
+                                                            <small class="d-block text-muted">
+                                                                کد طرح: {{ program.program_id }} | {{ program.program_type }}
+                                                            </small>
+                                                        </span>
+                                                        <span class="badge bg-info text-dark">
+                                                            {{ program.project_count }} پروژه
+                                                            <i class="bi bi-arrow-left ms-1"></i>
+                                                        </span>
+                                                    </a>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <div class="text-center text-muted py-4">
+                                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                                طرحی برای این استان ثبت نشده است.
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        {% endfor %}
                     </div>
-                    
-                    <h6 class="mt-3">وضعیت پروژه‌ها:</h6>
-                    <div class="list-group mb-3">
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            تأیید شده
-                            <span class="badge bg-success rounded-pill">{{ projects_by_status.approved }}</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            در انتظار تأیید
-                            <span class="badge bg-warning rounded-pill">{{ projects_by_status.pending }}</span>
-                        </div>
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            پیش‌نویس
-                            <span class="badge bg-secondary rounded-pill">{{ projects_by_status.draft }}</span>
-                        </div>
+                    {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        هیچ اطلاعاتی برای استان شما ثبت نشده است.
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
-        
-        <div class="col-md-8 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-success text-white">
-                    <h5 class="card-title mb-0">عملیات سریع</h5>
+    </div>
+
+    <!-- Programs Table Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-table me-2"></i>لیست طرح‌ها
+                            {% if programs %}<span class="badge bg-light text-dark ms-2">{{ programs|length }}</span>{% endif %}
+                        </h5>
+                        <a href="{% url 'creator_program:program_list' %}" class="btn btn-outline-light btn-sm">
+                            مشاهده همه <i class="bi bi-arrow-left ms-1"></i>
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <h5 class="card-title">طرح‌ها</h5>
-                                    <p class="card-text">مدیریت طرح‌های استان شما</p>
-                                    <a href="{% url 'creator_program:program_list' %}" class="btn btn-primary">مشاهده طرح‌ها</a>
-                                    <a href="{% url 'creator_program:program_create' %}" class="btn btn-success">طرح جدید</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <h5 class="card-title">پروژه‌ها</h5>
-                                    <p class="card-text">مدیریت پروژه‌های استان شما</p>
-                                    <a href="{% url 'creator_project:project_list' %}" class="btn btn-primary">مشاهده پروژه‌ها</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <h5 class="card-title">زیرپروژه‌ها</h5>
-                                    <p class="card-text">مدیریت زیرپروژه‌های پروژه‌های شما</p>
-                                    <a href="{% url 'creator_subproject:subproject_list' %}" class="btn btn-primary">مشاهده زیرپروژه‌ها</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <h5 class="mt-2 mb-3">پروژه‌های شما</h5>
-                    {% if user_projects %}
+                    {% if programs %}
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>شناسه</th>
-                                    <th>نام</th>
-                                    <th>نوع</th>
-                                    <th>پیشرفت</th>
-                                    <th>وضعیت</th>
+                                    <th>کد طرح</th>
+                                    <th>عنوان طرح</th>
+                                    <th>نوع طرح</th>
+                                    <th>استان</th>
+                                    <th>تعداد پروژه‌ها</th>
+                                    <th>پیشرفت فیزیکی</th>
+                                    <th>تاریخ افتتاح طرح</th>
                                     <th>عملیات</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for project in user_projects|slice:":5" %}
+                                {% for program in programs %}
                                 <tr>
-                                    <td>{{ project.project_id }}</td>
-                                    <td>{{ project.name }}</td>
-                                    <td>{{ project.project_type }}</td>
                                     <td>
-                                        <div class="progress">
-                                            <div class="progress-bar" role="progressbar" style="width: {{ project.physical_progress }}%;" aria-valuenow="{{ project.physical_progress }}" aria-valuemin="0" aria-valuemax="100">{{ project.physical_progress }}%</div>
-                                        </div>
+                                        <span class="fw-bold text-primary">{{ program.program_id }}</span>
                                     </td>
                                     <td>
-                                        {% if project.is_approved %}
-                                            <span class="badge bg-success">تأیید شده</span>
-                                        {% elif project.is_submitted %}
-                                            <span class="badge bg-warning">در انتظار</span>
+                                        <span class="fw-bold">{{ program.title }}</span>
+                                    </td>
+                                    <td>{{ program.get_program_type_display }}</td>
+                                    <td>{{ program.province }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ program.get_project_count }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold text-success">{{ program.calculate_overall_physical_progress }}%</span>
+                                    </td>
+                                    <td>
+                                        {% if program.program_opening_date %}
+                                            {{ program.program_opening_date|to_jalali }}
                                         {% else %}
-                                            <span class="badge bg-secondary">پیش‌نویس</span>
+                                            <span class="text-muted">—</span>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <a href="{% url 'creator_project:project_detail' project.id %}" class="btn btn-sm btn-primary">مشاهده</a>
-                                        <a href="{% url 'creator_project:project_update' project.id %}" class="btn btn-sm btn-secondary">بروزرسانی</a>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'creator_program:program_detail' program.pk %}" class="btn btn-sm btn-primary" title="مشاهده">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            {% if program.province in user.get_assigned_provinces %}
+                                            <a href="{% url 'creator_program:program_update' program.pk %}" class="btn btn-sm btn-secondary" title="بروزرسانی">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
-                    {% if user_projects.count > 5 %}
-                    <div class="text-center">
-                        <a href="{% url 'creator_project:project_list' %}" class="btn btn-outline-primary">مشاهده همه پروژه‌ها</a>
-                    </div>
-                    {% endif %}
                     {% else %}
-                    <div class="alert alert-info">
-                        شما هنوز هیچ پروژه‌ای ندارید.
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle me-2"></i>هیچ طرحی یافت نشد.
                     </div>
                     {% endif %}
                 </div>
@@ -146,4 +266,95 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .province-card-column { align-self: flex-start; }
+    .province-card .collapse.show { display: block; }
+    .province-donut { width: 92px; height: 92px; position: relative; margin: 0 auto; }
+    .province-donut-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .province-donut-svg circle { fill: none; stroke-width: 4; }
+    .province-donut-track { stroke: #e9ecef; }
+    .province-donut-value { stroke-linecap: round; }
+    .province-donut-value-physical { stroke: #0d6efd; }
+    .province-donut-value-financial { stroke: #198754; }
+    .province-donut-label {
+        position: absolute; inset: 0; display: flex; align-items: center;
+        justify-content: center; font-weight: 700; font-size: .9rem;
+    }
+    .province-finance-table { width: 100%; overflow: hidden; }
+    .province-finance-table table { width: 100% !important; table-layout: fixed; }
+    .province-finance-table td { vertical-align: middle; }
+    .province-finance-table td:first-child {
+        width: 46%; font-size: .8rem; line-height: 1.3; padding-right: .5rem;
+    }
+    .province-finance-table td.text-start {
+        width: 54%; font-size: .82rem; word-break: break-all;
+        white-space: normal; padding-left: .5rem;
+        font-variant-numeric: tabular-nums;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const provinceCards = document.querySelectorAll('.province-card');
+    const showAllButton = document.getElementById('showAllProvinceCards');
+    const closeAllButton = document.getElementById('closeAllProvinceCards');
+
+    provinceCards.forEach(function (card) {
+        const collapse = card.querySelector('.collapse');
+        if (!collapse) return;
+
+        collapse.addEventListener('show.bs.collapse', function () {
+            const column = card.closest('.province-card-column');
+            if (!column) return;
+            const rowTop = column.offsetTop;
+            document.querySelectorAll('.province-card-column').forEach(function (siblingColumn) {
+                if (siblingColumn.offsetTop === rowTop) {
+                    const otherCollapse = siblingColumn.querySelector('.province-card .collapse');
+                    if (otherCollapse && otherCollapse !== collapse && !otherCollapse.classList.contains('show')) {
+                        bootstrap.Collapse.getOrCreateInstance(otherCollapse, { toggle: false }).show();
+                    }
+                }
+            });
+        });
+    });
+
+    if (provinceCards.length && provinceCards.length <= 3) {
+        provinceCards.forEach(function (card) {
+            const collapse = card.querySelector('.collapse');
+            if (collapse && !collapse.classList.contains('show')) {
+                bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).show();
+            }
+        });
+    }
+
+    if (showAllButton) {
+        showAllButton.addEventListener('click', function () {
+            provinceCards.forEach(function (card) {
+                const collapse = card.querySelector('.collapse');
+                if (collapse && !collapse.classList.contains('show')) {
+                    bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).show();
+                }
+            });
+        });
+    }
+
+    if (closeAllButton) {
+        closeAllButton.addEventListener('click', function () {
+            provinceCards.forEach(function (card) {
+                const collapse = card.querySelector('.collapse');
+                if (collapse && collapse.classList.contains('show')) {
+                    bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).hide();
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

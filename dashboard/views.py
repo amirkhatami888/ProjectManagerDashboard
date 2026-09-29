@@ -26,9 +26,18 @@ from ai_assistant.models import (
 from ai_assistant.forms import AIPlatformSettingsForm
 
 
-def _get_province_stats():
-    """Build province summaries with their top-level programs."""
-    province_stats = list(Project.objects.values('province').annotate(
+def _get_province_stats(provinces=None):
+    """Build province summaries with their top-level programs.
+
+    If ``provinces`` is given, only those provinces are considered.
+    """
+    projects_qs = Project.objects.all()
+    programs_qs = Program.objects.all()
+    if provinces is not None:
+        projects_qs = projects_qs.filter(province__in=provinces)
+        programs_qs = programs_qs.filter(province__in=provinces)
+
+    province_stats = list(projects_qs.values('province').annotate(
         total_projects=Count('id'),
         avg_physical_progress=Avg('physical_progress'),
         total_cash_allocation=Sum('allocation_credit_cash_national') +
@@ -42,7 +51,7 @@ def _get_province_stats():
     ).order_by('province'))
 
     programs_by_province = {}
-    for program in Program.objects.prefetch_related('projects').order_by('title'):
+    for program in programs_qs.prefetch_related('projects').order_by('title'):
         programs_by_province.setdefault(program.province, []).append({
             'id': program.id,
             'title': program.title,
@@ -539,6 +548,15 @@ def province_manager_dashboard(request):
     if not provinces and request.user.province:
         provinces = [request.user.province]
     
+    # Filter programs by user's provinces
+    if provinces:
+        user_programs = Program.objects.filter(
+            models.Q(province__in=provinces) | 
+            models.Q(created_by=request.user)
+        )
+    else:
+        user_programs = Program.objects.filter(created_by=request.user)
+    
     # Filter projects by user's provinces
     if provinces:
         user_projects = Project.objects.filter(
@@ -551,7 +569,48 @@ def province_manager_dashboard(request):
     # Get subprojects for the user's projects
     user_subprojects = SubProject.objects.filter(project__in=user_projects)
     
-    # Count by status
+    # ============ PROGRAMS STATISTICS ============
+    programs_by_status = {
+        'total': user_programs.count(),
+        'approved': user_programs.filter(is_approved=True).count(),
+        'pending': user_programs.filter(is_submitted=True, is_approved=False).count(),
+        'draft': user_programs.filter(is_submitted=False).count(),
+    }
+    
+    # Program type breakdown
+    programs_by_type = user_programs.values('program_type').annotate(count=Count('id')).order_by('-count')
+    
+    # Program physical progress stats
+    program_progress_data = []
+    for program in user_programs:
+        progress = program.calculate_overall_physical_progress()
+        program_progress_data.append(progress)
+    
+    programs_progress_stats = {
+        'avg': round(sum(program_progress_data) / len(program_progress_data), 1) if program_progress_data else 0,
+        'min': round(min(program_progress_data), 1) if program_progress_data else 0,
+        'max': round(max(program_progress_data), 1) if program_progress_data else 0,
+        'completed': sum(1 for p in program_progress_data if p >= 100),
+        'in_progress': sum(1 for p in program_progress_data if 0 < p < 100),
+        'not_started': sum(1 for p in program_progress_data if p == 0),
+    }
+    
+    # Programs with opening dates
+    programs_with_opening = user_programs.filter(program_opening_date__isnull=False).count()
+    programs_upcoming = user_programs.filter(
+        program_opening_date__gte=timezone.now().date(),
+        program_opening_date__isnull=False
+    ).count()
+    
+    # Program financial stats
+    programs_financial = user_projects.aggregate(
+        total_contract=Sum('subprojects__contract_amount'),
+        total_allocated_cash=Sum('allocation_credit_cash_national') + Sum('allocation_credit_cash_province') + Sum('allocation_credit_cash_charity') + Sum('allocation_credit_cash_travel'),
+        total_allocated_treasury=Sum('allocation_credit_treasury_national') + Sum('allocation_credit_treasury_province') + Sum('allocation_credit_treasury_travel'),
+        total_debt=Sum('debt'),
+    )
+    
+    # ============ PROJECTS STATISTICS ============
     projects_by_status = {
         'total': user_projects.count(),
         'approved': user_projects.filter(is_approved=True).count(),
@@ -559,12 +618,64 @@ def province_manager_dashboard(request):
         'draft': user_projects.filter(is_submitted=False).count(),
     }
     
-    # For subprojects, we use the parent project's status
+    # Project type breakdown
+    projects_by_type = user_projects.values('project_type').annotate(count=Count('id')).order_by('-count')
+    
+    # Project physical progress stats
+    project_progress_data = [p for p in user_projects.values_list('physical_progress', flat=True) if isinstance(p, (int, float))]
+    projects_progress_stats = {
+        'avg': round(sum(project_progress_data) / len(project_progress_data), 1) if project_progress_data else 0,
+        'min': round(min(project_progress_data), 1) if project_progress_data else 0,
+        'max': round(max(project_progress_data), 1) if project_progress_data else 0,
+        'completed': sum(1 for p in project_progress_data if p and p >= 100),
+        'in_progress': sum(1 for p in project_progress_data if p and 0 < p < 100),
+        'not_started': sum(1 for p in project_progress_data if p is None or p == 0),
+    }
+    
+    # Project financial stats
+    projects_financial = user_projects.aggregate(
+        total_allocation_cash=Sum('allocation_credit_cash_national') + Sum('allocation_credit_cash_province') + Sum('allocation_credit_cash_charity') + Sum('allocation_credit_cash_travel'),
+        total_allocation_treasury=Sum('allocation_credit_treasury_national') + Sum('allocation_credit_treasury_province') + Sum('allocation_credit_treasury_travel'),
+        total_debt=Sum('debt'),
+    )
+    
+    # ============ SUBPROJECTS STATISTICS ============
     subprojects_by_status = {
         'total': user_subprojects.count(),
         'approved': user_subprojects.filter(project__is_approved=True).count(),
         'pending': user_subprojects.filter(project__is_submitted=True, project__is_approved=False).count(),
         'draft': user_subprojects.filter(project__is_submitted=False).count(),
+    }
+    
+    # Subproject situation breakdown
+    subprojects_by_situation = user_subprojects.values('state').annotate(count=Count('id')).order_by('-count')
+    
+    # Subproject financial stats
+    subprojects_financial = user_subprojects.aggregate(
+        total_contract=Sum('contract_amount'),
+        total_situation=Sum('situation_amount'),
+        total_debt=Sum('subproject_debt'),
+    )
+    
+    # Subproject progress stats
+    subproject_progress_data = [p for p in user_subprojects.values_list('physical_progress', flat=True) if isinstance(p, (int, float))]
+    subprojects_progress_stats = {
+        'avg': round(sum(subproject_progress_data) / len(subproject_progress_data), 1) if subproject_progress_data else 0,
+        'completed': sum(1 for p in subproject_progress_data if p and p >= 100),
+        'in_progress': sum(1 for p in subproject_progress_data if p and 0 < p < 100),
+        'not_started': sum(1 for p in subproject_progress_data if p is None or p == 0),
+    }
+    
+    # ============ OVERALL SUMMARY ============
+    overall_summary = {
+        'total_programs': programs_by_status['total'],
+        'total_projects': projects_by_status['total'],
+        'total_subprojects': subprojects_by_status['total'],
+        'total_contract_amount': (projects_financial.get('total_contract') or 0) + (subprojects_financial.get('total_contract') or 0),
+        'total_paid_amount': (projects_financial.get('total_paid') or 0) + (subprojects_financial.get('total_paid') or 0),
+        'total_debt': projects_financial.get('total_debt') or 0,
+        'total_allocated_cash': (programs_financial.get('total_allocated_cash') or 0) + (projects_financial.get('total_allocation_cash') or 0) + (subprojects_financial.get('total_contract') or 0),
+        'total_allocated_treasury': (programs_financial.get('total_allocated_treasury') or 0) + (projects_financial.get('total_allocation_treasury') or 0),
     }
     
     # Get report statistics from the reporter app
@@ -579,13 +690,59 @@ def province_manager_dashboard(request):
     recent_reports.sort(key=lambda x: x.created_at, reverse=True)
     recent_reports = recent_reports[:5]
     
+    # Recent programs, projects, subprojects
+    recent_programs = user_programs.order_by('-created_at')[:5]
+    recent_projects = user_projects.order_by('-created_at')[:5]
+    recent_subprojects = user_subprojects.order_by('-created_at')[:5]
+
+    # ============ PROVINCE STATISTICS (CEO-style, scoped to the user) ============
+    province_names = provinces or sorted(set(user_programs.values_list('province', flat=True)))
+    province_stats = _get_province_stats(province_names)
+
+    # Full program list for the dashboard table (same columns as /programs/)
+    user_programs = user_programs.order_by('-created_at')
+    
+    # ============ GENERAL PROGRAM INFO ============
+    general_program_info = {
+        'total_user_programs': user_programs.count(),
+        'total_user_projects': user_projects.count(),
+        'total_user_subprojects': user_subprojects.count(),
+        'avg_program_physical_progress': round(sum(program_progress_data) / len(program_progress_data), 1) if program_progress_data else 0,
+        'avg_project_physical_progress': round(sum(project_progress_data) / len(project_progress_data), 1) if project_progress_data else 0,
+        'avg_subproject_physical_progress': round(sum(subproject_progress_data) / len(subproject_progress_data), 1) if subproject_progress_data else 0,
+        'programs_approved_percentage': round((programs_by_status['approved'] / programs_by_status['total'] * 100) if programs_by_status['total'] > 0 else 0, 1),
+        'projects_approved_percentage': round((projects_by_status['approved'] / projects_by_status['total'] * 100) if projects_by_status['total'] > 0 else 0, 1),
+        'subprojects_approved_percentage': round((subprojects_by_status['approved'] / subprojects_by_status['total'] * 100) if subprojects_by_status['total'] > 0 else 0, 1),
+    }
+    
     context = {
         'user': request.user,
         'user_projects': user_projects,
         'user_subprojects': user_subprojects,
+        'user_programs': user_programs,
         'projects_by_status': projects_by_status,
         'subprojects_by_status': subprojects_by_status,
+        'programs_by_status': programs_by_status,
         'recent_reports': recent_reports,
+        # Enhanced statistics
+        'programs_by_type': programs_by_type,
+        'programs_progress_stats': programs_progress_stats,
+        'programs_with_opening': programs_with_opening,
+        'programs_upcoming': programs_upcoming,
+        'programs_financial': programs_financial,
+        'projects_by_type': projects_by_type,
+        'projects_progress_stats': projects_progress_stats,
+        'projects_financial': projects_financial,
+        'subprojects_by_situation': subprojects_by_situation,
+        'subprojects_financial': subprojects_financial,
+        'subprojects_progress_stats': subprojects_progress_stats,
+        'overall_summary': overall_summary,
+        'general_program_info': general_program_info,
+        'recent_programs': recent_programs,
+        'recent_projects': recent_projects,
+        'recent_subprojects': recent_subprojects,
+        'province_stats': province_stats,
+        'programs': user_programs,
     }
     
     return render(request, 'dashboard/province_manager_dashboard.html', context)

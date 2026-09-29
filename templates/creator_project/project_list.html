@@ -12,6 +12,40 @@
         <h1>لیست پروژه‌ها</h1>
     </div>
     
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="project_type" class="form-label">نوع پروژه</label>
+                    <select name="project_type" id="project_type" class="form-select">
+                        <option value="">همه</option>
+                        {% for value, label in project_type_choices %}
+                        <option value="{{ value }}" {% if value == current_project_type %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="province" class="form-label">استان</label>
+                    <select name="province" id="province" class="form-select">
+                        <option value="">همه</option>
+                        {% for value, label in province_choices %}
+                        <option value="{{ value }}" {% if value == current_province %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-funnel me-1"></i>اعمال فیلتر
+                    </button>
+                    <a href="{% url 'creator_project:project_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i>پاک کردن
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     {% if projects %}
     <div class="card">
         <div class="card-body">
@@ -24,11 +58,10 @@
                             <th>نام</th>
                             <th>استان</th>
                             <th>نوع</th>
-                            <th>متراژ زیر بنا</th>
-                            <th>طبقه</th>
-                            <th>تاریخ ایجاد</th>
-                            <th>پیشرفت</th>
-                            <th>وضعیت</th>
+                            <th>تاریخ پایان پروژه</th>
+                            <th>پیشرفت (%)</th>
+                            <th>تعداد پروژه‌های دارای قرارداد</th>
+                            <th>تعداد پروژه‌های بدون قرارداد</th>
                             <th>عملیات</th>
                         </tr>
                     </thead>
@@ -46,50 +79,36 @@
                             <td>{{ project.name }}</td>
                             <td>{{ project.province }}</td>
                             <td>{{ project.project_type }}</td>
-                            <td>{% if project.building_area %}{{ project.building_area }}{% else %}-{% endif %}</td>
-                            <td>{% if project.floor %}{{ project.floor }}{% else %}-{% endif %}</td>
-                            <td>{{ project.created_at|to_jalali:'%Y/%m/%d' }}</td>
-                            <td style="width: 150px;">
-                                <div class="progress">
-                                    <div class="progress-bar" role="progressbar" style="width: {{ project.physical_progress }}%;" aria-valuenow="{{ project.physical_progress }}" aria-valuemin="0" aria-valuemax="100">{{ project.physical_progress }}%</div>
+                            <td>{% if project.estimated_opening_time %}{{ project.estimated_opening_time|to_jalali:'%Y/%m/%d' }}{% else %}-{% endif %}</td>
+                            <td>{{ project.physical_progress }}%</td>
+                            <td>{{ project.subprojects_with_contract_count }}</td>
+                            <td>{{ project.subprojects_without_contract_count }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'creator_project:project_detail' project.id %}" class="btn btn-sm btn-primary" title="مشاهده">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    {% if user.is_admin or user.is_ceo or user.is_chief_executive or project.created_by == user or user.is_province_manager and project.province in user.get_assigned_provinces %}
+                                    <a href="{% url 'creator_project:project_update' project.id %}" class="btn btn-sm btn-secondary" title="بروزرسانی">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if user.is_province_manager and project.created_by == user and not project.is_submitted %}
+                                    <a href="{% url 'creator_project:project_submit' project.id %}" class="btn btn-sm btn-success" title="ارسال">
+                                        <i class="bi bi-send"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if user.is_admin or user.is_expert or user.is_vice_chief_executive %}
+                                    {% if project.is_submitted and not project.is_approved %}
+                                    <a href="{% url 'creator_project:project_approve' project.id %}" class="btn btn-sm btn-success" title="تایید">
+                                        <i class="bi bi-check-lg"></i>
+                                    </a>
+                                    <a href="{% url 'creator_project:project_reject' project.id %}" class="btn btn-sm btn-danger" title="رد">
+                                        <i class="bi bi-x-lg"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% endif %}
                                 </div>
-                            </td>
-                            <td>
-                                {% if project.is_approved %}
-                                    <span class="badge bg-success">تایید شده</span>
-                                {% elif project.is_submitted %}
-                                    <span class="badge bg-warning">در انتظار تایید</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">پیش‌نویس</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <a href="{% url 'creator_project:project_detail' project.id %}" class="btn btn-sm btn-primary">
-                                    مشاهده
-                                </a>
-                                
-                                {% if user.is_admin or project.created_by == user %}
-                                <a href="{% url 'creator_project:project_update' project.id %}" class="btn btn-sm btn-secondary">
-                                    بروزرسانی
-                                </a>
-                                {% endif %}
-                                
-                                {% if user.is_province_manager and project.created_by == user and not project.is_submitted %}
-                                <a href="{% url 'creator_project:project_submit' project.id %}" class="btn btn-sm btn-success">
-                                    ارسال
-                                </a>
-                                {% endif %}
-                                
-                                {% if user.is_admin or user.is_expert or user.is_vice_chief_executive %}
-                                {% if project.is_submitted and not project.is_approved %}
-                                <a href="{% url 'creator_project:project_approve' project.id %}" class="btn btn-sm btn-success">
-                                    تایید
-                                </a>
-                                <a href="{% url 'creator_project:project_reject' project.id %}" class="btn btn-sm btn-danger">
-                                    رد
-                                </a>
-                                {% endif %}
-                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}

@@ -1,11 +1,59 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load jalali_tags %}
 
 {% block title %}لیست زیرپروژه‌ها{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-form .form-select, .filter-form .form-control {
+        min-width: 200px;
+    }
+    .progress-percentage {
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid my-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>لیست زیرپروژه‌ها</h1>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3 filter-form">
+                <div class="col-md-4">
+                    <label for="project_stage" class="form-label">نوع زیرپروژه</label>
+                    <select name="project_stage" id="project_stage" class="form-select">
+                        <option value="">همه</option>
+                        {% for value, label in project_stage_choices %}
+                        <option value="{{ value }}" {% if selected_project_stage == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="province" class="form-label">استان</label>
+                    <select name="province" id="province" class="form-select">
+                        <option value="">همه</option>
+                        {% for value, label in province_choices %}
+                        <option value="{{ value }}" {% if selected_province == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-funnel"></i> فیلتر
+                    </button>
+                    <a href="{% url 'creator_subproject:subproject_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> پاک کردن
+                    </a>
+                </div>
+            </form>
+        </div>
     </div>
     
     {% if subprojects %}
@@ -17,11 +65,10 @@
                         <tr>
                             <th>طرح</th>
                             <th>پروژه</th>
-                            <th>نوع</th>
-                            <th>شماره</th>
-                            <th>وضعیت</th>
-                            <th>پیشرفت</th>
-                            <th>حالت</th>
+                            <th>نوع زیرپروژه</th>
+                            <th>پیشرفت (%)</th>
+                            <th>تاریخ شروع زیرپروژه</th>
+                            <th>تاریخ پایان زیرپروژه</th>
                             <th>عملیات</th>
                         </tr>
                     </thead>
@@ -40,43 +87,42 @@
                                 <small class="text-muted">({{ subproject.project.project_id }})</small>
                             </td>
                             <td>{{ subproject.project_stage }}</td>
-                            <td>{{ subproject.sub_project_number }}</td>
-                            <td>{{ subproject.state }}</td>
-                            <td style="width: 150px;">
-                                <div class="progress">
-                                    <div class="progress-bar" role="progressbar" style="width: {{ subproject.physical_progress }}%;" aria-valuenow="{{ subproject.physical_progress }}" aria-valuemin="0" aria-valuemax="100">{{ subproject.physical_progress }}%</div>
-                                </div>
-                            </td>
+                            <td class="progress-percentage">{{ subproject.physical_progress }}%</td>
                             <td>
-                                {% if subproject.project.is_approved %}
-                                    <span class="badge bg-success">تایید شده</span>
-                                {% elif subproject.project.is_submitted %}
-                                    <span class="badge bg-warning">در انتظار تایید</span>
+                                {% if subproject.start_date %}
+                                    {{ subproject.start_date|to_jalali }}
                                 {% else %}
-                                    <span class="badge bg-secondary">پیش‌نویس</span>
+                                    <span class="text-muted">-</span>
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="{% url 'creator_subproject:subproject_detail' subproject.id %}" class="btn btn-sm btn-primary">
-                                    <i class="bi bi-eye"></i> مشاهده
-                                </a>
-                                
-                                {% if user.is_admin or subproject.created_by == user %}
-                                <a href="{% url 'creator_subproject:subproject_update' subproject.id %}" class="btn btn-sm btn-secondary">
-                                    <i class="bi bi-pencil"></i> ویرایش
-                                </a>
+                                {% if subproject.end_date %}
+                                    {{ subproject.end_date|to_jalali }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
                                 {% endif %}
-                                
-                                {% if user.is_admin or user.is_expert or user.is_vice_chief_executive %}
-                                {% if subproject.project.is_submitted and not subproject.project.is_approved %}
-                                <a href="{% url 'creator_project:project_approve' subproject.project.id %}" class="btn btn-sm btn-success">
-                                    تایید پروژه
-                                </a>
-                                <a href="{% url 'creator_project:project_reject' subproject.project.id %}" class="btn btn-sm btn-danger">
-                                    رد پروژه
-                                </a>
-                                {% endif %}
-                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'creator_subproject:subproject_detail' subproject.id %}" class="btn btn-sm btn-primary" title="مشاهده">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    {% if user.is_admin or subproject.created_by == user %}
+                                    <a href="{% url 'creator_subproject:subproject_update' subproject.id %}" class="btn btn-sm btn-secondary" title="ویرایش">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if user.is_admin or user.is_expert or user.is_vice_chief_executive %}
+                                    {% if subproject.project.is_submitted and not subproject.project.is_approved %}
+                                    <a href="{% url 'creator_project:project_approve' subproject.project.id %}" class="btn btn-sm btn-success" title="تایید پروژه">
+                                        <i class="bi bi-check-lg"></i>
+                                    </a>
+                                    <a href="{% url 'creator_project:project_reject' subproject.project.id %}" class="btn btn-sm btn-danger" title="رد پروژه">
+                                        <i class="bi bi-x-lg"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% endif %}
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}

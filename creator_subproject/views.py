@@ -81,9 +81,43 @@ def subproject_list(request, project_id=None):
     else:
         return HttpResponseForbidden("You don't have permission to view subprojects.")
 
+    # Apply filters
+    project_stage_filter = request.GET.get('project_stage')
+    province_filter = request.GET.get('province')
+    
+    if project_stage_filter:
+        subprojects = subprojects.filter(project_stage=project_stage_filter)
+    
+    if province_filter:
+        subprojects = subprojects.filter(project__province=province_filter)
+
+    # Get filter choices for dropdowns
+    project_stage_choices = SubProject.SUB_PROJECT_TYPE_CHOICES
+    
+    # Filter province choices based on user access
+    if request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive:
+        # Admin, CEO, Chief Executive can see all provinces
+        province_choices = Project.PROVINCE_CHOICES
+    elif request.user.is_province_manager:
+        # Province manager only sees their assigned provinces
+        user_provinces = request.user.get_assigned_provinces()
+        province_choices = [(p, p) for p in user_provinces]
+    elif request.user.is_expert or request.user.is_vice_chief_executive:
+        # Experts and vice chief executives see provinces of submitted projects
+        submitted_provinces = Project.objects.filter(is_submitted=True).values_list('province', flat=True).distinct()
+        province_choices = [(p, p) for p in submitted_provinces if p]
+    else:
+        # Other users see provinces of their own projects
+        user_provinces = base_queryset.values_list('project__province', flat=True).distinct()
+        province_choices = [(p, p) for p in user_provinces if p]
+
     context = {
         'subprojects': subprojects,
-        'project_id': project_id
+        'project_id': project_id,
+        'project_stage_choices': project_stage_choices,
+        'province_choices': province_choices,
+        'selected_project_stage': project_stage_filter,
+        'selected_province': province_filter,
     }
     
     return render(request, 'creator_subproject/subproject_list.html', context)

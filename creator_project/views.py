@@ -85,8 +85,47 @@ def project_list(request):
     else:
         return HttpResponseForbidden("You don't have permission to view projects.")
     
+    # Filter by project type (نوع پروژه)
+    project_type = request.GET.get('project_type')
+    if project_type:
+        projects = projects.filter(project_type=project_type)
+    
+    # Filter by province (استان)
+    province = request.GET.get('province')
+    if province:
+        projects = projects.filter(province=province)
+    
+    projects = projects.annotate(
+        subprojects_with_contract_count=models.Count(
+            'subprojects',
+            filter=models.Q(subprojects__contract_amount__isnull=False)
+        ),
+        subprojects_without_contract_count=models.Count(
+            'subprojects',
+            filter=models.Q(subprojects__contract_amount__isnull=True)
+        )
+    )
+    
+    # Get available project types for filter
+    project_type_choices = Project.PROJECT_TYPE_CHOICES
+    
+    # Get available provinces based on user access
+    if request.user.is_admin or request.user.is_ceo or request.user.is_chief_executive:
+        province_choices = Project.PROVINCE_CHOICES
+    else:
+        user_provinces = request.user.get_assigned_provinces()
+        province_choices = [(p, p) for p in user_provinces]
+    
+    # Current filter values
+    current_project_type = request.GET.get('project_type', '')
+    current_province = request.GET.get('province', '')
+    
     return render(request, 'creator_project/project_list.html', {
-        'projects': projects
+        'projects': projects,
+        'project_type_choices': project_type_choices,
+        'province_choices': province_choices,
+        'current_project_type': current_project_type,
+        'current_province': current_province,
     })
 
 @login_required
